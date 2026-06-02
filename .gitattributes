@@ -1,0 +1,17 @@
+# Chuẩn hoá line-ending để nhóm làm trên Windows/macOS/Linux không bị churn.
+* text=auto
+
+*.bat   text eol=crlf
+*.cmd   text eol=crlf
+*.sh    text eol=lf
+
+# File nhị phân — không đụng vào
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.ttf   binary
+*.woff  binary
+*.woff2 binary
+*.jar   binary
