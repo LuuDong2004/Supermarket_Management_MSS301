@@ -1,0 +1,13 @@
+/* Global Styles - GotPOS React App */
+/* Bootstrap CSS is loaded via public/assets/admin-Bly6avC4.css in index.html */
+/* This file handles minimal React-specific overrides */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+#root {
+  min-height: 100vh;
+}
