@@ -1,1 +1,0 @@
-import"../admin.bundle-CBXoUBAg.js";import"../main-B7Jkv9i9.js";/* empty css                            */VirtualSelect.init({ele:`#warehouseStatus`,placeholder:`Select Supplier`,options:[{label:`Active`,value:`Active`},{label:`Inactive`,value:`Inactive`}]});
