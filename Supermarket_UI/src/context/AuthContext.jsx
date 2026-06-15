@@ -1,89 +1,92 @@
-// context/AuthContext.jsx
-// Đăng nhập THẬT qua API Gateway → auth-service → user-service.
-import { createContext, useState, useCallback } from 'react';
-import { storage, SESSION_KEYS } from '../utils/storage';
-import { authApi, usersApi } from '../services/api';
+import { createContext, useContext, useEffect, useState, useCallback } from 'react'
+import { api, tokenStore, ApiError } from '../lib/api.js'
+import { USE_MOCK, mockLogin } from '../mock/mockApi.js'
 
-export const AuthContext = createContext(null);
+const AuthContext = createContext(null)
+const USER_KEY = 'sms.user'
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => storage.get(SESSION_KEYS.USER));
-  const [token, setToken] = useState(() => storage.get(SESSION_KEYS.TOKEN));
-  const [loading, setLoading] = useState(false);
-
-  /**
-   * login(username, password)
-   * 1. POST /api/auth/login  → nhận accessToken + refreshToken
-   * 2. GET  /api/users/me    → nhận hồ sơ người dùng (chứng minh token chạy qua gateway)
-   */
-  const login = useCallback(async (username, password) => {
-    setLoading(true);
+  const [user, setUser] = useState(() => {
     try {
-      const res = await authApi.login({ username, password });
-      const auth = res?.data;
-      if (!auth?.accessToken) {
-        return { success: false, message: res?.message || 'Đăng nhập thất bại' };
-      }
-
-      // Lưu token trước để request /users/me được đính kèm Bearer
-      storage.set(SESSION_KEYS.TOKEN, auth.accessToken);
-      storage.set(SESSION_KEYS.REFRESH, auth.refreshToken);
-      setToken(auth.accessToken);
-
-      // Lấy hồ sơ đầy đủ; nếu lỗi vẫn dùng dữ liệu trả về từ login
-      let profile;
-      try {
-        profile = (await usersApi.me())?.data;
-      } catch {
-        profile = null;
-      }
-
-      const userData = profile || {
-        id: auth.userId,
-        username: auth.username,
-        role: auth.role,
-      };
-      // Topbar hiển thị theo user.email → fallback về username nếu chưa có
-      if (!userData.email) userData.email = userData.username;
-
-      setUser(userData);
-      storage.set(SESSION_KEYS.USER, userData);
-      return { success: true, user: userData };
-    } catch (err) {
-      // login thất bại → dọn token rác
-      storage.remove(SESSION_KEYS.TOKEN);
-      storage.remove(SESSION_KEYS.REFRESH);
-      setToken(null);
-      return { success: false, message: err.message || 'Đăng nhập thất bại' };
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const logout = useCallback(async () => {
-    const refreshToken = storage.get(SESSION_KEYS.REFRESH);
-    try {
-      if (refreshToken) await authApi.logout(refreshToken);
+      return JSON.parse(localStorage.getItem(USER_KEY) || 'null')
     } catch {
-      // bỏ qua lỗi mạng khi logout — vẫn xoá phiên ở client
+      return null
     }
-    setUser(null);
-    setToken(null);
-    storage.remove(SESSION_KEYS.USER);
-    storage.remove(SESSION_KEYS.TOKEN);
-    storage.remove(SESSION_KEYS.REFRESH);
-  }, []);
+  })
+  const [loading, setLoading] = useState(false)
+  const [mockMode, setMockMode] = useState(false)
 
-  const isAuthenticated = !!user && !!token;
-  // Backend trả role dạng ROLE_ADMIN / ROLE_CEO / ROLE_CASHIER ...
-  const role = user?.role || '';
-  const isAdmin = role === 'ROLE_ADMIN' || role === 'ROLE_CEO';
+  const persist = useCallback((u) => {
+    setUser(u)
+    if (u) localStorage.setItem(USER_KEY, JSON.stringify(u))
+    else localStorage.removeItem(USER_KEY)
+  }, [])
+
+  // On boot, if we have a token but a stale user, refresh the profile.
+  useEffect(() => {
+    if (tokenStore.get() && user && !user.id?.startsWith('demo-')) {
+      api.get('/users/me').then(persist).catch(() => {})
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const login = useCallback(
+    async (username, password) => {
+      setLoading(true)
+      try {
+        const auth = await api.post('/auth/login', { username, password }, { auth: false })
+        tokenStore.set(auth.accessToken, auth.refreshToken)
+        let profile
+        try {
+          profile = await api.get('/users/me')
+        } catch {
+          profile = { username: auth.username, role: auth.role, fullName: auth.username, id: auth.userId }
+        }
+        setMockMode(false)
+        persist(profile)
+        return profile
+      } catch (err) {
+        // Backend unreachable → optional demo fallback so the UI is explorable.
+        if (USE_MOCK && err instanceof ApiError && (err.status === 0 || err.status >= 500)) {
+          const demo = mockLogin(username, password)
+          tokenStore.set('demo-token', 'demo-refresh')
+          setMockMode(true)
+          persist(demo)
+          return demo
+        }
+        throw err
+      } finally {
+        setLoading(false)
+      }
+    },
+    [persist],
+  )
+
+  const logout = useCallback(() => {
+    const refresh = tokenStore.getRefresh()
+    if (refresh && refresh !== 'demo-refresh') {
+      api.post('/auth/logout', { refreshToken: refresh }).catch(() => {})
+    }
+    tokenStore.clear()
+    persist(null)
+    setMockMode(false)
+  }, [persist])
+
+  const hasRole = useCallback((roles) => {
+    if (!user) return false
+    if (!roles || roles.length === 0) return true
+    return roles.includes(user.role)
+  }, [user])
 
   return (
-    <AuthContext.Provider
-      value={{ user, token, loading, isAuthenticated, isAdmin, role, login, logout }}
-    >
+    <AuthContext.Provider value={{ user, loading, login, logout, hasRole, mockMode }}>
       {children}
     </AuthContext.Provider>
-  );
+  )
+}
+
+export function useAuth() {
+  const ctx = useContext(AuthContext)
+  if (!ctx) throw new Error('useAuth must be used within AuthProvider')
+  return ctx
 }
