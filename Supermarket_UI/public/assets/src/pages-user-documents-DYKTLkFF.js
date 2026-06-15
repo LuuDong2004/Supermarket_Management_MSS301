@@ -1,1 +1,0 @@
-import"../admin.bundle-CBXoUBAg.js";import"../main-B7Jkv9i9.js";/* empty css                            */VirtualSelect.init({ele:`#filesTypeSelect`,options:[{label:`Docs`,value:`1`},{label:`PDF`,value:`2`},{label:`Zip`,value:`3`},{label:`Images & Video`,value:`4`},{label:`Other`,value:`5`}],selectedValue:0,multiple:!0});
