@@ -1,0 +1,199 @@
+import { useState, useMemo } from 'react'
+import { PageHeader, FilterBar } from '../../components/ui/PageHeader.jsx'
+import { Card, CardHeader, CardBody, Button, Badge, StatusBadge, Field, Input, Select } from '../../components/ui/primitives.jsx'
+import { DataTable } from '../../components/ui/DataTable.jsx'
+import { StatCard } from '../../components/ui/StatCard.jsx'
+import { Modal } from '../../components/ui/Modal.jsx'
+import { useToast } from '../../components/ui/Toast.jsx'
+import { formatCurrency, formatNumber, formatDate, roleLabel, initials } from '../../lib/format.js'
+import * as db from '../../mock/db.js'
+import { Users, UserCheck, Building2, Plus, Phone, Calendar, BadgeDollarSign, Search } from 'lucide-react'
+
+const ROLES = ['ROLE_CASHIER', 'ROLE_WAREHOUSE', 'ROLE_ADMIN', 'ROLE_CEO', 'ROLE_SUPPLIER']
+
+export default function Employees() {
+  const toast = useToast()
+  const [search, setSearch] = useState('')
+  const [dept, setDept] = useState('')
+  const [role, setRole] = useState('')
+  const [creating, setCreating] = useState(false)
+  const [selected, setSelected] = useState(null)
+  const [form, setForm] = useState({ name: '', role: 'ROLE_CASHIER', dept: 'Thu ngân', phone: '', salary: '' })
+
+  const depts = useMemo(() => [...new Set(db.employees.map((e) => e.dept))], [])
+
+  const rows = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    return db.employees.filter((e) => {
+      if (q && !e.name.toLowerCase().includes(q) && !e.id.toLowerCase().includes(q)) return false
+      if (dept && e.dept !== dept) return false
+      if (role && e.role !== role) return false
+      return true
+    })
+  }, [search, dept, role])
+
+  const active = db.employees.filter((e) => e.status === 'Đang làm').length
+
+  const submitCreate = () => {
+    setCreating(false)
+    setForm({ name: '', role: 'ROLE_CASHIER', dept: 'Thu ngân', phone: '', salary: '' })
+    toast.success(`Đã thêm nhân viên ${form.name || 'mới'}.`)
+  }
+
+  const history = [
+    { date: '2024-05-01', text: 'Gia nhập công ty — Thu ngân' },
+    { date: '2024-11-20', text: 'Hoàn thành đào tạo POS nâng cao' },
+    { date: '2025-06-01', text: 'Đánh giá hiệu suất loại A — tăng lương 6%' },
+    { date: '2026-01-15', text: 'Phụ trách ca tối' },
+  ]
+
+  return (
+    <div>
+      <PageHeader
+        breadcrumb="Nhân sự · 3.5.1"
+        title="Hồ sơ nhân viên"
+        subtitle="Quản lý thông tin, phòng ban và lương của nhân viên."
+        actions={<Button icon={Plus} onClick={() => setCreating(true)}>Thêm nhân viên</Button>}
+      />
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <StatCard label="Tổng nhân viên" value={formatNumber(db.employees.length)} icon={Users} tone="brand" hint="toàn hệ thống" />
+        <StatCard label="Đang làm việc" value={formatNumber(active)} icon={UserCheck} tone="green" hint="trạng thái hoạt động" />
+        <StatCard label="Số phòng ban" value={formatNumber(depts.length)} icon={Building2} tone="blue" hint="đơn vị tổ chức" />
+      </div>
+
+      <FilterBar className="mt-6">
+        <Field label="Tìm kiếm" className="grow">
+          <div className="relative">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Input className="pl-9" placeholder="Tên hoặc mã nhân viên..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          </div>
+        </Field>
+        <Field label="Phòng ban">
+          <Select value={dept} onChange={(e) => setDept(e.target.value)}>
+            <option value="">Tất cả</option>
+            {depts.map((d) => <option key={d} value={d}>{d}</option>)}
+          </Select>
+        </Field>
+        <Field label="Vai trò">
+          <Select value={role} onChange={(e) => setRole(e.target.value)}>
+            <option value="">Tất cả</option>
+            {ROLES.map((r) => <option key={r} value={r}>{roleLabel(r)}</option>)}
+          </Select>
+        </Field>
+      </FilterBar>
+
+      <DataTable
+        rows={rows}
+        onRowClick={(r) => setSelected(r)}
+        empty={{ title: 'Không có nhân viên', subtitle: 'Thử đổi bộ lọc hoặc thêm nhân viên mới.' }}
+        columns={[
+          { key: 'id', header: 'Mã', render: (r) => <span className="font-mono text-xs">{r.id}</span> },
+          {
+            key: 'name', header: 'Nhân viên', render: (r) => (
+              <div className="flex items-center gap-3">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-50 text-xs font-semibold text-brand-700">{initials(r.name)}</span>
+                <span className="font-medium text-slate-700">{r.name}</span>
+              </div>
+            ),
+          },
+          { key: 'role', header: 'Vai trò', render: (r) => <Badge tone="brand">{roleLabel(r.role)}</Badge> },
+          { key: 'dept', header: 'Phòng ban' },
+          { key: 'joined', header: 'Ngày vào', render: (r) => formatDate(r.joined) },
+          { key: 'phone', header: 'Điện thoại', render: (r) => <span className="font-mono text-xs">{r.phone}</span> },
+          { key: 'status', header: 'Trạng thái', render: (r) => <StatusBadge status={r.status} /> },
+          { key: 'salary', header: 'Lương', align: 'right', render: (r) => <span className="font-semibold">{formatCurrency(r.salary)}</span> },
+        ]}
+      />
+
+      {/* Create employee modal */}
+      <Modal
+        open={creating}
+        onClose={() => setCreating(false)}
+        title="Thêm nhân viên"
+        subtitle="Tạo hồ sơ nhân viên mới"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setCreating(false)}>Hủy</Button>
+            <Button onClick={submitCreate}>Lưu hồ sơ</Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <Field label="Họ và tên" required>
+            <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Nguyễn Văn..." />
+          </Field>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Vai trò">
+              <Select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
+                {ROLES.map((r) => <option key={r} value={r}>{roleLabel(r)}</option>)}
+              </Select>
+            </Field>
+            <Field label="Phòng ban">
+              <Input value={form.dept} onChange={(e) => setForm({ ...form, dept: e.target.value })} />
+            </Field>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Điện thoại">
+              <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="09..." />
+            </Field>
+            <Field label="Lương (đ)">
+              <Input type="number" value={form.salary} onChange={(e) => setForm({ ...form, salary: e.target.value })} placeholder="8500000" />
+            </Field>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Profile detail modal */}
+      <Modal
+        open={!!selected}
+        onClose={() => setSelected(null)}
+        size="lg"
+        title={selected?.name}
+        subtitle={selected ? `${selected.id} · ${roleLabel(selected.role)}` : ''}
+        footer={<Button variant="secondary" onClick={() => setSelected(null)}>Đóng</Button>}
+      >
+        {selected && (
+          <div className="space-y-5">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <InfoRow icon={Building2} label="Phòng ban" value={selected.dept} />
+              <InfoRow icon={Calendar} label="Ngày vào làm" value={formatDate(selected.joined)} />
+              <InfoRow icon={Phone} label="Điện thoại" value={selected.phone} />
+              <InfoRow icon={BadgeDollarSign} label="Lương" value={formatCurrency(selected.salary)} />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-slate-500">Trạng thái:</span>
+              <StatusBadge status={selected.status} />
+            </div>
+            <div>
+              <p className="mb-3 text-sm font-semibold text-slate-700">Lịch sử công tác</p>
+              <ol className="relative ml-2 space-y-4 border-l border-slate-200 pl-5">
+                {history.map((h, i) => (
+                  <li key={i} className="relative">
+                    <span className="absolute -left-[1.42rem] top-1 h-2.5 w-2.5 rounded-full border-2 border-white bg-brand-500" />
+                    <p className="text-xs font-medium text-brand-600">{formatDate(h.date)}</p>
+                    <p className="text-sm text-slate-700">{h.text}</p>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </div>
+        )}
+      </Modal>
+    </div>
+  )
+}
+
+function InfoRow({ icon: Icon, label, value }) {
+  return (
+    <div className="flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50/60 px-3 py-2.5">
+      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-brand-600">
+        <Icon size={16} />
+      </span>
+      <div>
+        <p className="text-xs text-slate-400">{label}</p>
+        <p className="text-sm font-medium text-slate-700">{value}</p>
+      </div>
+    </div>
+  )
+}
