@@ -20,7 +20,31 @@ spring:
             - id: user-service
               uri: lb://user-service
               predicates:
-                - Path=/api/users/**
+                - Path=/api/users/**,/api/employees/**,/api/attendance/**
+            - id: product-service
+              uri: lb://product-service
+              predicates:
+                - Path=/api/products/**,/api/promotions/**,/api/vouchers/**
+            - id: inventory-service
+              uri: lb://inventory-service
+              predicates:
+                - Path=/api/inventory/**,/api/warehouse-transactions/**,/api/stock-adjustments/**,/api/stock-counts/**
+            - id: sales-service
+              uri: lb://sales-service
+              predicates:
+                - Path=/api/sales/**,/api/shifts/**,/api/customers/**
+            - id: supplier-service
+              uri: lb://supplier-service
+              predicates:
+                - Path=/api/suppliers/**,/api/purchase-orders/**
+            - id: reporting-service
+              uri: lb://reporting-service
+              predicates:
+                - Path=/api/reports/**,/api/monitoring/**
+            - id: notification-service
+              uri: lb://notification-service
+              predicates:
+                - Path=/api/approval-requests/**,/api/notifications/**,/api/policies/**,/api/settings/**
 
 # Shared HMAC secret — MUST equal auth-service's security.jwt.secret
 security:
@@ -51,6 +75,18 @@ springdoc:
         url: /api/auth/v3/api-docs
       - name: user-service
         url: /api/users/v3/api-docs
+      - name: product-service
+        url: /api/products/v3/api-docs
+      - name: inventory-service
+        url: /api/inventory/v3/api-docs
+      - name: sales-service
+        url: /api/sales/v3/api-docs
+      - name: supplier-service
+        url: /api/suppliers/v3/api-docs
+      - name: reporting-service
+        url: /api/reports/v3/api-docs
+      - name: notification-service
+        url: /api/notifications/v3/api-docs
 
 logging:
   level:
