@@ -1,20 +1,27 @@
-# product-service (reserved)
+# product-service
 
-Placeholder for the future **product-service**. It is intentionally **not yet a
-Maven module** so the reactor build stays green until real code exists.
+Owns the **product catalog**: products, promotion campaigns and discount
+vouchers. Backs the POS promotion screens (3.9.3) and provides product/category
+lookups consumed across the platform.
 
-## How to activate
+- Port: `8083` · Database: `product_db`
+- Java root: `com.mss301.product`
+- Gateway routes: `/api/products/**`, `/api/promotions/**`, `/api/vouchers/**`
 
-1. Scaffold the standard structure (copy `docs/architecture/SERVICE_TEMPLATE.md`):
-   ```
-   services/product-service/
-   ├── src/main/java/com/mss301/product/...
-   ├── src/main/resources/{application.yml, db/migration/}
-   ├── Dockerfile
-   └── pom.xml   (parent = ../../pom.xml)
-   ```
-2. Register it in the root `pom.xml` `<modules>` as `services/product-service`.
-3. Add a route in `api-gateway` and a service block in `docker-compose.yml`.
+## Endpoints
 
-This service owns its **own database/schema** and entities — never share JPA
-entities through the `shared/` libraries.
+| Method | Path | Roles | Notes |
+|--------|------|-------|-------|
+| GET    | `/api/products` | any | search (`query`, `category`) + pagination |
+| GET    | `/api/products/categories` | any | distinct categories |
+| GET    | `/api/products/low-stock?threshold=` | any | low-stock list |
+| GET    | `/api/products/{id}` | any | by id |
+| POST   | `/api/products` | ADMIN, CEO, WAREHOUSE_MANAGER | create |
+| PUT    | `/api/products/{id}` | ADMIN, CEO, WAREHOUSE_MANAGER | update |
+| DELETE | `/api/products/{id}` | ADMIN, CEO | soft delete |
+| GET/POST/PUT/DELETE | `/api/promotions/**` | ADMIN, CEO (writes) | campaigns |
+| GET/POST/DELETE | `/api/vouchers/**` | ADMIN, CEO (writes) | vouchers |
+
+Data is seeded from `Supermarket_UI/src/mock/db.js` via Flyway
+(`db/migration/V2__seed.sql`). This service owns its own schema; it never shares
+JPA entities through `shared/`.

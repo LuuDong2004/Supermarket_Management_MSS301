@@ -101,6 +101,132 @@ services:
     networks:
       - mss301-net
 
+  product-service:
+    build:
+      context: .
+      dockerfile: services/product-service/Dockerfile
+    container_name: mss301-product
+    depends_on:
+      postgres:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    ports:
+      - "${PRODUCT_PORT}:8083"
+    environment:
+      SERVER_PORT: 8083
+      DB_URL: jdbc:postgresql://postgres:5432/product_db
+      DB_USERNAME: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
+    networks:
+      - mss301-net
+
+  inventory-service:
+    build:
+      context: .
+      dockerfile: services/inventory-service/Dockerfile
+    container_name: mss301-inventory
+    depends_on:
+      postgres:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    ports:
+      - "${INVENTORY_PORT}:8084"
+    environment:
+      SERVER_PORT: 8084
+      DB_URL: jdbc:postgresql://postgres:5432/inventory_db
+      DB_USERNAME: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
+    networks:
+      - mss301-net
+
+  sales-service:
+    build:
+      context: .
+      dockerfile: services/sales-service/Dockerfile
+    container_name: mss301-sales
+    depends_on:
+      postgres:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    ports:
+      - "${SALES_PORT}:8085"
+    environment:
+      SERVER_PORT: 8085
+      DB_URL: jdbc:postgresql://postgres:5432/sales_db
+      DB_USERNAME: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
+    networks:
+      - mss301-net
+
+  supplier-service:
+    build:
+      context: .
+      dockerfile: services/supplier-service/Dockerfile
+    container_name: mss301-supplier
+    depends_on:
+      postgres:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    ports:
+      - "${SUPPLIER_PORT}:8087"
+    environment:
+      SERVER_PORT: 8087
+      DB_URL: jdbc:postgresql://postgres:5432/supplier_db
+      DB_USERNAME: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
+    networks:
+      - mss301-net
+
+  reporting-service:
+    build:
+      context: .
+      dockerfile: services/reporting-service/Dockerfile
+    container_name: mss301-reporting
+    depends_on:
+      postgres:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    ports:
+      - "${REPORTING_PORT}:8086"
+    environment:
+      SERVER_PORT: 8086
+      DB_URL: jdbc:postgresql://postgres:5432/reporting_db
+      DB_USERNAME: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
+    networks:
+      - mss301-net
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: services/notification-service/Dockerfile
+    container_name: mss301-notification
+    depends_on:
+      postgres:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+    ports:
+      - "${NOTIFICATION_PORT}:8088"
+    environment:
+      SERVER_PORT: 8088
+      DB_URL: jdbc:postgresql://postgres:5432/notification_db
+      DB_USERNAME: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
+    networks:
+      - mss301-net
+
   api-gateway:
     build:
       context: .

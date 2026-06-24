@@ -1,9 +1,10 @@
 # MSS301 — Supermarket Management Platform (Backend)
 
-Enterprise-structured microservice backend for the MSS301 capstone. This phase
-delivers the **foundation**: API Gateway, Auth Service, User Service, four shared
-libraries, and an Eureka registry — organized to scale to the future catalog,
-inventory, sales, supplier, reporting and notification services.
+Enterprise-structured microservice backend for the MSS301 capstone. It delivers
+the platform foundation — API Gateway, Auth Service, User Service, four shared
+libraries and an Eureka registry — plus the full business layer: **product,
+inventory, sales, supplier, reporting and notification** services, each owning its
+own database and seeded to mirror the frontend contract.
 
 > Stack: Java 21 · Spring Boot 3.5 · Spring Cloud 2025.0.0 · Spring Security 6 ·
 > Spring Cloud Gateway · Spring Data JPA · PostgreSQL · Flyway · JWT · MapStruct ·
@@ -18,8 +19,13 @@ SUPERMARKET_MANAGEMENT/
 ├── services/                 deployable business microservices
 │   ├── api-gateway/          :8080  edge routing + JWT validation
 │   ├── auth-service/         :8081  tokens, refresh, credential checks
-│   ├── user-service/         :8082  user CRUD (source of truth)
-│   └── {product,inventory,sales,supplier,reporting,notification}-service/  (reserved)
+│   ├── user-service/         :8082  user CRUD (source of truth) + HR (employees, attendance)
+│   ├── product-service/      :8083  products, promotions, vouchers
+│   ├── inventory-service/    :8084  inventory, warehouse txns, adjustments, stock counts
+│   ├── sales-service/        :8085  sales, shifts, members/loyalty
+│   ├── reporting-service/    :8086  reports, analytics, system monitoring
+│   ├── supplier-service/     :8087  suppliers, purchase orders
+│   └── notification-service/ :8088  approvals, notifications, policies, settings
 │
 ├── shared/                   internal libraries (NO entities, NO DB)
 │   ├── common-lib/           com.mss301.common   enums, constants, ErrorCode, exceptions, Feign DTOs
@@ -30,7 +36,7 @@ SUPERMARKET_MANAGEMENT/
 ├── infrastructure/
 │   ├── discovery-server/     :8761  Eureka registry
 │   ├── docker/               shared docker assets
-│   ├── postgres/init/        creates auth_db + user_db
+│   ├── postgres/init/        creates one database per service (auth/user/product/inventory/sales/supplier/reporting/notification)
 │   ├── redis/                redis.conf
 │   ├── rabbitmq/             reserved (event-driven services)
 │   └── monitoring/           prometheus.yml (reserved)
@@ -62,12 +68,15 @@ to add a new service.
 
 ## 3. Ports
 
-| Component        | Port |   | Component       | Port |
-|------------------|------|---|-----------------|------|
-| api-gateway      | 8080 |   | discovery       | 8761 |
-| auth-service     | 8081 |   | postgres        | 5432 |
-| user-service     | 8082 |   | redis           | 6379 |
-| frontend (Vite)  | 5173 |   |                 |      |
+| Component        | Port |   | Component            | Port |
+|------------------|------|---|----------------------|------|
+| api-gateway      | 8080 |   | reporting-service    | 8086 |
+| auth-service     | 8081 |   | supplier-service     | 8087 |
+| user-service     | 8082 |   | notification-service | 8088 |
+| product-service  | 8083 |   | discovery            | 8761 |
+| inventory-service| 8084 |   | postgres             | 5432 |
+| sales-service    | 8085 |   | redis                | 6379 |
+| frontend (Vite)  | 5173 |   |                      |      |
 
 ## 4. Run
 
@@ -87,9 +96,10 @@ Swagger `http://localhost:8080/swagger-ui.html`.
 ```bat
 scripts\build-all.bat
 ```
-Create databases `auth_db` and `user_db`, then run in order:
-`discovery-server → user-service → auth-service → api-gateway`
-(e.g. `mvn -pl :discovery-server spring-boot:run`).
+The postgres init script creates one database per service. Start
+`discovery-server` first, then `api-gateway`, then the business services in any
+order (e.g. `mvn -pl :discovery-server spring-boot:run`). Each service runs Flyway
+on boot to create and seed its own schema.
 
 ### Frontend — `Supermarket_UI/` (React 19 + Vite)
 

@@ -32,6 +32,12 @@
         <module>services/api-gateway</module>
         <module>services/auth-service</module>
         <module>services/user-service</module>
+        <module>services/product-service</module>
+        <module>services/inventory-service</module>
+        <module>services/sales-service</module>
+        <module>services/supplier-service</module>
+        <module>services/reporting-service</module>
+        <module>services/notification-service</module>
     </modules>
 
     <properties>
