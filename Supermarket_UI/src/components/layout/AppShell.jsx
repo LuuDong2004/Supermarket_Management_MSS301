@@ -24,9 +24,7 @@ export function AppShell() {
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <Topbar onMenu={() => setSidebarOpen(true)} />
         <main className="flex-1 overflow-y-auto px-4 py-6 lg:px-8">
-          <div className="mx-auto max-w-7xl">
-            <Outlet />
-          </div>
+          <Outlet />
         </main>
       </div>
     </div>

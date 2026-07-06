@@ -2,11 +2,11 @@
 // and VITE_USE_MOCK is enabled. Mirrors the seeded backend users plus a few
 // extra roles so every screen group can be explored.
 export const DEMO_ACCOUNTS = {
-  ceo: { password: 'password', role: 'ROLE_CEO', fullName: 'Trần Quốc Bảo', email: 'ceo@sms.vn' },
-  admin: { password: 'password', role: 'ROLE_ADMIN', fullName: 'Phạm Thị Dung', email: 'admin@sms.vn' },
-  cashier: { password: 'password', role: 'ROLE_CASHIER', fullName: 'Nguyễn Văn An', email: 'cashier@sms.vn' },
-  warehouse: { password: 'password', role: 'ROLE_WAREHOUSE', fullName: 'Trần Thị Bình', email: 'warehouse@sms.vn' },
-  supplier: { password: 'password', role: 'ROLE_SUPPLIER', fullName: 'Lê Văn Cường', email: 'supplier@sms.vn' },
+  ceo: { password: '123456', role: 'ROLE_CEO', fullName: 'Trần Quốc Bảo', email: 'ceo@sms.vn' },
+  admin: { password: '123456', role: 'ROLE_ADMIN', fullName: 'Phạm Thị Dung', email: 'admin@sms.vn' },
+  cashier: { password: '123456', role: 'ROLE_CASHIER', fullName: 'Nguyễn Văn An', email: 'cashier@sms.vn' },
+  warehouse: { password: '123456', role: 'ROLE_WAREHOUSE', fullName: 'Trần Thị Bình', email: 'warehouse@sms.vn' },
+  supplier: { password: '123456', role: 'ROLE_SUPPLIER', fullName: 'Lê Văn Cường', email: 'supplier@sms.vn' },
 }
 
 export const USE_MOCK = String(import.meta.env.VITE_USE_MOCK) !== 'false'
