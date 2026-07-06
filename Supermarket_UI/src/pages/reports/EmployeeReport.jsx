@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { PageHeader, FilterBar } from '../../components/ui/PageHeader.jsx'
 import { Card, CardHeader, CardBody, Button, Badge, Field, Input, Select } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
@@ -6,7 +6,7 @@ import { StatCard } from '../../components/ui/StatCard.jsx'
 import { Bars } from '../../components/ui/Charts.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { formatNumber, formatPercent } from '../../lib/format.js'
-import * as db from '../../mock/db.js'
+import { reportService, withFallback, toList, mockEmployeePerformance } from '../../services/index.js'
 import {
   Award, Gauge, Clock, Target, FileSpreadsheet, BarChart3, Users,
 } from 'lucide-react'
@@ -17,13 +17,21 @@ export default function EmployeeReport() {
   const [from, setFrom] = useState('2026-06-01')
   const [to, setTo] = useState('2026-06-15')
 
-  const perf = db.employeePerf
+  const [source, setSource] = useState('backend')
+  const [perf, setPerf] = useState([])
 
-  const topScore = useMemo(() => Math.max(...perf.map((e) => e.score)), [perf])
+  const load = async () => {
+    const res = await withFallback(() => reportService.employeePerformance(), mockEmployeePerformance)
+    setPerf(toList(res.data))
+    setSource(res.source)
+  }
+  useEffect(() => { load() }, [])
+
+  const topScore = useMemo(() => (perf.length ? Math.max(...perf.map((e) => e.score || 0)) : 0), [perf])
   const topName = useMemo(() => perf.find((e) => e.score === topScore)?.name || '—', [perf, topScore])
-  const avgScore = useMemo(() => Math.round(perf.reduce((s, e) => s + e.score, 0) / perf.length), [perf])
-  const totalHours = useMemo(() => perf.reduce((s, e) => s + e.hours, 0), [perf])
-  const avgAccuracy = useMemo(() => perf.reduce((s, e) => s + e.accuracy, 0) / perf.length, [perf])
+  const avgScore = useMemo(() => (perf.length ? Math.round(perf.reduce((s, e) => s + (e.score || 0), 0) / perf.length) : 0), [perf])
+  const totalHours = useMemo(() => perf.reduce((s, e) => s + (e.hours || 0), 0), [perf])
+  const avgAccuracy = useMemo(() => (perf.length ? perf.reduce((s, e) => s + Number(e.accuracy || 0), 0) / perf.length : 0), [perf])
 
   const exportReport = () => toast.success('Đã xuất báo cáo hiệu suất nhân viên ra Excel.')
 
@@ -39,7 +47,14 @@ export default function EmployeeReport() {
         breadcrumb="Báo cáo · 3.10.3"
         title="Hiệu suất nhân viên"
         subtitle="Đánh giá doanh số, độ chính xác và giờ làm theo từng nhân viên."
-        actions={<Button icon={FileSpreadsheet} onClick={exportReport}>Xuất Excel</Button>}
+        actions={
+          <div className="flex items-center gap-3">
+            <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
+              {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
+            </Badge>
+            <Button icon={FileSpreadsheet} onClick={exportReport}>Xuất Excel</Button>
+          </div>
+        }
       />
 
       <FilterBar>
@@ -89,7 +104,7 @@ export default function EmployeeReport() {
               columns={[
                 { key: 'name', header: 'Nhân viên', render: (r) => <span className="font-medium text-slate-700">{r.name}</span> },
                 { key: 'sales', header: 'Doanh số (đơn)', align: 'center', render: (r) => formatNumber(r.sales) },
-                { key: 'accuracy', header: 'Độ chính xác', align: 'center', render: (r) => formatPercent(r.accuracy) },
+                { key: 'accuracy', header: 'Độ chính xác', align: 'center', render: (r) => formatPercent(Number(r.accuracy || 0)) },
                 { key: 'hours', header: 'Giờ làm', align: 'center', render: (r) => `${formatNumber(r.hours)} giờ` },
                 {
                   key: 'score',

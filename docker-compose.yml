@@ -37,6 +37,61 @@ services:
     networks:
       - mss301-net
 
+  mysql:
+    image: mysql:8.4
+    container_name: mss301-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./infrastructure/mysql/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - mss301-net
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: mss301-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
+      MSSQL_PID: Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql-data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+    networks:
+      - mss301-net
+
+  # One-shot: creates sales_db / supplier_db once SQL Server is healthy (mssql image has no initdb hook).
+  sqlserver-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: mss301-sqlserver-init
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    environment:
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
+    volumes:
+      - ./infrastructure/sqlserver/init:/init:ro
+    entrypoint: ["/bin/bash", "-c", "/opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -i /init/init-databases.sql"]
+    restart: "no"
+    networks:
+      - mss301-net
+
   discovery-server:
     build:
       context: .
@@ -107,7 +162,7 @@ services:
       dockerfile: services/product-service/Dockerfile
     container_name: mss301-product
     depends_on:
-      postgres:
+      mysql:
         condition: service_healthy
       discovery-server:
         condition: service_healthy
@@ -115,9 +170,9 @@ services:
       - "${PRODUCT_PORT}:8083"
     environment:
       SERVER_PORT: 8083
-      DB_URL: jdbc:postgresql://postgres:5432/product_db
-      DB_USERNAME: ${POSTGRES_USER}
-      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_URL: jdbc:mysql://mysql:3306/product_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=utf8
+      DB_USERNAME: ${MYSQL_USER}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
       EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
     networks:
       - mss301-net
@@ -128,7 +183,7 @@ services:
       dockerfile: services/inventory-service/Dockerfile
     container_name: mss301-inventory
     depends_on:
-      postgres:
+      mysql:
         condition: service_healthy
       discovery-server:
         condition: service_healthy
@@ -136,9 +191,9 @@ services:
       - "${INVENTORY_PORT}:8084"
     environment:
       SERVER_PORT: 8084
-      DB_URL: jdbc:postgresql://postgres:5432/inventory_db
-      DB_USERNAME: ${POSTGRES_USER}
-      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_URL: jdbc:mysql://mysql:3306/inventory_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=utf8
+      DB_USERNAME: ${MYSQL_USER}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
       EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
     networks:
       - mss301-net
@@ -149,17 +204,17 @@ services:
       dockerfile: services/sales-service/Dockerfile
     container_name: mss301-sales
     depends_on:
-      postgres:
-        condition: service_healthy
+      sqlserver-init:
+        condition: service_completed_successfully
       discovery-server:
         condition: service_healthy
     ports:
       - "${SALES_PORT}:8085"
     environment:
       SERVER_PORT: 8085
-      DB_URL: jdbc:postgresql://postgres:5432/sales_db
-      DB_USERNAME: ${POSTGRES_USER}
-      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_URL: jdbc:sqlserver://sqlserver:1433;databaseName=sales_db;encrypt=true;trustServerCertificate=true
+      DB_USERNAME: sa
+      DB_PASSWORD: ${MSSQL_SA_PASSWORD}
       EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
     networks:
       - mss301-net
@@ -170,17 +225,17 @@ services:
       dockerfile: services/supplier-service/Dockerfile
     container_name: mss301-supplier
     depends_on:
-      postgres:
-        condition: service_healthy
+      sqlserver-init:
+        condition: service_completed_successfully
       discovery-server:
         condition: service_healthy
     ports:
       - "${SUPPLIER_PORT}:8087"
     environment:
       SERVER_PORT: 8087
-      DB_URL: jdbc:postgresql://postgres:5432/supplier_db
-      DB_USERNAME: ${POSTGRES_USER}
-      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_URL: jdbc:sqlserver://sqlserver:1433;databaseName=supplier_db;encrypt=true;trustServerCertificate=true
+      DB_USERNAME: sa
+      DB_PASSWORD: ${MSSQL_SA_PASSWORD}
       EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
     networks:
       - mss301-net
@@ -248,6 +303,8 @@ services:
 volumes:
   postgres-data:
   redis-data:
+  mysql-data:
+  mssql-data:
 
 networks:
   mss301-net:

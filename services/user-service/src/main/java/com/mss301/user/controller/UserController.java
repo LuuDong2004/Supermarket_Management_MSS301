@@ -2,6 +2,7 @@ package com.mss301.user.controller;
 
 import com.mss301.response.ApiResponse;
 import com.mss301.response.PageResponse;
+import com.mss301.user.dto.request.AdminUpdateUserRequest;
 import com.mss301.user.dto.request.ChangePasswordRequest;
 import com.mss301.user.dto.request.CreateUserRequest;
 import com.mss301.user.dto.request.UpdateProfileRequest;
@@ -78,6 +79,14 @@ public class UserController {
     @GetMapping("/{id}")
     public ApiResponse<UserResponse> getById(@PathVariable UUID id) {
         return ApiResponse.success(userService.getById(id));
+    }
+
+    @Operation(summary = "Update a user (admin)")
+    @PreAuthorize("hasAnyRole('ADMIN','CEO')")
+    @PutMapping("/{id}")
+    public ApiResponse<UserResponse> update(@PathVariable UUID id,
+                                            @Valid @RequestBody AdminUpdateUserRequest request) {
+        return ApiResponse.success("User updated", userService.updateUser(id, request));
     }
 
     @Operation(summary = "Soft delete a user (admin)")

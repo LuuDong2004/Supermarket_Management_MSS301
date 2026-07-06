@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { PageHeader } from '../../components/ui/PageHeader.jsx'
 import { Card, CardHeader, CardBody, Button, Badge, Field, Input, Divider } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
@@ -6,12 +6,14 @@ import { StatCard } from '../../components/ui/StatCard.jsx'
 import { Modal } from '../../components/ui/Modal.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { formatCurrency } from '../../lib/format.js'
-import * as db from '../../mock/db.js'
+import { useAuth } from '../../context/AuthContext.jsx'
+import { saleService, withFallback, toList, mockSales } from '../../services/index.js'
 import {
   Banknote, CreditCard, Wallet, QrCode, ReceiptText, CheckCircle2, Printer, ShoppingCart,
 } from 'lucide-react'
 
 const ORDER_TOTAL = 648000
+const ORDER_CODE = 'INV-20260615-0099'
 
 const METHODS = [
   { key: 'cash', label: 'Tiền mặt', icon: Banknote },
@@ -24,20 +26,45 @@ const QUICK_CASH = [500000, 200000, 100000, 50000]
 
 export default function Payment() {
   const toast = useToast()
+  const { user } = useAuth()
   const [method, setMethod] = useState('cash')
   const [given, setGiven] = useState('')
   const [receipt, setReceipt] = useState(false)
   const [paid, setPaid] = useState(false)
 
+  const [recentSales, setRecentSales] = useState([])
+  const [source, setSource] = useState('backend')
+
+  const load = async () => {
+    const r = await withFallback(() => saleService.list(), mockSales)
+    setRecentSales(toList(r.data)); setSource(r.source)
+  }
+  useEffect(() => { load() }, [])
+
   const givenNum = Number(given) || 0
   const change = useMemo(() => Math.max(0, givenNum - ORDER_TOTAL), [givenNum])
   const enoughCash = method !== 'cash' || givenNum >= ORDER_TOTAL
 
-  const complete = () => {
+  const complete = async () => {
     if (!enoughCash) return toast.error('Số tiền khách đưa chưa đủ.')
+    const now = new Date()
+    const methodLabel = METHODS.find((m) => m.key === method)?.label
+    try {
+      await saleService.create({
+        code: ORDER_CODE,
+        saleTime: now.toTimeString().slice(0, 5),
+        cashier: user?.fullName || user?.username || 'Thu ngân',
+        items: 3,
+        total: ORDER_TOTAL,
+        payment: methodLabel,
+      })
+      toast.success('Thanh toán thành công! Hóa đơn đã được tạo.')
+      await load()
+    } catch (e) {
+      toast.error(`Không tạo được hóa đơn: ${e.message}`)
+    }
     setPaid(true)
     setReceipt(true)
-    toast.success('Thanh toán thành công! Hóa đơn đã được tạo.')
   }
 
   const reset = () => {
@@ -55,7 +82,11 @@ export default function Payment() {
         breadcrumb="POS · 3.8.2"
         title="Xử lý thanh toán"
         subtitle="Chọn phương thức và hoàn tất thanh toán cho đơn hàng hiện tại."
-        actions={<Badge tone="green" dot>Ca đang mở · SH-330</Badge>}
+        actions={
+          <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
+            {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
+          </Badge>
+        }
       />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
@@ -139,14 +170,15 @@ export default function Payment() {
           </Card>
 
           <Card>
-            <CardHeader title="Giao dịch gần đây" icon={ShoppingCart} subtitle={`${db.recentSales.length} hóa đơn`} />
+            <CardHeader title="Giao dịch gần đây" icon={ShoppingCart} subtitle={`${recentSales.length} hóa đơn`} />
             <CardBody className="p-0">
               <DataTable
                 className="rounded-none border-0 shadow-none"
-                rows={db.recentSales}
+                rows={recentSales}
+                empty={{ title: 'Chưa có giao dịch' }}
                 columns={[
-                  { key: 'id', header: 'Hóa đơn', render: (r) => <span className="font-mono text-xs">{r.id}</span> },
-                  { key: 'time', header: 'Giờ' },
+                  { key: 'id', header: 'Hóa đơn', render: (r) => <span className="font-mono text-xs">{r.code || r.id}</span> },
+                  { key: 'time', header: 'Giờ', render: (r) => r.saleTime || r.time },
                   { key: 'items', header: 'SP', align: 'center' },
                   { key: 'payment', header: 'Thanh toán', render: (r) => <Badge tone="slate">{r.payment}</Badge> },
                   { key: 'total', header: 'Tổng', align: 'right', render: (r) => <span className="font-semibold">{formatCurrency(r.total)}</span> },

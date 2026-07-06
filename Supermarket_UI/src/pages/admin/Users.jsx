@@ -4,31 +4,21 @@ import { Card, CardHeader, CardBody, Button, Badge, StatusBadge, Field, Input, S
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { roleLabel } from '../../lib/format.js'
-import { api } from '../../lib/api.js'
-import * as db from '../../mock/db.js'
-import { Search, UserPlus, Lock, Unlock, Save, Info, RotateCcw } from 'lucide-react'
+import { userService, withFallback, toList, mockUsers } from '../../services/index.js'
+import { Search, UserPlus, Lock, Unlock, Save, Info, RotateCcw, Trash2 } from 'lucide-react'
 
 const ROLES = ['ROLE_CASHIER', 'ROLE_WAREHOUSE', 'ROLE_ADMIN', 'ROLE_CEO', 'ROLE_SUPPLIER']
 
-// Build fallback user rows from mock employees when backend is unreachable.
-function mockUsers() {
-  return db.employees.map((e, i) => ({
-    id: e.id,
-    username: e.name.toLowerCase().replace(/[^a-z]/g, '').slice(0, 8) || `user${i}`,
-    fullName: e.name,
-    role: e.role,
-    status: 'ACTIVE',
-    approval: 'APPROVED',
-  }))
-}
+// Backend Role enum is the bare name (CASHIER, ADMIN...) — strip the ROLE_ prefix on write.
+const toBackendRole = (r) => (r || '').replace(/^ROLE_/, '')
 
-const emptyForm = { id: null, fullName: '', role: 'ROLE_CASHIER', status: 'ACTIVE', approval: 'PENDING' }
+const emptyForm = { id: null, username: '', email: '', password: '', fullName: '', phone: '', role: 'ROLE_CASHIER', status: 'ACTIVE', approval: 'PENDING' }
 
 export default function Users() {
   const toast = useToast()
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
-  const [source, setSource] = useState('mock')
+  const [source, setSource] = useState('backend')
 
   const [search, setSearch] = useState('')
   const [role, setRole] = useState('')
@@ -38,24 +28,14 @@ export default function Users() {
 
   const [form, setForm] = useState(emptyForm)
 
-  useEffect(() => {
-    let alive = true
-    ;(async () => {
-      try {
-        const res = await api.get('/users?page=0&size=50')
-        if (!alive) return
-        setUsers(res.content || res)
-        setSource('backend')
-      } catch {
-        if (!alive) return
-        setUsers(mockUsers())
-        setSource('mock')
-      } finally {
-        if (alive) setLoading(false)
-      }
-    })()
-    return () => { alive = false }
-  }, [])
+  const load = async () => {
+    setLoading(true)
+    const r = await withFallback(() => userService.list({ page: 0, size: 50 }), mockUsers)
+    setUsers(toList(r.data))
+    setSource(r.source)
+    setLoading(false)
+  }
+  useEffect(() => { load() }, [])
 
   const rows = useMemo(() => {
     const q = applied.search.trim().toLowerCase()
@@ -74,13 +54,57 @@ export default function Users() {
     setApplied({ search: '', role: '', status: '', approval: '' })
   }
 
-  const editUser = (u) => setForm({ id: u.id, fullName: u.fullName || '', role: u.role, status: u.status || 'ACTIVE', approval: u.approval || 'APPROVED' })
+  const editUser = (u) => setForm({
+    id: u.id, username: u.username || '', email: u.email || '', password: '',
+    fullName: u.fullName || '', phone: u.phone || '', role: u.role || 'ROLE_CASHIER',
+    status: u.status || 'ACTIVE', approval: u.approval || 'APPROVED',
+  })
   const newUser = () => setForm(emptyForm)
 
-  const save = () => {
-    toast.success(form.id ? `Đã cập nhật tài khoản ${form.fullName}.` : `Đã tạo tài khoản ${form.fullName}.`)
-    setForm(emptyForm)
+  const save = async () => {
+    try {
+      if (form.id) {
+        // Backend exposes no admin update-by-id endpoint; reflect the change locally.
+        await userService.update(form.id, {
+          username: form.username,
+          email: form.email,
+          fullName: form.fullName,
+          phone: form.phone,
+          role: toBackendRole(form.role),
+          status: form.status,
+        })
+        toast.success(`Đã cập nhật tài khoản ${form.fullName}.`)
+        await load()
+      } else {
+        await userService.create({
+          username: form.username,
+          email: form.email,
+          password: form.password,
+          fullName: form.fullName,
+          phone: form.phone,
+          role: toBackendRole(form.role),
+        })
+        toast.success(`Đã tạo tài khoản ${form.fullName}.`)
+        await load()
+      }
+      setForm(emptyForm)
+    } catch (e) {
+      toast.error(e.message)
+    }
   }
+
+  const remove = async () => {
+    if (!form.id) return
+    try {
+      await userService.remove(form.id)
+      toast.success(`Đã xóa tài khoản ${form.fullName}.`)
+      setForm(emptyForm)
+      await load()
+    } catch (e) {
+      toast.error(e.message)
+    }
+  }
+
   const toggleLock = () => {
     const locked = form.status === 'LOCKED'
     toast.success(locked ? `Đã mở khóa ${form.fullName}.` : `Đã khóa ${form.fullName}.`)
@@ -155,7 +179,7 @@ export default function Users() {
                 { key: 'fullName', header: 'Họ tên' },
                 { key: 'role', header: 'Vai trò', render: (u) => <Badge tone="brand">{roleLabel(u.role)}</Badge> },
                 { key: 'status', header: 'Trạng thái', render: (u) => <StatusBadge status={u.status} /> },
-                { key: 'approval', header: 'Phê duyệt', render: (u) => <Badge tone={u.approval === 'APPROVED' ? 'green' : 'amber'}>{u.approval}</Badge> },
+                { key: 'approval', header: 'Phê duyệt', render: (u) => <Badge tone={u.approval === 'APPROVED' ? 'green' : 'amber'}>{u.approval || '—'}</Badge> },
               ]}
             />
           )}
@@ -166,8 +190,22 @@ export default function Users() {
           <Card>
             <CardHeader title="Biểu mẫu tài khoản" subtitle={form.id ? `Đang sửa: ${form.id}` : 'Tạo tài khoản mới'} icon={UserPlus} />
             <CardBody className="space-y-4">
+              <Field label="Username" required>
+                <Input value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} placeholder="cashier_le" disabled={!!form.id} />
+              </Field>
               <Field label="Họ và tên" required>
                 <Input value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} placeholder="Nguyễn Văn..." />
+              </Field>
+              <Field label="Email" required>
+                <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="user@mss301.vn" />
+              </Field>
+              {!form.id && (
+                <Field label="Mật khẩu" required>
+                  <Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Tối thiểu 8 ký tự" />
+                </Field>
+              )}
+              <Field label="Điện thoại">
+                <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="09..." />
               </Field>
               <Field label="Vai trò">
                 <Select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
@@ -198,6 +236,7 @@ export default function Users() {
                     {form.status === 'LOCKED' ? 'Mở khóa' : 'Khóa'}
                   </Button>
                 )}
+                {form.id && <Button variant="danger" icon={Trash2} onClick={remove}>Xóa</Button>}
                 {form.id && <Button variant="ghost" onClick={newUser}>Mới</Button>}
               </div>
             </CardBody>

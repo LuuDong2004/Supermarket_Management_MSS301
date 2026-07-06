@@ -3,6 +3,7 @@ package com.mss301.user.service.interfaces;
 import com.mss301.response.PageResponse;
 import com.mss301.common.dto.internal.InternalCreateUserRequest;
 import com.mss301.common.dto.internal.InternalUserResponse;
+import com.mss301.user.dto.request.AdminUpdateUserRequest;
 import com.mss301.user.dto.request.ChangePasswordRequest;
 import com.mss301.user.dto.request.CreateUserRequest;
 import com.mss301.user.dto.request.UpdateProfileRequest;
@@ -16,6 +17,8 @@ public interface UserService {
     UserResponse createUser(CreateUserRequest request);
 
     UserResponse updateProfile(UUID userId, UpdateProfileRequest request);
+
+    UserResponse updateUser(UUID userId, AdminUpdateUserRequest request);
 
     void changePassword(UUID userId, ChangePasswordRequest request);
 
