@@ -1,43 +1,97 @@
-import { useState, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { PageHeader, FilterBar } from '../../components/ui/PageHeader.jsx'
-import { Card, CardHeader, CardBody, Button, Badge, StatusBadge, Field, Input, Select } from '../../components/ui/primitives.jsx'
+import { Card, CardHeader, CardBody, Button, Badge, StatusBadge, Field, Input, Select, Spinner } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { StatCard } from '../../components/ui/StatCard.jsx'
 import { Modal } from '../../components/ui/Modal.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { formatCurrency, formatNumber, formatDate, roleLabel, initials } from '../../lib/format.js'
-import * as db from '../../mock/db.js'
-import { Users, UserCheck, Building2, Plus, Phone, Calendar, BadgeDollarSign, Search } from 'lucide-react'
+import { employeeService, withFallback, toList, mockEmployees } from '../../services/index.js'
+import { Users, UserCheck, Building2, Plus, Phone, Calendar, BadgeDollarSign, Search, Trash2, Pencil } from 'lucide-react'
 
 const ROLES = ['ROLE_CASHIER', 'ROLE_WAREHOUSE', 'ROLE_ADMIN', 'ROLE_CEO', 'ROLE_SUPPLIER']
 
+const emptyForm = { id: null, code: '', name: '', role: 'ROLE_CASHIER', dept: 'Thu ngân', joined: '', phone: '', status: 'Đang làm', salary: '' }
+
 export default function Employees() {
   const toast = useToast()
+  const [rows, setRows] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [source, setSource] = useState('backend')
+
   const [search, setSearch] = useState('')
   const [dept, setDept] = useState('')
   const [role, setRole] = useState('')
   const [creating, setCreating] = useState(false)
   const [selected, setSelected] = useState(null)
-  const [form, setForm] = useState({ name: '', role: 'ROLE_CASHIER', dept: 'Thu ngân', phone: '', salary: '' })
+  const [form, setForm] = useState(emptyForm)
 
-  const depts = useMemo(() => [...new Set(db.employees.map((e) => e.dept))], [])
+  const load = async () => {
+    setLoading(true)
+    const r = await withFallback(() => employeeService.list(), mockEmployees)
+    setRows(toList(r.data))
+    setSource(r.source)
+    setLoading(false)
+  }
+  useEffect(() => { load() }, [])
 
-  const rows = useMemo(() => {
+  const depts = useMemo(() => [...new Set(rows.map((e) => e.dept).filter(Boolean))], [rows])
+
+  const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
-    return db.employees.filter((e) => {
-      if (q && !e.name.toLowerCase().includes(q) && !e.id.toLowerCase().includes(q)) return false
+    return rows.filter((e) => {
+      if (q && !(e.name || '').toLowerCase().includes(q) && !((e.code || e.id) || '').toLowerCase().includes(q)) return false
       if (dept && e.dept !== dept) return false
       if (role && e.role !== role) return false
       return true
     })
-  }, [search, dept, role])
+  }, [rows, search, dept, role])
 
-  const active = db.employees.filter((e) => e.status === 'Đang làm').length
+  const active = rows.filter((e) => e.status === 'Đang làm').length
 
-  const submitCreate = () => {
-    setCreating(false)
-    setForm({ name: '', role: 'ROLE_CASHIER', dept: 'Thu ngân', phone: '', salary: '' })
-    toast.success(`Đã thêm nhân viên ${form.name || 'mới'}.`)
+  const openCreate = () => { setForm(emptyForm); setCreating(true) }
+  const openEdit = (e) => {
+    setForm({
+      id: e.id, code: e.code || e.id || '', name: e.name || '', role: e.role || 'ROLE_CASHIER',
+      dept: e.dept || '', joined: e.joined || '', phone: e.phone || '', status: e.status || 'Đang làm',
+      salary: e.salary ?? '',
+    })
+    setSelected(null)
+    setCreating(true)
+  }
+
+  const save = async () => {
+    const payload = {
+      code: form.code || form.id || `E-${Date.now()}`,
+      name: form.name,
+      role: form.role,
+      dept: form.dept,
+      joined: form.joined || null,
+      phone: form.phone,
+      status: form.status,
+      salary: form.salary === '' ? null : Number(form.salary),
+    }
+    try {
+      if (form.id) await employeeService.update(form.id, payload)
+      else await employeeService.create(payload)
+      toast.success(form.id ? `Đã cập nhật nhân viên ${form.name}.` : `Đã thêm nhân viên ${form.name || 'mới'}.`)
+      setCreating(false)
+      setForm(emptyForm)
+      await load()
+    } catch (e) {
+      toast.error(e.message)
+    }
+  }
+
+  const remove = async (row) => {
+    try {
+      await employeeService.remove(row.id)
+      toast.success('Đã xóa nhân viên.')
+      setSelected(null)
+      await load()
+    } catch (e) {
+      toast.error(e.message)
+    }
   }
 
   const history = [
@@ -53,11 +107,18 @@ export default function Employees() {
         breadcrumb="Nhân sự · 3.5.1"
         title="Hồ sơ nhân viên"
         subtitle="Quản lý thông tin, phòng ban và lương của nhân viên."
-        actions={<Button icon={Plus} onClick={() => setCreating(true)}>Thêm nhân viên</Button>}
+        actions={
+          <div className="flex items-center gap-3">
+            <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
+              {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
+            </Badge>
+            <Button icon={Plus} onClick={openCreate}>Thêm nhân viên</Button>
+          </div>
+        }
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        <StatCard label="Tổng nhân viên" value={formatNumber(db.employees.length)} icon={Users} tone="brand" hint="toàn hệ thống" />
+        <StatCard label="Tổng nhân viên" value={formatNumber(rows.length)} icon={Users} tone="brand" hint="toàn hệ thống" />
         <StatCard label="Đang làm việc" value={formatNumber(active)} icon={UserCheck} tone="green" hint="trạng thái hoạt động" />
         <StatCard label="Số phòng ban" value={formatNumber(depts.length)} icon={Building2} tone="blue" hint="đơn vị tổ chức" />
       </div>
@@ -83,46 +144,57 @@ export default function Employees() {
         </Field>
       </FilterBar>
 
-      <DataTable
-        rows={rows}
-        onRowClick={(r) => setSelected(r)}
-        empty={{ title: 'Không có nhân viên', subtitle: 'Thử đổi bộ lọc hoặc thêm nhân viên mới.' }}
-        columns={[
-          { key: 'id', header: 'Mã', render: (r) => <span className="font-mono text-xs">{r.id}</span> },
-          {
-            key: 'name', header: 'Nhân viên', render: (r) => (
-              <div className="flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-50 text-xs font-semibold text-brand-700">{initials(r.name)}</span>
-                <span className="font-medium text-slate-700">{r.name}</span>
-              </div>
-            ),
-          },
-          { key: 'role', header: 'Vai trò', render: (r) => <Badge tone="brand">{roleLabel(r.role)}</Badge> },
-          { key: 'dept', header: 'Phòng ban' },
-          { key: 'joined', header: 'Ngày vào', render: (r) => formatDate(r.joined) },
-          { key: 'phone', header: 'Điện thoại', render: (r) => <span className="font-mono text-xs">{r.phone}</span> },
-          { key: 'status', header: 'Trạng thái', render: (r) => <StatusBadge status={r.status} /> },
-          { key: 'salary', header: 'Lương', align: 'right', render: (r) => <span className="font-semibold">{formatCurrency(r.salary)}</span> },
-        ]}
-      />
+      {loading ? (
+        <div className="flex items-center justify-center rounded-xl border border-slate-200 bg-white py-16">
+          <Spinner className="h-7 w-7" />
+        </div>
+      ) : (
+        <DataTable
+          rows={filtered}
+          onRowClick={(r) => setSelected(r)}
+          empty={{ title: 'Không có nhân viên', subtitle: 'Thử đổi bộ lọc hoặc thêm nhân viên mới.' }}
+          columns={[
+            { key: 'code', header: 'Mã', render: (r) => <span className="font-mono text-xs">{r.code || r.id}</span> },
+            {
+              key: 'name', header: 'Nhân viên', render: (r) => (
+                <div className="flex items-center gap-3">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-50 text-xs font-semibold text-brand-700">{initials(r.name)}</span>
+                  <span className="font-medium text-slate-700">{r.name}</span>
+                </div>
+              ),
+            },
+            { key: 'role', header: 'Vai trò', render: (r) => <Badge tone="brand">{roleLabel(r.role)}</Badge> },
+            { key: 'dept', header: 'Phòng ban' },
+            { key: 'joined', header: 'Ngày vào', render: (r) => formatDate(r.joined) },
+            { key: 'phone', header: 'Điện thoại', render: (r) => <span className="font-mono text-xs">{r.phone}</span> },
+            { key: 'status', header: 'Trạng thái', render: (r) => <StatusBadge status={r.status} /> },
+            { key: 'salary', header: 'Lương', align: 'right', render: (r) => <span className="font-semibold">{formatCurrency(r.salary)}</span> },
+          ]}
+        />
+      )}
 
-      {/* Create employee modal */}
+      {/* Create / edit employee modal */}
       <Modal
         open={creating}
         onClose={() => setCreating(false)}
-        title="Thêm nhân viên"
-        subtitle="Tạo hồ sơ nhân viên mới"
+        title={form.id ? 'Sửa nhân viên' : 'Thêm nhân viên'}
+        subtitle={form.id ? `Cập nhật hồ sơ ${form.code || form.id}` : 'Tạo hồ sơ nhân viên mới'}
         footer={
           <>
             <Button variant="secondary" onClick={() => setCreating(false)}>Hủy</Button>
-            <Button onClick={submitCreate}>Lưu hồ sơ</Button>
+            <Button onClick={save}>Lưu hồ sơ</Button>
           </>
         }
       >
         <div className="space-y-4">
-          <Field label="Họ và tên" required>
-            <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Nguyễn Văn..." />
-          </Field>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Mã nhân viên">
+              <Input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="E005" disabled={!!form.id} />
+            </Field>
+            <Field label="Họ và tên" required>
+              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Nguyễn Văn..." />
+            </Field>
+          </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Vai trò">
               <Select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
@@ -131,6 +203,18 @@ export default function Employees() {
             </Field>
             <Field label="Phòng ban">
               <Input value={form.dept} onChange={(e) => setForm({ ...form, dept: e.target.value })} />
+            </Field>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Ngày vào làm">
+              <Input type="date" value={form.joined} onChange={(e) => setForm({ ...form, joined: e.target.value })} />
+            </Field>
+            <Field label="Trạng thái">
+              <Select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+                <option value="Đang làm">Đang làm</option>
+                <option value="Nghỉ việc">Nghỉ việc</option>
+                <option value="Tạm nghỉ">Tạm nghỉ</option>
+              </Select>
             </Field>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -150,8 +234,14 @@ export default function Employees() {
         onClose={() => setSelected(null)}
         size="lg"
         title={selected?.name}
-        subtitle={selected ? `${selected.id} · ${roleLabel(selected.role)}` : ''}
-        footer={<Button variant="secondary" onClick={() => setSelected(null)}>Đóng</Button>}
+        subtitle={selected ? `${selected.code || selected.id} · ${roleLabel(selected.role)}` : ''}
+        footer={
+          <>
+            <Button variant="danger" icon={Trash2} onClick={() => remove(selected)}>Xóa</Button>
+            <Button variant="secondary" icon={Pencil} onClick={() => openEdit(selected)}>Sửa</Button>
+            <Button variant="secondary" onClick={() => setSelected(null)}>Đóng</Button>
+          </>
+        }
       >
         {selected && (
           <div className="space-y-5">

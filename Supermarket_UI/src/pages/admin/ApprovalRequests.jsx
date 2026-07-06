@@ -1,13 +1,13 @@
-import { useState, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { PageHeader } from '../../components/ui/PageHeader.jsx'
-import { Button, Badge, StatusBadge, Field, Input, Select, Textarea } from '../../components/ui/primitives.jsx'
+import { Button, Badge, StatusBadge, Field, Input, Select, Textarea, Spinner } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { Modal } from '../../components/ui/Modal.jsx'
 import { Tabs } from '../../components/ui/Tabs.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { formatDate } from '../../lib/format.js'
-import * as db from '../../mock/db.js'
-import { Plus } from 'lucide-react'
+import { approvalRequestService, withFallback, toList, mockApprovalRequests } from '../../services/index.js'
+import { Plus, Check, X } from 'lucide-react'
 
 const TYPES = ['Tạo tài khoản', 'Thay đổi quyền', 'Điều chỉnh kho', 'Chính sách giá']
 
@@ -18,14 +18,27 @@ function typeTone(type) {
   return 'brand'
 }
 
+const todayIso = () => new Date().toISOString().slice(0, 10)
+
 export default function ApprovalRequests() {
   const toast = useToast()
+  const [all, setAll] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [source, setSource] = useState('backend')
   const [tab, setTab] = useState('all')
   const [creating, setCreating] = useState(false)
   const [selected, setSelected] = useState(null)
   const [form, setForm] = useState({ type: 'Tạo tài khoản', target: '', note: '' })
 
-  const all = db.approvalRequests
+  const load = async () => {
+    setLoading(true)
+    const r = await withFallback(() => approvalRequestService.list(), mockApprovalRequests)
+    setAll(toList(r.data))
+    setSource(r.source)
+    setLoading(false)
+  }
+  useEffect(() => { load() }, [])
+
   const pending = all.filter((r) => r.status === 'Chờ duyệt')
   const approved = all.filter((r) => r.status === 'Đã duyệt')
 
@@ -36,10 +49,45 @@ export default function ApprovalRequests() {
     return all
   }, [tab, all, pending, approved])
 
-  const submit = () => {
-    setCreating(false)
-    setForm({ type: 'Tạo tài khoản', target: '', note: '' })
-    toast.success('Đã gửi yêu cầu phê duyệt mới.')
+  const submit = async () => {
+    const payload = {
+      code: `AR-${Date.now()}`,
+      type: form.type,
+      requester: 'Admin',
+      target: form.target,
+      reqDate: todayIso(),
+      status: 'Chờ duyệt',
+      note: form.note,
+    }
+    try {
+      await approvalRequestService.create(payload)
+      toast.success('Đã gửi yêu cầu phê duyệt mới.')
+      setCreating(false)
+      setForm({ type: 'Tạo tài khoản', target: '', note: '' })
+      await load()
+    } catch (e) {
+      toast.error(e.message)
+    }
+  }
+
+  const decide = async (row, status) => {
+    const payload = {
+      code: row.code || row.id,
+      type: row.type,
+      requester: row.requester,
+      target: row.target,
+      reqDate: row.reqDate || row.date || todayIso(),
+      status,
+      note: row.note || '',
+    }
+    try {
+      await approvalRequestService.update(row.id, payload)
+      toast.success(status === 'Đã duyệt' ? 'Đã duyệt yêu cầu.' : 'Đã từ chối yêu cầu.')
+      setSelected(null)
+      await load()
+    } catch (e) {
+      toast.error(e.message)
+    }
   }
 
   return (
@@ -48,7 +96,14 @@ export default function ApprovalRequests() {
         breadcrumb="Quản trị · 3.4.2"
         title="Yêu cầu phê duyệt"
         subtitle="Theo dõi các yêu cầu cần CEO phê duyệt."
-        actions={<Button icon={Plus} onClick={() => setCreating(true)}>Gửi yêu cầu mới</Button>}
+        actions={
+          <div className="flex items-center gap-3">
+            <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
+              {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
+            </Badge>
+            <Button icon={Plus} onClick={() => setCreating(true)}>Gửi yêu cầu mới</Button>
+          </div>
+        }
       />
 
       <Tabs
@@ -62,20 +117,26 @@ export default function ApprovalRequests() {
         ]}
       />
 
-      <DataTable
-        rows={rows}
-        onRowClick={(r) => setSelected(r)}
-        empty={{ title: 'Không có yêu cầu', subtitle: 'Chưa có yêu cầu nào ở trạng thái này.' }}
-        columns={[
-          { key: 'id', header: 'Mã', render: (r) => <span className="font-mono text-xs">{r.id}</span> },
-          { key: 'type', header: 'Loại', render: (r) => <Badge tone={typeTone(r.type)}>{r.type}</Badge> },
-          { key: 'requester', header: 'Người yêu cầu' },
-          { key: 'target', header: 'Đối tượng', render: (r) => <span className="text-slate-600">{r.target}</span> },
-          { key: 'date', header: 'Ngày', render: (r) => formatDate(r.date) },
-          { key: 'status', header: 'Trạng thái', render: (r) => <StatusBadge status={r.status} /> },
-          { key: 'note', header: 'Ghi chú', render: (r) => <span className="text-xs text-slate-500">{r.note || '—'}</span> },
-        ]}
-      />
+      {loading ? (
+        <div className="flex items-center justify-center rounded-xl border border-slate-200 bg-white py-16">
+          <Spinner className="h-7 w-7" />
+        </div>
+      ) : (
+        <DataTable
+          rows={rows}
+          onRowClick={(r) => setSelected(r)}
+          empty={{ title: 'Không có yêu cầu', subtitle: 'Chưa có yêu cầu nào ở trạng thái này.' }}
+          columns={[
+            { key: 'code', header: 'Mã', render: (r) => <span className="font-mono text-xs">{r.code || r.id}</span> },
+            { key: 'type', header: 'Loại', render: (r) => <Badge tone={typeTone(r.type)}>{r.type}</Badge> },
+            { key: 'requester', header: 'Người yêu cầu' },
+            { key: 'target', header: 'Đối tượng', render: (r) => <span className="text-slate-600">{r.target}</span> },
+            { key: 'reqDate', header: 'Ngày', render: (r) => formatDate(r.reqDate || r.date) },
+            { key: 'status', header: 'Trạng thái', render: (r) => <StatusBadge status={r.status} /> },
+            { key: 'note', header: 'Ghi chú', render: (r) => <span className="text-xs text-slate-500">{r.note || '—'}</span> },
+          ]}
+        />
+      )}
 
       {/* New request modal */}
       <Modal
@@ -109,16 +170,26 @@ export default function ApprovalRequests() {
       <Modal
         open={!!selected}
         onClose={() => setSelected(null)}
-        title={selected ? `Yêu cầu ${selected.id}` : ''}
+        title={selected ? `Yêu cầu ${selected.code || selected.id}` : ''}
         subtitle={selected?.type}
-        footer={<Button variant="secondary" onClick={() => setSelected(null)}>Đóng</Button>}
+        footer={
+          <>
+            {selected?.status === 'Chờ duyệt' && (
+              <>
+                <Button variant="danger" icon={X} onClick={() => decide(selected, 'Từ chối')}>Từ chối</Button>
+                <Button variant="success" icon={Check} onClick={() => decide(selected, 'Đã duyệt')}>Duyệt</Button>
+              </>
+            )}
+            <Button variant="secondary" onClick={() => setSelected(null)}>Đóng</Button>
+          </>
+        }
       >
         {selected && (
           <div className="space-y-3 text-sm">
             <DetailRow label="Loại" value={<Badge tone={typeTone(selected.type)}>{selected.type}</Badge>} />
             <DetailRow label="Người yêu cầu" value={selected.requester} />
             <DetailRow label="Đối tượng" value={selected.target} />
-            <DetailRow label="Ngày tạo" value={formatDate(selected.date)} />
+            <DetailRow label="Ngày tạo" value={formatDate(selected.reqDate || selected.date)} />
             <DetailRow label="Trạng thái" value={<StatusBadge status={selected.status} />} />
             <div>
               <p className="text-slate-500">Ghi chú</p>

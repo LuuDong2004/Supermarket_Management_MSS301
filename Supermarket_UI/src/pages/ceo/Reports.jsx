@@ -1,23 +1,44 @@
-import { useState, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { PageHeader } from '../../components/ui/PageHeader.jsx'
 import { Card, CardHeader, CardBody, Field, Select, Badge } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { StatCard } from '../../components/ui/StatCard.jsx'
 import { Bars, Donut, AreaTrend } from '../../components/ui/Charts.jsx'
 import { formatCurrency, formatNumber } from '../../lib/format.js'
-import * as db from '../../mock/db.js'
+import {
+  reportService, productService, withFallback, toList,
+  mockSalesTrend, mockCategoryShare, mockMonthlyRevenue, mockProducts,
+} from '../../services/index.js'
 import { DollarSign, Wallet, TrendingUp, ShoppingCart, BarChart3, PieChart, LineChart, Package } from 'lucide-react'
 
 export default function Reports() {
   const [period, setPeriod] = useState('6m')
+  const [source, setSource] = useState('backend')
+  const [trend, setTrend] = useState([])
+  const [share, setShare] = useState([])
+  const [revenue, setRevenue] = useState([])
+  const [products, setProducts] = useState([])
+
+  const load = async () => {
+    const t = await withFallback(() => reportService.salesTrend(), mockSalesTrend)
+    const s = await withFallback(() => reportService.categoryShare(), mockCategoryShare)
+    const m = await withFallback(() => reportService.monthlyRevenue(), mockMonthlyRevenue)
+    const p = await withFallback(() => productService.list(), mockProducts)
+    setTrend(toList(t.data))
+    setShare(toList(s.data))
+    setRevenue(toList(m.data))
+    setProducts(toList(p.data))
+    setSource(t.source)
+  }
+  useEffect(() => { load() }, [])
 
   const monthly = useMemo(() => {
-    if (period === '3m') return db.monthlyRevenue.slice(-3)
-    return db.monthlyRevenue
-  }, [period])
+    if (period === '3m') return revenue.slice(-3)
+    return revenue
+  }, [period, revenue])
 
-  const lastMonth = db.monthlyRevenue[db.monthlyRevenue.length - 1]
-  const prevMonth = db.monthlyRevenue[db.monthlyRevenue.length - 2]
+  const lastMonth = revenue[revenue.length - 1] || { revenue: 0 }
+  const prevMonth = revenue[revenue.length - 2]
   const growth = prevMonth ? Math.round(((lastMonth.revenue - prevMonth.revenue) / prevMonth.revenue) * 100) : 0
 
   // Revenue figures are in "triệu đồng" in the dataset; show as currency.
@@ -26,11 +47,11 @@ export default function Reports() {
 
   const topProducts = useMemo(
     () =>
-      db.products
-        .map((p) => ({ ...p, revenue: p.price * Math.max(1, 200 - p.stock) }))
+      products
+        .map((p) => ({ ...p, revenue: (p.price || 0) * Math.max(1, 200 - (p.stock || 0)) }))
         .sort((a, b) => b.revenue - a.revenue)
         .slice(0, 6),
-    [],
+    [products],
   )
 
   return (
@@ -40,12 +61,17 @@ export default function Reports() {
         title="Báo cáo quản trị"
         subtitle="Tổng quan kết quả kinh doanh cho ban điều hành."
         actions={
-          <Field>
-            <Select value={period} onChange={(e) => setPeriod(e.target.value)}>
-              <option value="3m">3 tháng gần nhất</option>
-              <option value="6m">6 tháng gần nhất</option>
-            </Select>
-          </Field>
+          <div className="flex items-center gap-3">
+            <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
+              {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
+            </Badge>
+            <Field>
+              <Select value={period} onChange={(e) => setPeriod(e.target.value)}>
+                <option value="3m">3 tháng gần nhất</option>
+                <option value="6m">6 tháng gần nhất</option>
+              </Select>
+            </Field>
+          </div>
         }
       />
 
@@ -72,14 +98,14 @@ export default function Reports() {
         </Card>
         <Card>
           <CardHeader title="Cơ cấu ngành hàng" icon={PieChart} />
-          <CardBody><Donut data={db.categoryShare} /></CardBody>
+          <CardBody><Donut data={share} /></CardBody>
         </Card>
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader title="Xu hướng doanh thu" subtitle="7 ngày · Triệu đồng" icon={LineChart} />
-          <CardBody><AreaTrend data={db.salesTrend} x="day" y="revenue" /></CardBody>
+          <CardBody><AreaTrend data={trend} x="label" y="revenue" /></CardBody>
         </Card>
         <Card>
           <CardHeader title="Top sản phẩm" subtitle="Theo doanh thu ước tính" icon={Package} />

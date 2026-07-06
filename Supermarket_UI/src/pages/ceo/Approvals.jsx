@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { PageHeader } from '../../components/ui/PageHeader.jsx'
 import { Card, CardBody, Button, Badge, StatusBadge, EmptyState } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
@@ -7,7 +7,7 @@ import { Modal } from '../../components/ui/Modal.jsx'
 import { Tabs } from '../../components/ui/Tabs.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { formatDate } from '../../lib/format.js'
-import * as db from '../../mock/db.js'
+import { approvalRequestService, withFallback, toList, mockApprovalRequests } from '../../services/index.js'
 import { CheckCircle2, XCircle, Clock, Inbox, FileCheck2 } from 'lucide-react'
 
 function typeTone(type) {
@@ -20,15 +20,44 @@ function typeTone(type) {
 export default function Approvals() {
   const toast = useToast()
   const [tab, setTab] = useState('pending')
-  const [pending, setPending] = useState(db.approvalRequests.filter((r) => r.status === 'Chờ duyệt'))
-  const [processed, setProcessed] = useState(db.approvalRequests.filter((r) => r.status !== 'Chờ duyệt'))
+  const [requests, setRequests] = useState([])
+  const [source, setSource] = useState('backend')
   const [selected, setSelected] = useState(null)
 
-  const decide = (req, approve) => {
-    setPending((p) => p.filter((r) => r.id !== req.id))
-    setProcessed((p) => [{ ...req, status: approve ? 'Đã duyệt' : 'Từ chối' }, ...p])
+  const load = async () => {
+    const res = await withFallback(() => approvalRequestService.list(), mockApprovalRequests)
+    setRequests(toList(res.data))
+    setSource(res.source)
+  }
+  useEffect(() => { load() }, [])
+
+  const pending = useMemo(() => requests.filter((r) => r.status === 'Chờ duyệt'), [requests])
+  const processed = useMemo(() => requests.filter((r) => r.status !== 'Chờ duyệt'), [requests])
+
+  const decide = async (req, approve) => {
+    const status = approve ? 'Đã duyệt' : 'Từ chối'
     setSelected(null)
-    toast.success(approve ? `Đã phê duyệt ${req.id}.` : `Đã từ chối ${req.id}.`)
+    if (source === 'backend' && req.id) {
+      try {
+        await approvalRequestService.update(req.id, {
+          code: req.code,
+          type: req.type,
+          requester: req.requester,
+          target: req.target,
+          reqDate: req.reqDate,
+          status,
+          note: req.note || '',
+        })
+        toast.success(approve ? `Đã phê duyệt ${req.code}.` : `Đã từ chối ${req.code}.`)
+        await load()
+        return
+      } catch {
+        toast.error('Không thể cập nhật yêu cầu. Đang cập nhật tạm thời.')
+      }
+    }
+    // Offline / demo fallback: update local state only.
+    setRequests((rs) => rs.map((r) => (r.code === req.code ? { ...r, status } : r)))
+    toast.success(approve ? `Đã phê duyệt ${req.code}.` : `Đã từ chối ${req.code}.`)
   }
 
   return (
@@ -37,6 +66,11 @@ export default function Approvals() {
         breadcrumb="Điều hành · 3.3.2"
         title="Phê duyệt"
         subtitle="Hàng đợi phê duyệt của CEO — duyệt hoặc từ chối các yêu cầu."
+        actions={
+          <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
+            {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
+          </Badge>
+        }
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -66,16 +100,16 @@ export default function Approvals() {
         ) : (
           <div className="grid gap-4 lg:grid-cols-2">
             {pending.map((req) => (
-              <Card key={req.id}>
+              <Card key={req.code}>
                 <CardBody className="space-y-3">
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <div className="flex items-center gap-2">
                         <Badge tone={typeTone(req.type)}>{req.type}</Badge>
-                        <span className="font-mono text-xs text-slate-400">{req.id}</span>
+                        <span className="font-mono text-xs text-slate-400">{req.code}</span>
                       </div>
                       <p className="mt-2 font-semibold text-slate-800">{req.target}</p>
-                      <p className="text-sm text-slate-500">{req.requester} · {formatDate(req.date)}</p>
+                      <p className="text-sm text-slate-500">{req.requester} · {formatDate(req.reqDate)}</p>
                     </div>
                     <StatusBadge status={req.status} />
                   </div>
@@ -93,14 +127,15 @@ export default function Approvals() {
       ) : (
         <DataTable
           rows={processed}
+          rowKey="code"
           onRowClick={(r) => setSelected(r)}
           empty={{ title: 'Chưa có yêu cầu nào được xử lý' }}
           columns={[
-            { key: 'id', header: 'Mã', render: (r) => <span className="font-mono text-xs">{r.id}</span> },
+            { key: 'code', header: 'Mã', render: (r) => <span className="font-mono text-xs">{r.code}</span> },
             { key: 'type', header: 'Loại', render: (r) => <Badge tone={typeTone(r.type)}>{r.type}</Badge> },
             { key: 'requester', header: 'Người yêu cầu' },
             { key: 'target', header: 'Đối tượng' },
-            { key: 'date', header: 'Ngày', render: (r) => formatDate(r.date) },
+            { key: 'reqDate', header: 'Ngày', render: (r) => formatDate(r.reqDate) },
             { key: 'status', header: 'Kết quả', render: (r) => <StatusBadge status={r.status} /> },
           ]}
         />
@@ -109,7 +144,7 @@ export default function Approvals() {
       <Modal
         open={!!selected}
         onClose={() => setSelected(null)}
-        title={selected ? `Yêu cầu ${selected.id}` : ''}
+        title={selected ? `Yêu cầu ${selected.code}` : ''}
         subtitle={selected?.type}
         footer={
           selected?.status === 'Chờ duyệt' ? (
@@ -126,7 +161,7 @@ export default function Approvals() {
           <div className="space-y-3 text-sm">
             <Row label="Người yêu cầu" value={selected.requester} />
             <Row label="Đối tượng" value={selected.target} />
-            <Row label="Ngày tạo" value={formatDate(selected.date)} />
+            <Row label="Ngày tạo" value={formatDate(selected.reqDate)} />
             <Row label="Trạng thái" value={<StatusBadge status={selected.status} />} />
             <div>
               <p className="text-slate-500">Ghi chú</p>

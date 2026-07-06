@@ -1,12 +1,15 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { PageHeader } from '../../components/ui/PageHeader.jsx'
-import { Button, Badge, StatusBadge, Divider } from '../../components/ui/primitives.jsx'
+import { Button, Badge, StatusBadge, Divider, Spinner } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { StatCard } from '../../components/ui/StatCard.jsx'
 import { Tabs } from '../../components/ui/Tabs.jsx'
 import { Modal } from '../../components/ui/Modal.jsx'
 import { formatDate } from '../../lib/format.js'
-import * as db from '../../mock/db.js'
+import {
+  stockAdjustmentService, warehouseTxnService,
+  withFallback, toList, mockStockAdjustments, mockWarehouseTxns,
+} from '../../services/index.js'
 import { Clock, CheckCircle2, XCircle, Check } from 'lucide-react'
 
 const STEPS = ['Đã gửi', 'Đang duyệt', 'Hoàn tất']
@@ -20,28 +23,45 @@ function stepIndex(status) {
 const TYPE_TONE = { 'Điều chỉnh': 'amber', 'Nhập kho': 'green', 'Xuất kho': 'blue' }
 
 export default function ApprovalStatus() {
+  const [adjustments, setAdjustments] = useState([])
+  const [txns, setTxns] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [source, setSource] = useState('backend')
   const [tab, setTab] = useState('all')
   const [selected, setSelected] = useState(null)
 
+  const load = async () => {
+    setLoading(true)
+    const [adj, txn] = await Promise.all([
+      withFallback(() => stockAdjustmentService.list(), mockStockAdjustments),
+      withFallback(() => warehouseTxnService.list(), mockWarehouseTxns),
+    ])
+    setAdjustments(toList(adj.data))
+    setTxns(toList(txn.data))
+    setSource(adj.source === 'backend' && txn.source === 'backend' ? 'backend' : 'mock')
+    setLoading(false)
+  }
+  useEffect(() => { load() }, [])
+
   const requests = useMemo(() => {
-    const adjustments = db.stockAdjustments.map((a) => ({
-      key: a.id,
+    const adjRows = adjustments.map((a) => ({
+      key: `ADJ-${a.id ?? a.code}`,
       type: 'Điều chỉnh',
-      code: a.id,
+      code: a.code,
       desc: `${a.product} (${a.diff > 0 ? '+' : ''}${a.diff}) · ${a.reason}`,
-      date: a.date,
+      date: a.adjDate,
       status: a.status,
     }))
-    const txns = db.warehouseTxns.map((t) => ({
-      key: t.id,
+    const txnRows = txns.map((t) => ({
+      key: `TXN-${t.id ?? t.code}`,
       type: t.type,
       code: t.ref,
       desc: `${t.product} · ${t.qty > 0 ? '+' : ''}${t.qty}`,
-      date: t.date,
+      date: t.txnDate,
       status: t.status,
     }))
-    return [...adjustments, ...txns].sort((a, b) => (a.date < b.date ? 1 : -1))
-  }, [])
+    return [...adjRows, ...txnRows].sort((a, b) => (a.date < b.date ? 1 : -1))
+  }, [adjustments, txns])
 
   const counts = useMemo(() => ({
     pending: requests.filter((r) => r.status === 'Chờ duyệt').length,
@@ -58,6 +78,11 @@ export default function ApprovalStatus() {
         breadcrumb="Kho · 3.7.5"
         title="Trạng thái duyệt"
         subtitle="Theo dõi tiến trình phê duyệt các yêu cầu do nhân viên kho gửi lên."
+        actions={
+          <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
+            {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
+          </Badge>
+        }
       />
 
       <div className="grid gap-4 sm:grid-cols-3">
@@ -79,19 +104,25 @@ export default function ApprovalStatus() {
           ]}
         />
 
-        <DataTable
-          rows={rows}
-          rowKey="key"
-          onRowClick={(r) => setSelected(r)}
-          empty={{ title: 'Không có yêu cầu', subtitle: 'Chưa có yêu cầu nào ở trạng thái này.' }}
-          columns={[
-            { key: 'type', header: 'Loại', render: (r) => <Badge tone={TYPE_TONE[r.type] || 'slate'}>{r.type}</Badge> },
-            { key: 'code', header: 'Mã', render: (r) => <span className="font-mono text-xs">{r.code}</span> },
-            { key: 'desc', header: 'Mô tả' },
-            { key: 'date', header: 'Ngày', render: (r) => formatDate(r.date) },
-            { key: 'status', header: 'Trạng thái', render: (r) => <StatusBadge status={r.status} /> },
-          ]}
-        />
+        {loading ? (
+          <div className="flex items-center justify-center rounded-xl border border-slate-200 bg-white py-16">
+            <Spinner className="h-7 w-7" />
+          </div>
+        ) : (
+          <DataTable
+            rows={rows}
+            rowKey="key"
+            onRowClick={(r) => setSelected(r)}
+            empty={{ title: 'Không có yêu cầu', subtitle: 'Chưa có yêu cầu nào ở trạng thái này.' }}
+            columns={[
+              { key: 'type', header: 'Loại', render: (r) => <Badge tone={TYPE_TONE[r.type] || 'slate'}>{r.type}</Badge> },
+              { key: 'code', header: 'Mã', render: (r) => <span className="font-mono text-xs">{r.code}</span> },
+              { key: 'desc', header: 'Mô tả' },
+              { key: 'date', header: 'Ngày', render: (r) => formatDate(r.date) },
+              { key: 'status', header: 'Trạng thái', render: (r) => <StatusBadge status={r.status} /> },
+            ]}
+          />
+        )}
       </div>
 
       <Modal
