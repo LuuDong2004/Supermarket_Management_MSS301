@@ -99,7 +99,7 @@ export const stockCountService = {
   remove: (id) => api.delete(`/stock-counts/${id}`),
 }
 
-// ---- Sales service (SQL Server) ----
+// ---- Sales service (MySQL) ----
 export const saleService = {
   list: () => api.get('/sales'),
   get: (id) => api.get(`/sales/${id}`),
@@ -123,7 +123,7 @@ export const customerService = {
   remove: (id) => api.delete(`/customers/${id}`),
 }
 
-// ---- Supplier service (SQL Server) ----
+// ---- Supplier service (MySQL) ----
 export const supplierService = {
   list: (params) => api.get(`/suppliers${qs(params)}`),
   get: (id) => api.get(`/suppliers/${id}`),
