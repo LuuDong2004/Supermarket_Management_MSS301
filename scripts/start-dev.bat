@@ -1,6 +1,6 @@
 @echo off
-REM Build images and start the full dev stack (postgres, redis, discovery,
-REM gateway, auth, user) in the background.
+REM Build images and start the full dev stack (mysql, redis, discovery,
+REM gateway, and all business services) in the background.
 setlocal
 cd /d "%~dp0.."
 echo [start-dev] Starting MSS301 stack via docker compose...

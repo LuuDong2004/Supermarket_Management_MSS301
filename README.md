@@ -7,7 +7,7 @@ inventory, sales, supplier, reporting and notification** services, each owning i
 own database and seeded to mirror the frontend contract.
 
 > Stack: Java 21 · Spring Boot 3.5 · Spring Cloud 2025.0.0 · Spring Security 6 ·
-> Spring Cloud Gateway · Spring Data JPA · PostgreSQL · MySQL · SQL Server · Flyway ·
+> Spring Cloud Gateway · Spring Data JPA · MySQL 8 · Flyway ·
 > JWT · MapStruct · Lombok · OpenFeign · Docker.
 
 ---
@@ -36,9 +36,7 @@ SUPERMARKET_MANAGEMENT/
 ├── infrastructure/
 │   ├── discovery-server/     :8761  Eureka registry
 │   ├── docker/               shared docker assets
-│   ├── postgres/init/        creates postgres DBs (auth/user/reporting/notification)
-│   ├── mysql/init/           creates mysql DBs (product/inventory)
-│   ├── sqlserver/init/       creates sqlserver DBs (sales/supplier)
+│   ├── mysql/init/           creates all service DBs (one MySQL instance)
 │   ├── redis/                redis.conf
 │   ├── rabbitmq/             reserved (event-driven services)
 │   └── monitoring/           prometheus.yml (reserved)
@@ -64,11 +62,10 @@ to add a new service.
    all services register with discovery-server (Eureka)
 ```
 
-- **Polyglot persistence (DB-per-service)** — each service owns its own database
-  on one of three engines, all Flyway-migrated on boot:
-  - **PostgreSQL** — `auth_db`, `user_db`, `reporting_db`, `notification_db`
-  - **MySQL 8** — `product_db`, `inventory_db`
-  - **SQL Server 2022** — `sales_db`, `supplier_db`
+- **DB-per-service** — each service owns its own logical database on a single
+  **MySQL 8** instance, all Flyway-migrated on boot: `auth_db`, `user_db`,
+  `product_db`, `inventory_db`, `sales_db`, `supplier_db`, `reporting_db`,
+  `notification_db`.
 - **stateless JWT**, gateway-centric validation, identity
   forwarded as trusted headers, service-to-service over OpenFeign + a shared
   internal API key. No shared tables; no entities in `shared/`.
@@ -81,10 +78,9 @@ to add a new service.
 | auth-service     | 8081 |   | supplier-service     | 8087 |
 | user-service     | 8082 |   | notification-service | 8088 |
 | product-service  | 8083 |   | discovery            | 8761 |
-| inventory-service| 8084 |   | postgres             | 5432 |
+| inventory-service| 8084 |   | mysql                | 3306 |
 | sales-service    | 8085 |   | redis                | 6379 |
-| frontend (Vite)  | 5173 |   | mysql                | 3306 |
-|                  |      |   | sqlserver            | 1433 |
+| frontend (Vite)  | 5173 |   |                      |      |
 
 ## 4. Run
 
@@ -104,13 +100,12 @@ Swagger `http://localhost:8080/swagger-ui.html`.
 ```bat
 scripts\build-all.bat
 ```
-Per-engine init scripts create the databases (postgres + mysql via their
-`docker-entrypoint-initdb.d`; sqlserver via the one-shot `sqlserver-init`
-container). Start `discovery-server` first, then `api-gateway`, then the business
-services in any order (e.g. `mvn -pl :discovery-server spring-boot:run`). Each
-service runs Flyway on boot to create and seed its own schema. To run a service
-locally against these engines, start the DB containers first
-(`docker compose up -d postgres mysql sqlserver sqlserver-init`).
+The MySQL init script creates every service database via its
+`docker-entrypoint-initdb.d` on first start. Start `discovery-server` first, then
+`api-gateway`, then the business services in any order (e.g.
+`mvn -pl :discovery-server spring-boot:run`). Each service runs Flyway on boot to
+create and seed its own schema. To run a service locally, start the DB container
+first (`docker compose up -d mysql`).
 
 ### Frontend — `Supermarket_UI/` (React 19 + Vite)
 
@@ -158,8 +153,7 @@ curl -s http://localhost:8080/api/users/me -H "Authorization: Bearer <accessToke
 
 Key env vars (see `.env`): `JWT_SECRET` (must match in gateway + auth, ≥32 bytes),
 `JWT_ACCESS_MINUTES`, `JWT_REFRESH_DAYS`, `INTERNAL_API_KEY`,
-`POSTGRES_USER/PASSWORD`, `MYSQL_ROOT_PASSWORD/USER/PASSWORD`,
-`MSSQL_SA_PASSWORD` (must meet SQL Server complexity rules),
+`MYSQL_ROOT_PASSWORD/USER/PASSWORD`,
 `EUREKA_SERVER_URL`, `CORS_ALLOWED_ORIGINS`.
 
 ## 7. Docs

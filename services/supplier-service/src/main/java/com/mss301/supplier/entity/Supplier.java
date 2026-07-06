@@ -31,8 +31,8 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @EntityListeners(AuditingEntityListener.class)
-@SQLDelete(sql = "UPDATE suppliers SET deleted = 1, updated_at = SYSUTCDATETIME() WHERE id = ?")
-@SQLRestriction("deleted = 0")
+@SQLDelete(sql = "UPDATE suppliers SET deleted = true, updated_at = now() WHERE id = ?")
+@SQLRestriction("deleted = false")
 public class Supplier {
 
     @Id
