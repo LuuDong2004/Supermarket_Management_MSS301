@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { PageHeader, FilterBar } from '../../components/ui/PageHeader.jsx'
 import { Card, CardHeader, CardBody, Button, Badge, Field, Input, Select } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
@@ -6,7 +6,10 @@ import { StatCard } from '../../components/ui/StatCard.jsx'
 import { AreaTrend, Lines, Donut } from '../../components/ui/Charts.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { formatCurrency, formatNumber } from '../../lib/format.js'
-import * as db from '../../mock/db.js'
+import {
+  reportService, productService, withFallback, toList,
+  mockSalesTrend, mockCategoryShare, mockMonthlyRevenue, mockProducts,
+} from '../../services/index.js'
 import {
   DollarSign, ShoppingCart, Receipt, TrendingUp, FileSpreadsheet,
   Boxes, LineChart, Trophy,
@@ -18,22 +21,41 @@ export default function SalesReport() {
   const [to, setTo] = useState('2026-06-15')
   const [period, setPeriod] = useState('week')
 
+  const [source, setSource] = useState('backend')
+  const [trend, setTrend] = useState([])
+  const [share, setShare] = useState([])
+  const [revenue, setRevenue] = useState([])
+  const [products, setProducts] = useState([])
+
+  const load = async () => {
+    const t = await withFallback(() => reportService.salesTrend(), mockSalesTrend)
+    const s = await withFallback(() => reportService.categoryShare(), mockCategoryShare)
+    const m = await withFallback(() => reportService.monthlyRevenue(), mockMonthlyRevenue)
+    const p = await withFallback(() => productService.list(), mockProducts)
+    setTrend(toList(t.data))
+    setShare(toList(s.data))
+    setRevenue(toList(m.data))
+    setProducts(toList(p.data))
+    setSource(t.source)
+  }
+  useEffect(() => { load() }, [])
+
   // Derived KPIs from the sales trend dataset (revenue is in millions).
-  const totalRevenue = useMemo(() => db.salesTrend.reduce((s, d) => s + d.revenue, 0) * 1_000_000, [])
-  const totalOrders = useMemo(() => db.salesTrend.reduce((s, d) => s + d.orders, 0), [])
+  const totalRevenue = useMemo(() => trend.reduce((s, d) => s + (d.revenue || 0), 0) * 1_000_000, [trend])
+  const totalOrders = useMemo(() => trend.reduce((s, d) => s + (d.orders || 0), 0), [trend])
   const avgOrder = totalOrders ? Math.round(totalRevenue / totalOrders) : 0
 
   // Top selling products: mock "đã bán" derived from stock, revenue = price * qty.
   const topProducts = useMemo(
     () =>
-      db.products
+      products
         .map((p) => {
-          const sold = Math.max(8, Math.round(p.stock * 0.6))
-          return { ...p, sold, revenue: p.price * sold }
+          const sold = Math.max(8, Math.round((p.stock || 0) * 0.6))
+          return { ...p, sold, revenue: (p.price || 0) * sold }
         })
         .sort((a, b) => b.revenue - a.revenue)
         .slice(0, 8),
-    [],
+    [products],
   )
 
   const exportReport = () => toast.success('Đã xuất báo cáo doanh thu ra Excel.')
@@ -44,7 +66,14 @@ export default function SalesReport() {
         breadcrumb="Báo cáo · 3.10.1"
         title="Doanh thu & Kinh doanh"
         subtitle="Tổng quan hiệu quả kinh doanh theo khoảng thời gian."
-        actions={<Button icon={FileSpreadsheet} onClick={exportReport}>Xuất Excel</Button>}
+        actions={
+          <div className="flex items-center gap-3">
+            <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
+              {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
+            </Badge>
+            <Button icon={FileSpreadsheet} onClick={exportReport}>Xuất Excel</Button>
+          </div>
+        }
       />
 
       <FilterBar>
@@ -77,11 +106,11 @@ export default function SalesReport() {
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader title="Doanh thu theo ngày" subtitle="Triệu đồng" icon={TrendingUp} />
-          <CardBody><AreaTrend data={db.salesTrend} x="day" y="revenue" /></CardBody>
+          <CardBody><AreaTrend data={trend} x="label" y="revenue" /></CardBody>
         </Card>
         <Card>
           <CardHeader title="Cơ cấu ngành hàng" subtitle="Tỷ trọng doanh thu" icon={Boxes} />
-          <CardBody><Donut data={db.categoryShare} /></CardBody>
+          <CardBody><Donut data={share} /></CardBody>
         </Card>
       </div>
 
@@ -90,7 +119,7 @@ export default function SalesReport() {
           <CardHeader title="Doanh thu vs Mục tiêu" subtitle="Theo tháng · Triệu đồng" icon={LineChart} />
           <CardBody>
             <Lines
-              data={db.monthlyRevenue}
+              data={revenue}
               x="month"
               series={[
                 { key: 'revenue', name: 'Doanh thu' },
@@ -108,7 +137,7 @@ export default function SalesReport() {
             <DataTable
               className="rounded-none border-0 shadow-none"
               rows={topProducts}
-              rowKey="id"
+              rowKey="code"
               columns={[
                 {
                   key: 'name',

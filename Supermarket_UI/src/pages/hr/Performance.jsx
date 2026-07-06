@@ -1,13 +1,13 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { PageHeader } from '../../components/ui/PageHeader.jsx'
-import { Card, CardHeader, CardBody, Button, Badge, Field, Select, Textarea } from '../../components/ui/primitives.jsx'
+import { Card, CardHeader, CardBody, Button, Badge, Field, Select, Textarea, Spinner } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { StatCard } from '../../components/ui/StatCard.jsx'
 import { Modal } from '../../components/ui/Modal.jsx'
 import { Bars } from '../../components/ui/Charts.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { formatNumber } from '../../lib/format.js'
-import * as db from '../../mock/db.js'
+import { reportService, withFallback, toList, mockEmployeePerformance } from '../../services/index.js'
 import { Award, Gauge, TrendingUp, Star } from 'lucide-react'
 
 function scoreTone(score) {
@@ -19,14 +19,26 @@ function scoreTone(score) {
 
 export default function Performance() {
   const toast = useToast()
+  const [rows, setRows] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [source, setSource] = useState('backend')
   const [selected, setSelected] = useState(null)
   const [recommendation, setRecommendation] = useState('Giữ nguyên')
   const [note, setNote] = useState('')
 
-  const rows = db.employeePerf
-  const avgScore = Math.round(rows.reduce((s, r) => s + r.score, 0) / rows.length)
-  const top = [...rows].sort((a, b) => b.score - a.score)[0]
-  const avgAccuracy = (rows.reduce((s, r) => s + r.accuracy, 0) / rows.length).toFixed(1)
+  useEffect(() => {
+    (async () => {
+      setLoading(true)
+      const r = await withFallback(() => reportService.employeePerformance(), mockEmployeePerformance)
+      setRows(toList(r.data))
+      setSource(r.source)
+      setLoading(false)
+    })()
+  }, [])
+
+  const avgScore = rows.length ? Math.round(rows.reduce((s, r) => s + r.score, 0) / rows.length) : 0
+  const top = rows.length ? [...rows].sort((a, b) => b.score - a.score)[0] : { name: '—', score: 0 }
+  const avgAccuracy = rows.length ? (rows.reduce((s, r) => s + r.accuracy, 0) / rows.length).toFixed(1) : '0.0'
 
   const openReview = (r) => {
     setSelected(r)
@@ -45,6 +57,11 @@ export default function Performance() {
         breadcrumb="Nhân sự · 3.5.3"
         title="Đánh giá hiệu suất"
         subtitle="Xếp hạng nhân viên theo doanh số, độ chính xác và giờ công."
+        actions={
+          <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
+            {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
+          </Badge>
+        }
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -54,6 +71,12 @@ export default function Performance() {
         <StatCard label="Số nhân viên" value={formatNumber(rows.length)} icon={Star} tone="violet" hint="được đánh giá" />
       </div>
 
+      {loading ? (
+        <div className="mt-6 flex items-center justify-center rounded-xl border border-slate-200 bg-white py-16">
+          <Spinner className="h-7 w-7" />
+        </div>
+      ) : (
+        <>
       <Card className="mt-6">
         <CardHeader title="Phân bố điểm hiệu suất" subtitle="Thang điểm 100" icon={Gauge} />
         <CardBody>
@@ -85,6 +108,8 @@ export default function Performance() {
           ]}
         />
       </div>
+        </>
+      )}
 
       <Modal
         open={!!selected}
