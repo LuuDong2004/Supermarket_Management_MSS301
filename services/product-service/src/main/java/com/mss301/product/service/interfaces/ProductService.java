@@ -4,6 +4,7 @@ import com.mss301.product.dto.request.ProductRequest;
 import com.mss301.product.dto.response.ProductResponse;
 import com.mss301.response.PageResponse;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -13,6 +14,8 @@ public interface ProductService {
     ProductResponse create(ProductRequest request);
 
     ProductResponse update(UUID id, ProductRequest request);
+
+    ProductResponse uploadImage(UUID id, MultipartFile file);
 
     ProductResponse getById(UUID id);
 

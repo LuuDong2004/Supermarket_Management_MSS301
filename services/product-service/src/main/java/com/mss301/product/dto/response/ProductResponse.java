@@ -16,6 +16,7 @@ public record ProductResponse(
         Integer stock,
         String unit,
         LocalDate expiry,
+        String imageUrl,
         Instant createdAt,
         Instant updatedAt
 ) {

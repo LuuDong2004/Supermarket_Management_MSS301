@@ -98,6 +98,10 @@ services:
       DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
       INTERNAL_API_KEY: ${INTERNAL_API_KEY}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_BUCKET: ${MINIO_BUCKET}
     networks:
       - mss301-net
 
@@ -119,6 +123,10 @@ services:
       DB_USERNAME: root
       DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_BUCKET: ${MINIO_BUCKET}
     networks:
       - mss301-net
 
@@ -182,6 +190,10 @@ services:
       DB_USERNAME: root
       DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_BUCKET: ${MINIO_BUCKET}
     networks:
       - mss301-net
 

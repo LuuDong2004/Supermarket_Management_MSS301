@@ -10,12 +10,14 @@ import com.mss301.supplier.mapper.SupplierMapper;
 import com.mss301.supplier.repository.SupplierRepository;
 import com.mss301.supplier.service.interfaces.SupplierService;
 import com.mss301.response.PageResponse;
+import com.mss301.storage.StorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
@@ -26,6 +28,7 @@ public class SupplierServiceImpl implements SupplierService {
 
     private final SupplierRepository supplierRepository;
     private final SupplierMapper supplierMapper;
+    private final StorageService storageService;
 
     @Override
     public SupplierResponse create(SupplierRequest request) {
@@ -44,6 +47,14 @@ public class SupplierServiceImpl implements SupplierService {
         }
         supplierMapper.update(supplier, request);
         return supplierMapper.toResponse(supplier);
+    }
+
+    @Override
+    public SupplierResponse uploadImage(UUID id, MultipartFile file) {
+        Supplier supplier = find(id);
+        String url = storageService.upload(file, "suppliers");
+        supplier.setImageUrl(url);
+        return supplierMapper.toResponse(supplierRepository.save(supplier));
     }
 
     @Override

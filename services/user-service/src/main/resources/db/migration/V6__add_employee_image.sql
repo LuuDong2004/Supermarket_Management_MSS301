@@ -1,0 +1,1 @@
+ALTER TABLE employees ADD COLUMN image_url VARCHAR(512) NULL;

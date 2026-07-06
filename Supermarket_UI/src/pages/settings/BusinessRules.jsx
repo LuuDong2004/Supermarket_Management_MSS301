@@ -8,11 +8,10 @@ import { Tabs } from '../../components/ui/Tabs.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { cn } from '../../lib/cn.js'
 import { formatDate, formatNumber } from '../../lib/format.js'
-import { policyService, withFallback, toList, mockPolicies } from '../../services/index.js'
+import { policyService, monitoringService, withFallback, toList } from '../../services/index.js'
 import {
   ScrollText, ShieldCheck, History, ClipboardList, Pencil, Plus, Trash2,
 } from 'lucide-react'
-import * as db from '../../mock/db.js'
 
 const TABS = [
   { value: 'rules', label: 'Quy tắc nghiệp vụ' },
@@ -53,6 +52,7 @@ export default function BusinessRules() {
   const [tab, setTab] = useState('rules')
 
   const [policies, setPolicies] = useState([])
+  const [allLogs, setAllLogs] = useState([])
   const [loading, setLoading] = useState(true)
   const [source, setSource] = useState('backend')
 
@@ -63,9 +63,13 @@ export default function BusinessRules() {
 
   const load = async () => {
     setLoading(true)
-    const r = await withFallback(() => policyService.list(), mockPolicies)
+    const [r, lr] = await Promise.all([
+      withFallback(() => policyService.list()),
+      withFallback(() => monitoringService.logs()),
+    ])
     const rows = toList(r.data)
     setPolicies(rows)
+    setAllLogs(toList(lr.data))
     setSource(r.source)
     setEnabled(Object.fromEntries(rows.map((p) => [p.id, true])))
     setLoading(false)
@@ -79,8 +83,8 @@ export default function BusinessRules() {
   )
 
   const logs = useMemo(
-    () => db.systemLogs.filter((l) => levelFilter === 'all' || l.level === levelFilter),
-    [levelFilter],
+    () => allLogs.filter((l) => levelFilter === 'all' || l.level === levelFilter),
+    [allLogs, levelFilter],
   )
 
   const openNew = () => {
@@ -146,7 +150,7 @@ export default function BusinessRules() {
         actions={
           <div className="flex items-center gap-3">
             <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-              {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
+              {source === 'backend' ? 'Dữ liệu backend' : 'Lỗi tải dữ liệu'}
             </Badge>
             <Button icon={Plus} onClick={openNew}>Thêm quy tắc</Button>
           </div>
@@ -156,7 +160,7 @@ export default function BusinessRules() {
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
         <StatCard label="Tổng quy tắc" value={formatNumber(policies.length)} icon={ClipboardList} tone="brand" hint="đang áp dụng" />
         <StatCard label="Thay đổi gần nhất" value={formatDate(recentChange)} icon={History} tone="amber" hint="cập nhật quy tắc" />
-        <StatCard label="Sự kiện kiểm toán" value={formatNumber(db.systemLogs.length)} icon={ShieldCheck} tone="violet" hint="trong nhật ký" />
+        <StatCard label="Sự kiện kiểm toán" value={formatNumber(allLogs.length)} icon={ShieldCheck} tone="violet" hint="trong nhật ký" />
       </div>
 
       <Tabs tabs={TABS} value={tab} onChange={setTab} className="mb-6" />
@@ -232,7 +236,7 @@ export default function BusinessRules() {
                 { key: 'level', header: 'Mức độ', align: 'center', render: (r) => <Badge tone={LEVEL_TONE[r.level] || 'slate'} dot>{r.level}</Badge> },
                 { key: 'service', header: 'Dịch vụ', render: (r) => <span className="font-mono text-xs text-slate-600">{r.service}</span> },
                 { key: 'message', header: 'Nội dung', render: (r) => <span className="text-slate-700">{r.message}</span> },
-                { key: 'user', header: 'Người dùng', render: (r) => <Badge tone="slate">{r.user}</Badge> },
+                { key: 'actor', header: 'Người dùng', render: (r) => <Badge tone="slate">{r.actor}</Badge> },
               ]}
             />
           </CardBody>

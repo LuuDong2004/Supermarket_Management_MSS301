@@ -4,6 +4,7 @@ import com.mss301.common.exception.ConflictException;
 import com.mss301.common.exception.ErrorCode;
 import com.mss301.common.exception.ResourceNotFoundException;
 import com.mss301.response.PageResponse;
+import com.mss301.storage.StorageService;
 import com.mss301.user.dto.request.EmployeeRequest;
 import com.mss301.user.dto.response.EmployeeResponse;
 import com.mss301.user.entity.Employee;
@@ -15,6 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
@@ -25,6 +27,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     private final EmployeeRepository employeeRepository;
     private final EmployeeMapper employeeMapper;
+    private final StorageService storageService;
 
     @Override
     @Transactional(readOnly = true)
@@ -63,6 +66,14 @@ public class EmployeeServiceImpl implements EmployeeService {
         Employee employee = findActive(id);
         employeeMapper.update(employee, request);
         return employeeMapper.toResponse(employee);
+    }
+
+    @Override
+    public EmployeeResponse uploadImage(UUID id, MultipartFile file) {
+        Employee employee = findActive(id);
+        String url = storageService.upload(file, "employees");
+        employee.setImageUrl(url);
+        return employeeMapper.toResponse(employeeRepository.save(employee));
     }
 
     @Override

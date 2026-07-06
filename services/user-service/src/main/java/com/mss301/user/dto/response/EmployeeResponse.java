@@ -15,6 +15,7 @@ public record EmployeeResponse(
         String phone,
         String status,
         BigDecimal salary,
+        String imageUrl,
         Instant createdAt,
         Instant updatedAt
 ) {

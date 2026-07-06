@@ -4,6 +4,7 @@ import com.mss301.supplier.dto.request.SupplierRequest;
 import com.mss301.supplier.dto.response.SupplierResponse;
 import com.mss301.response.PageResponse;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
@@ -12,6 +13,8 @@ public interface SupplierService {
     SupplierResponse create(SupplierRequest request);
 
     SupplierResponse update(UUID id, SupplierRequest request);
+
+    SupplierResponse uploadImage(UUID id, MultipartFile file);
 
     SupplierResponse getById(UUID id);
 

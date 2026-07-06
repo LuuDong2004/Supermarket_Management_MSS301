@@ -10,12 +10,14 @@ import com.mss301.product.mapper.ProductMapper;
 import com.mss301.product.repository.ProductRepository;
 import com.mss301.product.service.interfaces.ProductService;
 import com.mss301.response.PageResponse;
+import com.mss301.storage.StorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -27,6 +29,7 @@ public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
+    private final StorageService storageService;
 
     @Override
     public ProductResponse create(ProductRequest request) {
@@ -45,6 +48,14 @@ public class ProductServiceImpl implements ProductService {
         }
         productMapper.update(product, request);
         return productMapper.toResponse(product);
+    }
+
+    @Override
+    public ProductResponse uploadImage(UUID id, MultipartFile file) {
+        Product product = find(id);
+        String url = storageService.upload(file, "products");
+        product.setImageUrl(url);
+        return productMapper.toResponse(productRepository.save(product));
     }
 
     @Override

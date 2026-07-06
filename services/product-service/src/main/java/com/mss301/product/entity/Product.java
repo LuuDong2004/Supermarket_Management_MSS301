@@ -67,6 +67,9 @@ public class Product {
 
     private LocalDate expiry;
 
+    @Column(name = "image_url", length = 512)
+    private String imageUrl;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

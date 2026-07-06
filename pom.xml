@@ -24,6 +24,7 @@
         <module>shared/api-response-lib</module>
         <module>shared/security-lib</module>
         <module>shared/event-lib</module>
+        <module>shared/storage-lib</module>
 
         <!-- Infrastructure -->
         <module>infrastructure/discovery-server</module>
@@ -51,6 +52,7 @@
         <lombok-mapstruct-binding.version>0.2.0</lombok-mapstruct-binding.version>
         <jjwt.version>0.12.6</jjwt.version>
         <springdoc.version>2.8.6</springdoc.version>
+        <minio.version>8.5.14</minio.version>
     </properties>
 
     <dependencyManagement>
@@ -83,6 +85,18 @@
                 <groupId>com.mss301</groupId>
                 <artifactId>event-lib</artifactId>
                 <version>1.0.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.mss301</groupId>
+                <artifactId>storage-lib</artifactId>
+                <version>1.0.0</version>
+            </dependency>
+
+            <!-- MinIO / S3 object storage -->
+            <dependency>
+                <groupId>io.minio</groupId>
+                <artifactId>minio</artifactId>
+                <version>${minio.version}</version>
             </dependency>
 
             <!-- MapStruct -->
