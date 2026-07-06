@@ -1,31 +1,80 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { PageHeader } from '../../components/ui/PageHeader.jsx'
-import { Card, CardHeader, CardBody, Button, Badge, StatusBadge, Field, Input, Divider } from '../../components/ui/primitives.jsx'
+import { Card, CardHeader, CardBody, Button, Badge, StatusBadge, Field, Input, Divider, Spinner } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { StatCard } from '../../components/ui/StatCard.jsx'
 import { Modal } from '../../components/ui/Modal.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { formatCurrency, formatNumber, formatDate } from '../../lib/format.js'
-import * as db from '../../mock/db.js'
-import { Clock, DollarSign, ShoppingCart, Banknote, Scale, LockKeyhole } from 'lucide-react'
+import { useAuth } from '../../context/AuthContext.jsx'
+import { shiftService, withFallback, toList, mockShifts } from '../../services/index.js'
+import { Clock, DollarSign, ShoppingCart, Banknote, Scale, LockKeyhole, Plus } from 'lucide-react'
+
+const EMPTY_SHIFT = { code: '', cashier: '', open: '', close: '', opening: 0, sales: 0, status: 'Đang mở' }
 
 export default function Shift() {
   const toast = useToast()
-  const shift = db.shifts[0]
+  const { user } = useAuth()
   const ordersInShift = 24
 
+  const [shifts, setShifts] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [source, setSource] = useState('backend')
   const [actual, setActual] = useState('')
   const [confirm, setConfirm] = useState(false)
-  const [closed, setClosed] = useState(false)
+  const [openShift, setOpenShift] = useState(false)
+  const [openForm, setOpenForm] = useState({ opening: '' })
 
-  const expectedCash = shift.opening + shift.sales
+  const load = async () => {
+    setLoading(true)
+    const r = await withFallback(() => shiftService.list(), mockShifts)
+    setShifts(toList(r.data)); setSource(r.source); setLoading(false)
+  }
+  useEffect(() => { load() }, [])
+
+  // Current shift = first open one, else most recent.
+  const shift = shifts.find((s) => s.status !== 'Đã đóng') || shifts[0] || EMPTY_SHIFT
+  const closed = shift.status === 'Đã đóng'
+
+  const expectedCash = (shift.opening || 0) + (shift.sales || 0)
   const actualNum = Number(actual) || 0
   const diff = actualNum - expectedCash
 
-  const doClose = () => {
-    setConfirm(false)
-    setClosed(true)
-    toast.success(`Đã đóng ca ${shift.id}. Chênh lệch ${formatCurrency(diff)}.`)
+  const doClose = async () => {
+    try {
+      await shiftService.update(shift.id, {
+        code: shift.code || shift.id,
+        cashier: shift.cashier,
+        openAt: shift.openAt || shift.open,
+        closeAt: formatDate(new Date(), true),
+        opening: shift.opening || 0,
+        sales: shift.sales || 0,
+        status: 'Đã đóng',
+      })
+      setConfirm(false)
+      toast.success(`Đã đóng ca ${shift.code || shift.id}. Chênh lệch ${formatCurrency(diff)}.`)
+      setActual('')
+      await load()
+    } catch (e) { toast.error(e.message) }
+  }
+
+  const doOpen = async () => {
+    const cashier = user?.fullName || user?.username || 'Thu ngân'
+    try {
+      await shiftService.create({
+        code: `SH-${Date.now()}`,
+        cashier,
+        openAt: formatDate(new Date(), true),
+        closeAt: '',
+        opening: Number(openForm.opening) || 0,
+        sales: 0,
+        status: 'Đang mở',
+      })
+      setOpenShift(false)
+      setOpenForm({ opening: '' })
+      toast.success('Đã mở ca mới.')
+      await load()
+    } catch (e) { toast.error(e.message) }
   }
 
   return (
@@ -34,7 +83,15 @@ export default function Shift() {
         breadcrumb="POS · 3.8.3"
         title="Ca thu ngân"
         subtitle="Quản lý mở/đóng ca và đối soát tiền mặt cuối ca."
-        actions={<StatusBadge status={closed ? 'Đã đóng' : shift.status} />}
+        actions={
+          <div className="flex items-center gap-3">
+            <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
+              {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
+            </Badge>
+            <StatusBadge status={shift.status} />
+            <Button variant="secondary" icon={Plus} onClick={() => setOpenShift(true)}>Mở ca</Button>
+          </div>
+        }
       />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -52,11 +109,11 @@ export default function Shift() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
-          <CardHeader title={`Ca hiện tại · ${shift.id}`} icon={Clock} subtitle={`Thu ngân: ${shift.cashier}`} />
+          <CardHeader title={`Ca hiện tại · ${shift.code || shift.id}`} icon={Clock} subtitle={`Thu ngân: ${shift.cashier}`} />
           <CardBody className="space-y-5">
             <div className="grid gap-4 sm:grid-cols-2">
-              <Info label="Giờ mở ca" value={shift.open} />
-              <Info label="Giờ đóng ca" value={closed ? formatDate(new Date(), true) : shift.close} />
+              <Info label="Giờ mở ca" value={shift.openAt || shift.open} />
+              <Info label="Giờ đóng ca" value={shift.closeAt || shift.close || '—'} />
               <Info label="Tiền đầu ca" value={formatCurrency(shift.opening)} />
               <Info label="Doanh thu bán hàng" value={formatCurrency(shift.sales)} />
             </div>
@@ -113,20 +170,24 @@ export default function Shift() {
       </div>
 
       <Card className="mt-6">
-        <CardHeader title="Lịch sử ca làm việc" icon={Clock} subtitle={`${db.shifts.length} ca gần đây`} />
+        <CardHeader title="Lịch sử ca làm việc" icon={Clock} subtitle={`${shifts.length} ca gần đây`} />
         <CardBody className="p-0">
-          <DataTable
-            className="rounded-none border-0 shadow-none"
-            rows={db.shifts}
-            columns={[
-              { key: 'id', header: 'Mã ca', render: (r) => <span className="font-mono text-xs">{r.id}</span> },
-              { key: 'cashier', header: 'Thu ngân' },
-              { key: 'open', header: 'Mở ca' },
-              { key: 'close', header: 'Đóng ca' },
-              { key: 'sales', header: 'Doanh thu', align: 'right', render: (r) => <span className="font-semibold">{formatCurrency(r.sales)}</span> },
-              { key: 'status', header: 'Trạng thái', align: 'center', render: (r) => <StatusBadge status={r.status} /> },
-            ]}
-          />
+          {loading ? (
+            <div className="flex items-center justify-center py-12"><Spinner className="h-7 w-7" /></div>
+          ) : (
+            <DataTable
+              className="rounded-none border-0 shadow-none"
+              rows={shifts}
+              columns={[
+                { key: 'id', header: 'Mã ca', render: (r) => <span className="font-mono text-xs">{r.code || r.id}</span> },
+                { key: 'cashier', header: 'Thu ngân' },
+                { key: 'open', header: 'Mở ca', render: (r) => r.openAt || r.open },
+                { key: 'close', header: 'Đóng ca', render: (r) => r.closeAt || r.close || '—' },
+                { key: 'sales', header: 'Doanh thu', align: 'right', render: (r) => <span className="font-semibold">{formatCurrency(r.sales)}</span> },
+                { key: 'status', header: 'Trạng thái', align: 'center', render: (r) => <StatusBadge status={r.status} /> },
+              ]}
+            />
+          )}
         </CardBody>
       </Card>
 
@@ -134,7 +195,7 @@ export default function Shift() {
         open={confirm}
         onClose={() => setConfirm(false)}
         title="Xác nhận đóng ca"
-        subtitle={`${shift.id} · ${shift.cashier}`}
+        subtitle={`${shift.code || shift.id} · ${shift.cashier}`}
         footer={
           <>
             <Button variant="secondary" onClick={() => setConfirm(false)}>Hủy</Button>
@@ -152,6 +213,30 @@ export default function Shift() {
               Có chênh lệch {formatCurrency(Math.abs(diff))}. Vui lòng ghi chú lý do khi đối soát với quản lý.
             </p>
           )}
+        </div>
+      </Modal>
+
+      <Modal
+        open={openShift}
+        onClose={() => setOpenShift(false)}
+        title="Mở ca mới"
+        subtitle={user?.fullName || user?.username || 'Thu ngân'}
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setOpenShift(false)}>Hủy</Button>
+            <Button icon={Plus} onClick={doOpen}>Mở ca</Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <Field label="Tiền đầu ca" hint="Số tiền mặt trong két khi bắt đầu ca">
+            <Input
+              type="number"
+              placeholder="Nhập số tiền đầu ca..."
+              value={openForm.opening}
+              onChange={(e) => setOpenForm({ opening: e.target.value })}
+            />
+          </Field>
         </div>
       </Modal>
     </div>

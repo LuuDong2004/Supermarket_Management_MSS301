@@ -1,23 +1,83 @@
-import { useState, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { PageHeader, FilterBar } from '../../components/ui/PageHeader.jsx'
-import { Button, Field, Input, StatusBadge } from '../../components/ui/primitives.jsx'
+import { Button, Badge, Field, Input, Select, StatusBadge, Spinner } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { StatCard } from '../../components/ui/StatCard.jsx'
+import { Modal } from '../../components/ui/Modal.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { formatNumber, formatDate } from '../../lib/format.js'
-import * as db from '../../mock/db.js'
-import { Clock, AlarmClock, UserX, Hourglass, Download } from 'lucide-react'
+import { attendanceService, withFallback, toList, mockAttendance } from '../../services/index.js'
+import { Clock, AlarmClock, UserX, Hourglass, Download, Plus, Trash2 } from 'lucide-react'
+
+const STATUSES = ['Đúng giờ', 'Đi muộn', 'Vắng']
+
+const emptyForm = { id: null, code: '', employee: '', date: '2026-06-15', checkIn: '', checkOut: '', hours: '', status: 'Đúng giờ' }
 
 export default function Attendance() {
   const toast = useToast()
+  const [rows, setRows] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [source, setSource] = useState('backend')
   const [date, setDate] = useState('2026-06-15')
+  const [editing, setEditing] = useState(false)
+  const [form, setForm] = useState(emptyForm)
 
-  const rows = useMemo(() => db.attendance, [])
+  const load = async () => {
+    setLoading(true)
+    const r = await withFallback(() => attendanceService.list(), mockAttendance)
+    setRows(toList(r.data))
+    setSource(r.source)
+    setLoading(false)
+  }
+  useEffect(() => { load() }, [])
 
-  const onTime = rows.filter((r) => r.status === 'Đúng giờ').length
-  const late = rows.filter((r) => r.status === 'Đi muộn').length
-  const absent = rows.filter((r) => r.status === 'Vắng').length
-  const totalHours = rows.reduce((s, r) => s + (r.hours || 0), 0)
+  const filtered = useMemo(() => rows.filter((r) => !date || r.date === date), [rows, date])
+
+  const onTime = filtered.filter((r) => r.status === 'Đúng giờ').length
+  const late = filtered.filter((r) => r.status === 'Đi muộn').length
+  const absent = filtered.filter((r) => r.status === 'Vắng').length
+  const totalHours = filtered.reduce((s, r) => s + (r.hours || 0), 0)
+
+  const openCreate = () => { setForm({ ...emptyForm, date }); setEditing(true) }
+  const openEdit = (r) => {
+    setForm({
+      id: r.id, code: r.code || r.id || '', employee: r.employee || '', date: r.date || date,
+      checkIn: r.checkIn || '', checkOut: r.checkOut || '', hours: r.hours ?? '', status: r.status || 'Đúng giờ',
+    })
+    setEditing(true)
+  }
+
+  const save = async () => {
+    const payload = {
+      code: form.code || form.id || `AT-${Date.now()}`,
+      employee: form.employee,
+      date: form.date || null,
+      checkIn: form.checkIn,
+      checkOut: form.checkOut,
+      hours: form.hours === '' ? null : Number(form.hours),
+      status: form.status,
+    }
+    try {
+      if (form.id) await attendanceService.update(form.id, payload)
+      else await attendanceService.create(payload)
+      toast.success('Đã lưu chấm công.')
+      setEditing(false)
+      setForm(emptyForm)
+      await load()
+    } catch (e) {
+      toast.error(e.message)
+    }
+  }
+
+  const remove = async (row) => {
+    try {
+      await attendanceService.remove(row.id)
+      toast.success('Đã xóa bản ghi chấm công.')
+      await load()
+    } catch (e) {
+      toast.error(e.message)
+    }
+  }
 
   return (
     <div>
@@ -25,7 +85,15 @@ export default function Attendance() {
         breadcrumb="Nhân sự · 3.5.2"
         title="Chấm công"
         subtitle="Theo dõi giờ vào/ra và trạng thái chấm công theo ngày."
-        actions={<Button variant="secondary" icon={Download} onClick={() => toast.success('Đã xuất báo cáo chấm công.')}>Xuất báo cáo</Button>}
+        actions={
+          <div className="flex items-center gap-3">
+            <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
+              {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
+            </Badge>
+            <Button icon={Plus} onClick={openCreate}>Thêm chấm công</Button>
+            <Button variant="secondary" icon={Download} onClick={() => toast.success('Đã xuất báo cáo chấm công.')}>Xuất báo cáo</Button>
+          </div>
+        }
       />
 
       <FilterBar>
@@ -41,18 +109,71 @@ export default function Attendance() {
         <StatCard label="Tổng giờ công" value={`${formatNumber(totalHours)} h`} icon={Hourglass} tone="brand" hint="trong ngày" />
       </div>
 
-      <DataTable
-        rows={rows}
-        empty={{ title: 'Chưa có dữ liệu chấm công', subtitle: 'Chọn ngày khác để xem.' }}
-        columns={[
-          { key: 'employee', header: 'Nhân viên', render: (r) => <span className="font-medium text-slate-700">{r.employee}</span> },
-          { key: 'date', header: 'Ngày', render: (r) => formatDate(r.date) },
-          { key: 'in', header: 'Giờ vào', align: 'center', render: (r) => <span className="font-mono text-xs">{r.in}</span> },
-          { key: 'out', header: 'Giờ ra', align: 'center', render: (r) => <span className="font-mono text-xs">{r.out}</span> },
-          { key: 'hours', header: 'Số giờ', align: 'center', render: (r) => <span className="font-semibold">{r.hours} h</span> },
-          { key: 'status', header: 'Trạng thái', render: (r) => <StatusBadge status={r.status} /> },
-        ]}
-      />
+      {loading ? (
+        <div className="flex items-center justify-center rounded-xl border border-slate-200 bg-white py-16">
+          <Spinner className="h-7 w-7" />
+        </div>
+      ) : (
+        <DataTable
+          rows={filtered}
+          onRowClick={openEdit}
+          empty={{ title: 'Chưa có dữ liệu chấm công', subtitle: 'Chọn ngày khác để xem.' }}
+          columns={[
+            { key: 'employee', header: 'Nhân viên', render: (r) => <span className="font-medium text-slate-700">{r.employee}</span> },
+            { key: 'date', header: 'Ngày', render: (r) => formatDate(r.date) },
+            { key: 'checkIn', header: 'Giờ vào', align: 'center', render: (r) => <span className="font-mono text-xs">{r.checkIn || '—'}</span> },
+            { key: 'checkOut', header: 'Giờ ra', align: 'center', render: (r) => <span className="font-mono text-xs">{r.checkOut || '—'}</span> },
+            { key: 'hours', header: 'Số giờ', align: 'center', render: (r) => <span className="font-semibold">{r.hours} h</span> },
+            { key: 'status', header: 'Trạng thái', render: (r) => <StatusBadge status={r.status} /> },
+            {
+              key: 'actions', header: '', align: 'right', render: (r) => (
+                <Button variant="ghost" size="sm" icon={Trash2} onClick={(e) => { e.stopPropagation(); remove(r) }} />
+              ),
+            },
+          ]}
+        />
+      )}
+
+      {/* Create / edit attendance modal */}
+      <Modal
+        open={editing}
+        onClose={() => setEditing(false)}
+        title={form.id ? 'Sửa chấm công' : 'Thêm chấm công'}
+        subtitle={form.id ? `Cập nhật ${form.code || form.id}` : 'Ghi nhận chấm công mới'}
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setEditing(false)}>Hủy</Button>
+            <Button onClick={save}>Lưu</Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <Field label="Nhân viên" required>
+            <Input value={form.employee} onChange={(e) => setForm({ ...form, employee: e.target.value })} placeholder="Nguyễn Văn A" />
+          </Field>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Ngày">
+              <Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+            </Field>
+            <Field label="Trạng thái">
+              <Select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
+                {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+              </Select>
+            </Field>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Field label="Giờ vào">
+              <Input value={form.checkIn} onChange={(e) => setForm({ ...form, checkIn: e.target.value })} placeholder="07:55" />
+            </Field>
+            <Field label="Giờ ra">
+              <Input value={form.checkOut} onChange={(e) => setForm({ ...form, checkOut: e.target.value })} placeholder="16:05" />
+            </Field>
+            <Field label="Số giờ">
+              <Input type="number" value={form.hours} onChange={(e) => setForm({ ...form, hours: e.target.value })} placeholder="8" />
+            </Field>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }

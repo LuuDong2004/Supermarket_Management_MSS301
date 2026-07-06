@@ -11,8 +11,10 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.type.SqlTypes;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -30,11 +32,12 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @EntityListeners(AuditingEntityListener.class)
-@SQLDelete(sql = "UPDATE customers SET deleted = true, updated_at = now() WHERE id = ?")
-@SQLRestriction("deleted = false")
+@SQLDelete(sql = "UPDATE customers SET deleted = 1, updated_at = SYSUTCDATETIME() WHERE id = ?")
+@SQLRestriction("deleted = 0")
 public class Customer {
 
     @Id
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(nullable = false, updatable = false)
     private UUID id;
 

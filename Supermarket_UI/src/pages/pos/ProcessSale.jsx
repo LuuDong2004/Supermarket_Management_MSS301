@@ -1,31 +1,51 @@
-import { useState, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { PageHeader } from '../../components/ui/PageHeader.jsx'
 import { Card, CardHeader, CardBody, Button, Field, Input, Badge } from '../../components/ui/primitives.jsx'
 import { Modal } from '../../components/ui/Modal.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { formatCurrency } from '../../lib/format.js'
-import * as db from '../../mock/db.js'
+import { useAuth } from '../../context/AuthContext.jsx'
+import {
+  productService, saleService, customerService, voucherService,
+  withFallback, toList, mockProducts, mockCustomers, mockVouchers,
+} from '../../services/index.js'
 import { Search, Plus, Minus, Trash2, ScanLine, ShoppingCart, UserPlus, BadgePercent, X } from 'lucide-react'
 
 const VAT_RATE = 0.08
 
 export default function ProcessSale() {
   const toast = useToast()
+  const { user } = useAuth()
   const [query, setQuery] = useState('')
-  const [cart, setCart] = useState([
-    { ...db.products[0], qty: 5 },
-    { ...db.products[1], qty: 2 },
-  ])
+  const [products, setProducts] = useState([])
+  const [customers, setCustomers] = useState([])
+  const [vouchers, setVouchers] = useState([])
+  const [source, setSource] = useState('backend')
+  const [cart, setCart] = useState([])
   const [customer, setCustomer] = useState(null)
   const [voucher, setVoucher] = useState('')
   const [appliedVoucher, setAppliedVoucher] = useState(null)
   const [checkout, setCheckout] = useState(false)
 
+  useEffect(() => {
+    ;(async () => {
+      const [rp, rc, rv] = await Promise.all([
+        withFallback(() => productService.list(), mockProducts),
+        withFallback(() => customerService.list(), mockCustomers),
+        withFallback(() => voucherService.list(), mockVouchers),
+      ])
+      setProducts(toList(rp.data))
+      setCustomers(toList(rc.data))
+      setVouchers(toList(rv.data))
+      setSource(rp.source)
+    })()
+  }, [])
+
   const matches = useMemo(() => {
     const q = query.trim().toLowerCase()
     if (!q) return []
-    return db.products.filter((p) => p.name.toLowerCase().includes(q) || p.barcode.includes(q)).slice(0, 6)
-  }, [query])
+    return products.filter((p) => (p.name || '').toLowerCase().includes(q) || (p.barcode || '').includes(q)).slice(0, 6)
+  }, [query, products])
 
   const addProduct = (p) => {
     setCart((c) => {
@@ -42,8 +62,9 @@ export default function ProcessSale() {
 
   const subtotal = cart.reduce((s, x) => s + x.price * x.qty, 0)
   const memberDiscount = customer ? Math.round(subtotal * 0.02) : 0
+  const voucherMin = (v) => v?.minSpend ?? v?.min ?? 0
   let voucherDiscount = 0
-  if (appliedVoucher && subtotal >= appliedVoucher.min) {
+  if (appliedVoucher && subtotal >= voucherMin(appliedVoucher)) {
     voucherDiscount = appliedVoucher.type === 'percent' ? Math.round((subtotal * appliedVoucher.value) / 100) : appliedVoucher.value
   }
   const discount = memberDiscount + voucherDiscount
@@ -51,20 +72,35 @@ export default function ProcessSale() {
   const grandTotal = subtotal - discount + vat
 
   const applyVoucher = () => {
-    const v = db.vouchers.find((x) => x.code.toLowerCase() === voucher.trim().toLowerCase())
+    const v = vouchers.find((x) => (x.code || '').toLowerCase() === voucher.trim().toLowerCase())
     if (!v) return toast.error('Mã voucher không hợp lệ.')
-    if (subtotal < v.min) return toast.error(`Đơn tối thiểu ${formatCurrency(v.min)} để dùng mã này.`)
+    if (subtotal < voucherMin(v)) return toast.error(`Đơn tối thiểu ${formatCurrency(voucherMin(v))} để dùng mã này.`)
     setAppliedVoucher(v)
     toast.success(`Đã áp dụng ${v.code}.`)
   }
 
-  const confirmCheckout = () => {
-    setCheckout(false)
-    setCart([])
-    setAppliedVoucher(null)
-    setCustomer(null)
-    setVoucher('')
-    toast.success('Thanh toán thành công! Hóa đơn đã được tạo.')
+  const confirmCheckout = async () => {
+    const now = new Date()
+    const payload = {
+      code: `INV-${now.getTime()}`,
+      saleTime: now.toTimeString().slice(0, 5),
+      cashier: user?.fullName || user?.username || 'Thu ngân',
+      items: cart.length,
+      total: grandTotal,
+      payment: 'Tiền mặt',
+    }
+    try {
+      await saleService.create(payload)
+      toast.success('Thanh toán thành công! Hóa đơn đã được tạo.')
+    } catch (e) {
+      toast.error(`Không tạo được hóa đơn: ${e.message}`)
+    } finally {
+      setCheckout(false)
+      setCart([])
+      setAppliedVoucher(null)
+      setCustomer(null)
+      setVoucher('')
+    }
   }
 
   return (
@@ -73,7 +109,11 @@ export default function ProcessSale() {
         breadcrumb="POS · 3.8.1"
         title="Bán hàng"
         subtitle="Quét mã hoặc tìm sản phẩm để thêm vào giỏ và thanh toán."
-        actions={<Badge tone="green" dot>Ca đang mở · SH-330</Badge>}
+        actions={
+          <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
+            {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
+          </Badge>
+        }
       />
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -114,7 +154,7 @@ export default function ProcessSale() {
                 )}
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
-                {db.products.slice(0, 5).map((p) => (
+                {products.slice(0, 5).map((p) => (
                   <button key={p.id} onClick={() => addProduct(p)} className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs text-slate-600 hover:border-brand-300 hover:bg-brand-50">
                     {p.name.split(' ').slice(0, 2).join(' ')}
                   </button>
@@ -184,7 +224,7 @@ export default function ProcessSale() {
                 ) : (
                   <div className="flex gap-2">
                     <Input placeholder="SĐT / mã thành viên" className="flex-1" id="memq" />
-                    <Button variant="secondary" icon={UserPlus} onClick={() => setCustomer(db.customers[0])}>Tìm</Button>
+                    <Button variant="secondary" icon={UserPlus} onClick={() => customers[0] ? setCustomer(customers[0]) : toast.error('Chưa có dữ liệu khách hàng.')}>Tìm</Button>
                   </div>
                 )}
               </Field>

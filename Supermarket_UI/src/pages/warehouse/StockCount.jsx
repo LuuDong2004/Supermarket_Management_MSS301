@@ -1,38 +1,72 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { PageHeader, FilterBar } from '../../components/ui/PageHeader.jsx'
-import { Card, CardHeader, CardBody, Button, Badge, Field, Select, Input } from '../../components/ui/primitives.jsx'
+import { Card, CardHeader, CardBody, Button, Badge, StatusBadge, Field, Select, Input, Textarea, Divider, Spinner } from '../../components/ui/primitives.jsx'
+import { DataTable } from '../../components/ui/DataTable.jsx'
 import { StatCard } from '../../components/ui/StatCard.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
-import { formatNumber } from '../../lib/format.js'
-import * as db from '../../mock/db.js'
-import { ClipboardList, Send, ListChecks, AlertTriangle, Equal } from 'lucide-react'
+import { formatNumber, formatDate } from '../../lib/format.js'
+import { stockCountService, withFallback, toList, mockStockCounts } from '../../services/index.js'
+import { ClipboardList, ListChecks, AlertTriangle, Equal, Save, RotateCcw } from 'lucide-react'
 
-const categories = [...new Set(db.products.map((p) => p.category))]
+const STATUSES = ['Đang kiểm', 'Hoàn tất']
+const emptyForm = { id: null, code: '', location: 'Kho A', status: 'Đang kiểm', countDate: '2026-06-15', note: '' }
 
 export default function StockCount() {
   const toast = useToast()
-  const [category, setCategory] = useState('all')
-  const [counted, setCounted] = useState(() =>
-    Object.fromEntries(db.products.map((p) => [p.id, p.stock])),
+  const [rows, setRows] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [source, setSource] = useState('backend')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [form, setForm] = useState(emptyForm)
+
+  const load = async () => {
+    setLoading(true)
+    const r = await withFallback(() => stockCountService.list(), mockStockCounts)
+    setRows(toList(r.data))
+    setSource(r.source)
+    setLoading(false)
+  }
+  useEffect(() => { load() }, [])
+
+  const filtered = useMemo(
+    () => rows.filter((c) => statusFilter === 'all' || c.status === statusFilter),
+    [rows, statusFilter],
   )
 
-  const rows = useMemo(
-    () => db.products.filter((p) => category === 'all' || p.category === category),
-    [category],
-  )
+  const inProgress = rows.filter((c) => c.status === 'Đang kiểm').length
+  const done = rows.filter((c) => c.status === 'Hoàn tất').length
 
-  const setCount = (id, val) => setCounted((c) => ({ ...c, [id]: val }))
-  const diffOf = (p) => Number(counted[p.id] ?? p.stock) - p.stock
+  const editRow = (c) => setForm({ id: c.id, code: c.code || '', location: c.location || 'Kho A', status: c.status || 'Đang kiểm', countDate: c.countDate || '2026-06-15', note: c.note || '' })
+  const resetForm = () => setForm(emptyForm)
 
-  const discrepancies = db.products.filter((p) => diffOf(p) !== 0)
-  const totalDiff = db.products.reduce((s, p) => s + diffOf(p), 0)
-
-  const submit = () => {
-    if (discrepancies.length === 0) {
-      toast.info('Không có chênh lệch nào. Kết quả kiểm kê khớp với hệ thống.')
-      return
+  const save = async () => {
+    const payload = {
+      code: form.code,
+      location: form.location,
+      status: form.status,
+      countDate: form.countDate,
+      note: form.note,
     }
-    toast.success(`Đã gửi kết quả kiểm kê: ${discrepancies.length} mặt hàng chênh lệch, tổng ${totalDiff > 0 ? '+' : ''}${totalDiff} đơn vị.`)
+    try {
+      if (form.id) await stockCountService.update(form.id, payload)
+      else await stockCountService.create(payload)
+      toast.success('Đã lưu phiếu kiểm kê.')
+      await load()
+      resetForm()
+    } catch (e) {
+      toast.error(e.message)
+    }
+  }
+
+  const remove = async (row) => {
+    try {
+      await stockCountService.remove(row.id)
+      toast.success('Đã xóa phiếu kiểm kê.')
+      await load()
+      if (form.id === row.id) resetForm()
+    } catch (e) {
+      toast.error(e.message)
+    }
   }
 
   return (
@@ -40,74 +74,84 @@ export default function StockCount() {
       <PageHeader
         breadcrumb="Kho · 3.7.3"
         title="Kiểm kê"
-        subtitle="Nhập số lượng thực đếm để đối chiếu với tồn kho hệ thống."
-        actions={<Button icon={Send} onClick={submit}>Gửi kết quả kiểm kê</Button>}
+        subtitle="Tạo và theo dõi các phiếu kiểm kê tồn kho theo khu vực."
+        actions={
+          <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
+            {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
+          </Badge>
+        }
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Mặt hàng kiểm" value={formatNumber(rows.length)} icon={ListChecks} tone="brand" hint="trong danh sách" />
-        <StatCard label="Có chênh lệch" value={formatNumber(discrepancies.length)} icon={AlertTriangle} tone="amber" hint="cần điều chỉnh" />
-        <StatCard label="Tổng chênh lệch" value={`${totalDiff > 0 ? '+' : ''}${formatNumber(totalDiff)}`} icon={Equal} tone={totalDiff === 0 ? 'green' : 'red'} hint="đơn vị" />
-        <StatCard label="Tổng SKU" value={formatNumber(db.products.length)} icon={ClipboardList} tone="blue" hint="toàn kho" />
+        <StatCard label="Tổng phiếu" value={formatNumber(rows.length)} icon={ClipboardList} tone="brand" hint="tất cả" />
+        <StatCard label="Đang kiểm" value={formatNumber(inProgress)} icon={ListChecks} tone="amber" hint="chưa hoàn tất" />
+        <StatCard label="Hoàn tất" value={formatNumber(done)} icon={Equal} tone="green" hint="đã đóng" />
+        <StatCard label="Khu vực" value={formatNumber(new Set(rows.map((c) => c.location)).size)} icon={AlertTriangle} tone="blue" hint="đang kiểm kê" />
       </div>
 
-      <div className="mt-6">
-        <FilterBar>
-          <Field label="Ngành hàng">
-            <Select value={category} onChange={(e) => setCategory(e.target.value)}>
-              <option value="all">Tất cả</option>
-              {categories.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </Select>
-          </Field>
-        </FilterBar>
+      <div className="mt-6 grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <FilterBar>
+            <Field label="Trạng thái">
+              <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+                <option value="all">Tất cả</option>
+                {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+              </Select>
+            </Field>
+          </FilterBar>
 
-        <Card>
-          <CardHeader title="Phiếu kiểm kê" subtitle="Nhập thực đếm cho từng mặt hàng" icon={ClipboardList} />
-          <CardBody className="p-0">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  <th className="px-4 py-3">Sản phẩm</th>
-                  <th className="px-4 py-3 text-center">Tồn hệ thống</th>
-                  <th className="px-4 py-3 text-center">Thực đếm</th>
-                  <th className="px-4 py-3 text-right">Chênh lệch</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {rows.map((p) => {
-                  const diff = diffOf(p)
-                  return (
-                    <tr key={p.id}>
-                      <td className="px-4 py-3">
-                        <p className="font-medium text-slate-700">{p.name}</p>
-                        <p className="font-mono text-xs text-slate-400">{p.barcode}</p>
-                      </td>
-                      <td className="px-4 py-3 text-center text-slate-600">{p.stock} {p.unit}</td>
-                      <td className="px-4 py-3">
-                        <Input
-                          type="number"
-                          min={0}
-                          className="mx-auto w-24 text-center"
-                          value={counted[p.id] ?? p.stock}
-                          onChange={(e) => setCount(p.id, e.target.value)}
-                        />
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        {diff === 0 ? (
-                          <Badge tone="slate">0</Badge>
-                        ) : (
-                          <Badge tone={diff > 0 ? 'green' : 'red'}>{diff > 0 ? `+${diff}` : diff}</Badge>
-                        )}
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </CardBody>
-        </Card>
+          {loading ? (
+            <div className="flex items-center justify-center rounded-xl border border-slate-200 bg-white py-16">
+              <Spinner className="h-7 w-7" />
+            </div>
+          ) : (
+            <DataTable
+              rows={filtered}
+              onRowClick={editRow}
+              empty={{ title: 'Không có phiếu kiểm kê', subtitle: 'Tạo phiếu mới ở biểu mẫu bên phải.' }}
+              columns={[
+                { key: 'code', header: 'Mã phiếu', render: (r) => <span className="font-mono text-xs">{r.code}</span> },
+                { key: 'location', header: 'Khu vực' },
+                { key: 'status', header: 'Trạng thái', render: (r) => <StatusBadge status={r.status} /> },
+                { key: 'countDate', header: 'Ngày kiểm', render: (r) => formatDate(r.countDate) },
+                { key: 'note', header: 'Ghi chú', render: (r) => <span className="text-slate-500">{r.note}</span> },
+                { key: 'actions', header: '', align: 'right', render: (r) => (
+                  <Button variant="danger" size="sm" onClick={(e) => { e.stopPropagation(); remove(r) }}>Xóa</Button>
+                ) },
+              ]}
+            />
+          )}
+        </div>
+
+        <div>
+          <Card>
+            <CardHeader title="Phiếu kiểm kê" subtitle={form.id ? `Đang sửa: ${form.code}` : 'Tạo phiếu mới'} icon={ClipboardList} />
+            <CardBody className="space-y-4">
+              <Field label="Mã phiếu" required>
+                <Input value={form.code} onChange={(e) => setForm((f) => ({ ...f, code: e.target.value }))} placeholder="SC-03" />
+              </Field>
+              <Field label="Khu vực" required>
+                <Input value={form.location} onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))} placeholder="Kho A" />
+              </Field>
+              <Field label="Trạng thái">
+                <Select value={form.status} onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}>
+                  {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                </Select>
+              </Field>
+              <Field label="Ngày kiểm" required>
+                <Input type="date" value={form.countDate} onChange={(e) => setForm((f) => ({ ...f, countDate: e.target.value }))} />
+              </Field>
+              <Field label="Ghi chú">
+                <Textarea rows={3} value={form.note} onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))} placeholder="Nhập ghi chú..." />
+              </Field>
+              <Divider />
+              <div className="flex flex-wrap gap-2">
+                <Button icon={Save} onClick={save}>{form.id ? 'Lưu thay đổi' : 'Tạo phiếu'}</Button>
+                {form.id && <Button variant="ghost" icon={RotateCcw} onClick={resetForm}>Mới</Button>}
+              </div>
+            </CardBody>
+          </Card>
+        </div>
       </div>
     </div>
   )
