@@ -10,7 +10,6 @@ import { Forbidden, NotFound } from './pages/Errors.jsx'
 
 // POS (3.8, 3.9)
 import ProcessSale from './pages/pos/ProcessSale.jsx'
-import Payment from './pages/pos/Payment.jsx'
 import Shift from './pages/pos/Shift.jsx'
 import Members from './pages/pos/Members.jsx'
 import Loyalty from './pages/pos/Loyalty.jsx'
@@ -69,7 +68,6 @@ export default function App() {
 
         {/* POS */}
         <Route path="pos/sale" element={G('/app/pos/sale', <ProcessSale />)} />
-        <Route path="pos/payment" element={G('/app/pos/payment', <Payment />)} />
         <Route path="pos/shift" element={G('/app/pos/shift', <Shift />)} />
         <Route path="pos/members" element={G('/app/pos/members', <Members />)} />
         <Route path="pos/loyalty" element={G('/app/pos/loyalty', <Loyalty />)} />

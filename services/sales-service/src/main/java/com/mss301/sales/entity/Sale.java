@@ -58,6 +58,10 @@ public class Sale {
     @Column(length = 30)
     private String payment;
 
+    @Column(length = 20, nullable = false)
+    @Builder.Default
+    private String status = "PENDING";
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

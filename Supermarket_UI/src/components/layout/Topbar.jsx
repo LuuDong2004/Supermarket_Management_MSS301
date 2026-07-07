@@ -18,16 +18,16 @@ export function Topbar({ onMenu }) {
   }, [])
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-slate-200 bg-white/90 px-4 backdrop-blur lg:px-6">
-      <button onClick={onMenu} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 lg:hidden">
+    <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-slate-100 bg-white/80 px-4 backdrop-blur-md lg:px-6 shadow-sm">
+      <button onClick={onMenu} className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 lg:hidden">
         <Menu size={20} />
       </button>
 
       <div className="relative hidden max-w-md flex-1 sm:block">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
         <input
           placeholder="Tìm module, sản phẩm, khách hàng..."
-          className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+          className="w-full rounded-xl border border-slate-100 bg-slate-50/80 py-2 pl-10 pr-4 text-sm placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-brand-500/10 transition-all duration-200"
         />
       </div>
 
@@ -35,17 +35,17 @@ export function Topbar({ onMenu }) {
         {mockMode && (
           <Badge tone="amber" className="hidden sm:inline-flex">Chế độ demo (mock)</Badge>
         )}
-        <button className="relative rounded-lg p-2 text-slate-500 hover:bg-slate-100">
+        <button className="relative rounded-xl p-2 text-slate-500 hover:bg-slate-100">
           <Bell size={19} />
-          <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-rose-500" />
+          <span className="absolute right-2.5 top-2.5 h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />
         </button>
 
         <div className="relative" ref={ref}>
           <button
             onClick={() => setMenuOpen((o) => !o)}
-            className="flex items-center gap-2 rounded-lg py-1.5 pl-1.5 pr-2 hover:bg-slate-100"
+            className="flex items-center gap-2 rounded-xl py-1.5 pl-1.5 pr-2 hover:bg-slate-100 transition-colors"
           >
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-600 text-xs font-semibold text-white">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-brand-600 to-brand-500 text-xs font-bold text-white shadow-premium border border-brand-400/20">
               {initials(user?.fullName || user?.username || 'U')}
             </span>
             <span className="hidden text-left leading-tight sm:block">

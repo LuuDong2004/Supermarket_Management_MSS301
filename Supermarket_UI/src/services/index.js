@@ -105,6 +105,9 @@ export const saleService = {
   get: (id) => api.get(`/sales/${id}`),
   create: (body) => api.post('/sales', body),
   remove: (id) => api.delete(`/sales/${id}`),
+  getSePayConfig: () => api.get('/sales/sepay-config'),
+  updateStatus: (id, status) => api.put(`/sales/${id}/status`, { status }),
+  completeCash: (id) => api.put(`/sales/${id}/complete-cash`),
 }
 
 export const shiftService = {

@@ -14,6 +14,7 @@ public record SaleRequest(
         @Size(max = 120) String cashier,
         @NotNull @PositiveOrZero Integer items,
         @NotNull @DecimalMin("0.0") BigDecimal total,
-        @Size(max = 30) String payment
+        @Size(max = 30) String payment,
+        @Size(max = 20) String status
 ) {
 }

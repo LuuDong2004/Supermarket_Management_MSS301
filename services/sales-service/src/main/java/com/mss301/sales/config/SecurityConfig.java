@@ -22,7 +22,9 @@ public class SecurityConfig {
             "/v3/api-docs/**",
             "/api/sales/v3/api-docs/**",
             "/swagger-ui/**",
-            "/swagger-ui.html"
+            "/swagger-ui.html",
+            "/api/sales/sepay-webhook",
+            "/api/sales/sepay-config"
     };
 
     private final ObjectMapper objectMapper;
