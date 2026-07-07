@@ -21,7 +21,9 @@ public class RouteValidator {
             "/v3/api-docs",
             "/swagger-ui",
             "/webjars",
-            "/actuator"
+            "/actuator",
+            "/api/sales/sepay-webhook",
+            "/api/sales/sepay-config"
     );
 
     public boolean isSecured(ServerHttpRequest request) {

@@ -68,18 +68,18 @@ export default function Dashboard() {
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-2" hoverEffect>
           <CardHeader title="Doanh thu 7 ngày" subtitle="Triệu đồng" icon={TrendingUp} />
           <CardBody><AreaTrend data={salesTrend} x="label" y="revenue" /></CardBody>
         </Card>
-        <Card>
+        <Card hoverEffect>
           <CardHeader title="Cơ cấu ngành hàng" icon={Boxes} />
           <CardBody><Donut data={categoryShare} /></CardBody>
         </Card>
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-2" hoverEffect>
           <CardHeader
             title="Giao dịch gần đây"
             icon={ShoppingCart}
@@ -100,20 +100,20 @@ export default function Dashboard() {
           </CardBody>
         </Card>
 
-        <Card>
+        <Card hoverEffect>
           <CardHeader title="Cảnh báo tồn kho" icon={AlertTriangle} action={<Link to="/app/warehouse/monitor"><Button variant="ghost" size="sm">Tất cả</Button></Link>} />
           <CardBody className="space-y-3">
             {lowStock.map((p) => (
-              <div key={p.id || p.code} className="flex items-center justify-between gap-2 rounded-lg border border-slate-100 bg-slate-50/60 px-3 py-2">
+              <div key={p.id || p.code} className="flex items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50/40 px-3.5 py-2.5 transition-colors hover:bg-slate-50">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-slate-700">{p.name}</p>
-                  <p className="text-xs text-slate-400">{p.category}</p>
+                  <p className="truncate text-sm font-semibold text-slate-700">{p.name}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-0.5">{p.category}</p>
                 </div>
                 <Badge tone="red">{p.stock ?? p.onHand} {p.unit}</Badge>
               </div>
             ))}
             {lowStock.length === 0 && (
-              <p className="rounded-lg border border-slate-100 bg-slate-50/60 px-3 py-2 text-sm text-slate-400">Không có sản phẩm dưới ngưỡng tồn kho.</p>
+              <p className="rounded-xl border border-slate-100 bg-slate-50/40 px-3.5 py-2.5 text-sm text-slate-400">Không có sản phẩm dưới ngưỡng tồn kho.</p>
             )}
           </CardBody>
         </Card>
@@ -132,15 +132,15 @@ export default function Dashboard() {
 
 function QuickLink({ to, icon: Icon, title, text }) {
   return (
-    <Link to={to} className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-card transition hover:border-brand-300 hover:shadow-card-hover">
-      <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-brand-50 text-brand-600 transition group-hover:bg-brand-600 group-hover:text-white">
+    <Link to={to} className="group flex items-center gap-3.5 rounded-2xl border border-slate-100 bg-white/90 p-5 shadow-premium transition-all duration-300 hover:shadow-premium-hover hover:border-brand-200 hover:-translate-y-0.5 backdrop-blur-sm">
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-50 border border-brand-100/50 text-brand-600 transition-all duration-300 group-hover:bg-gradient-to-br group-hover:from-brand-600 group-hover:to-brand-500 group-hover:text-white group-hover:shadow-md">
         <Icon size={20} />
       </span>
       <div className="min-w-0">
-        <p className="font-semibold text-slate-800">{title}</p>
-        <p className="truncate text-xs text-slate-400">{text}</p>
+        <p className="font-bold text-slate-800 font-display text-sm tracking-wide">{title}</p>
+        <p className="truncate text-xs text-slate-400 mt-0.5">{text}</p>
       </div>
-      <ArrowRight size={16} className="ml-auto text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-brand-500" />
+      <ArrowRight size={16} className="ml-auto text-slate-300 transition-all duration-300 group-hover:translate-x-1 group-hover:text-brand-500" />
     </Link>
   )
 }
