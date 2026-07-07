@@ -13,27 +13,27 @@ const TONES = {
 export function StatCard({ label, value, icon: Icon, tone = 'brand', delta, hint }) {
   const positive = delta != null && delta >= 0
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-card transition hover:shadow-card-hover">
+    <div className="rounded-2xl border border-slate-100 bg-white/90 p-5 shadow-premium transition-all duration-300 hover:shadow-premium-hover hover:-translate-y-0.5 backdrop-blur-sm">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm font-medium text-slate-500">{label}</p>
-          <p className="mt-1.5 text-2xl font-bold tracking-tight text-slate-900">{value}</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{label}</p>
+          <p className="mt-2 text-2xl font-extrabold tracking-tight text-slate-800 font-display">{value}</p>
         </div>
         {Icon && (
-          <span className={cn('flex h-11 w-11 items-center justify-center rounded-lg', TONES[tone])}>
+          <span className={cn('flex h-11 w-11 items-center justify-center rounded-xl shadow-sm border border-slate-100/50', TONES[tone])}>
             <Icon size={20} />
           </span>
         )}
       </div>
       {(delta != null || hint) && (
-        <div className="mt-3 flex items-center gap-2 text-xs">
+        <div className="mt-4 flex items-center gap-2 text-xs">
           {delta != null && (
-            <span className={cn('inline-flex items-center gap-1 font-medium', positive ? 'text-emerald-600' : 'text-rose-600')}>
+            <span className={cn('inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-semibold', positive ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-rose-50 text-rose-600 border border-rose-100')}>
               {positive ? <TrendingUp size={13} /> : <TrendingDown size={13} />}
-              {Math.abs(delta)}%
+              {positive ? '+' : '-'}{Math.abs(delta)}%
             </span>
           )}
-          {hint && <span className="text-slate-400">{hint}</span>}
+          {hint && <span className="font-medium text-slate-400">{hint}</span>}
         </div>
       )}
     </div>

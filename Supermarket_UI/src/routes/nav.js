@@ -20,7 +20,6 @@ export const NAV = [
     section: 'Bán hàng (POS)',
     items: [
       { to: '/app/pos/sale', label: 'Bán hàng / Thanh toán', icon: ShoppingCart, roles: ['ROLE_CASHIER', 'ROLE_ADMIN'], code: '3.8.1' },
-      { to: '/app/pos/payment', label: 'Xử lý thanh toán', icon: CreditCard, roles: ['ROLE_CASHIER', 'ROLE_ADMIN'], code: '3.8.2' },
       { to: '/app/pos/shift', label: 'Ca thu ngân', icon: Receipt, roles: ['ROLE_CASHIER', 'ROLE_ADMIN'], code: '3.8.3' },
       { to: '/app/pos/members', label: 'Khách hàng thành viên', icon: Users, roles: ['ROLE_CASHIER', 'ROLE_ADMIN'], code: '3.9.1' },
       { to: '/app/pos/loyalty', label: 'Điểm thưởng', icon: Gift, roles: ['ROLE_CASHIER', 'ROLE_ADMIN'], code: '3.9.2' },

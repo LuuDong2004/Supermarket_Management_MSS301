@@ -48,14 +48,14 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen bg-slate-50/50">
       {/* ---------------- Brand panel ---------------- */}
-      <div className="relative hidden w-[55%] overflow-hidden bg-gradient-to-br from-brand-700 via-brand-600 to-indigo-900 lg:flex lg:flex-col">
+      <div className="relative hidden w-[55%] overflow-hidden bg-gradient-to-br from-emerald-800 via-emerald-600 to-teal-950 lg:flex lg:flex-col shadow-premium">
         {/* decorative blobs */}
         <div className="pointer-events-none absolute -left-24 -top-24 h-80 w-80 rounded-full bg-white/10 blur-3xl" />
-        <div className="pointer-events-none absolute bottom-0 right-0 h-96 w-96 translate-x-1/3 translate-y-1/3 rounded-full bg-indigo-400/20 blur-3xl" />
+        <div className="pointer-events-none absolute bottom-0 right-0 h-96 w-96 translate-x-1/3 translate-y-1/3 rounded-full bg-emerald-400/20 blur-3xl" />
         <div
-          className="pointer-events-none absolute inset-0 opacity-[0.07]"
+          className="pointer-events-none absolute inset-0 opacity-[0.05]"
           style={{
             backgroundImage:
               'linear-gradient(white 1px, transparent 1px), linear-gradient(90deg, white 1px, transparent 1px)',
@@ -64,43 +64,43 @@ export default function Login() {
         />
 
         <div className="relative flex h-full flex-col justify-between p-12 text-white">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/15 text-2xl font-extrabold shadow-lg backdrop-blur">
+          <div className="flex items-center gap-3.5">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/15 text-2xl font-black shadow-lg backdrop-blur border border-white/10">
               S
             </div>
             <div>
-              <p className="text-lg font-bold tracking-tight">SMS</p>
-              <p className="text-sm text-white/60">Supermarket Management System</p>
+              <p className="text-lg font-black tracking-wide font-display">SMS</p>
+              <p className="text-xs text-emerald-100/70 font-medium">Supermarket Management System</p>
             </div>
           </div>
 
           <div className="max-w-lg">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white/80 backdrop-blur">
-              <Sparkles size={13} /> Nền tảng quản lý siêu thị hợp nhất
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3.5 py-1 text-xs font-semibold text-emerald-50 backdrop-blur border border-white/5">
+              <Sparkles size={13} className="text-emerald-300 animate-pulse" /> Nền tảng quản lý siêu thị hợp nhất
             </span>
-            <h2 className="mt-5 text-4xl font-bold leading-tight tracking-tight">
+            <h2 className="mt-5 text-4xl font-extrabold leading-tight tracking-tight font-display text-white">
               Vận hành siêu thị<br />thông minh &amp; hiện đại.
             </h2>
-            <p className="mt-4 text-base leading-relaxed text-white/70">
-              Hợp nhất bán hàng, kho vận, nhân sự và báo cáo điều hành trong một hệ thống duy nhất.
+            <p className="mt-4 text-sm leading-relaxed text-emerald-100/80">
+              Hợp nhất bán hàng, kho vận, nhân sự và báo cáo điều hành trong một hệ thống duy nhất, tối ưu hiệu suất tối đa.
             </p>
 
             <div className="mt-8 space-y-3">
               {FEATURES.map((f) => (
-                <div key={f.title} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3 backdrop-blur transition hover:bg-white/10">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/15 text-white">
-                    <f.icon size={19} />
+                <div key={f.title} className="flex items-center gap-3.5 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur transition-all duration-300 hover:bg-white/10 hover:translate-x-1">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/15 text-white shadow-sm">
+                    <f.icon size={20} />
                   </span>
                   <div>
-                    <p className="text-sm font-semibold">{f.title}</p>
-                    <p className="text-xs text-white/60">{f.text}</p>
+                    <p className="text-sm font-bold tracking-wide font-display">{f.title}</p>
+                    <p className="text-xs text-emerald-100/60 mt-0.5">{f.text}</p>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="flex items-center justify-between text-sm text-white/50">
+          <div className="flex items-center justify-between text-xs text-emerald-100/40 font-medium tracking-wide">
             <span>MSS301 · SE1913 · JV Group 4</span>
             <span>© 2026 SMS</span>
           </div>
@@ -109,26 +109,26 @@ export default function Login() {
 
       {/* ---------------- Form panel ---------------- */}
       <div className="flex w-full items-center justify-center px-6 py-10 lg:w-[45%]">
-        <div className="w-full max-w-[380px]">
+        <div className="w-full max-w-[390px]">
           {/* mobile brand */}
           <div className="mb-8 flex items-center gap-3 lg:hidden">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-600 text-xl font-extrabold text-white">S</div>
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-brand-600 to-brand-500 text-xl font-extrabold text-white shadow-premium">S</div>
             <div>
-              <p className="font-bold text-slate-900">SMS</p>
-              <p className="text-xs text-slate-400">Supermarket Management</p>
+              <p className="font-extrabold text-slate-800 font-display tracking-wide">SMS</p>
+              <p className="text-[10px] text-slate-400 font-bold uppercase">Supermarket Management</p>
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-card-hover">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Chào mừng trở lại 👋</h1>
-            <p className="mt-1.5 text-sm text-slate-500">Đăng nhập bằng tài khoản nhân viên để tiếp tục.</p>
+          <div className="rounded-2xl border border-slate-100 bg-white p-8 shadow-premium backdrop-blur-sm">
+            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 font-display">Chào mừng trở lại 👋</h1>
+            <p className="mt-1.5 text-xs text-slate-400 font-medium">Đăng nhập bằng tài khoản nhân viên để tiếp tục.</p>
 
             <form onSubmit={submit} className="mt-7 space-y-4">
               <Field label="Tên đăng nhập" required>
                 <div className="relative">
-                  <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                   <Input
-                    className="pl-9"
+                    className="pl-10"
                     placeholder="vd: cashier"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
@@ -140,10 +140,10 @@ export default function Login() {
 
               <Field label="Mật khẩu" required>
                 <div className="relative">
-                  <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                   <Input
                     type={showPwd ? 'text' : 'password'}
-                    className="pl-9 pr-10"
+                    className="pl-10 pr-10"
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -152,7 +152,7 @@ export default function Login() {
                   <button
                     type="button"
                     onClick={() => setShowPwd((s) => !s)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-1 text-slate-400 hover:text-slate-600"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 rounded-lg p-1 text-slate-400 hover:text-slate-600 transition-colors"
                     tabIndex={-1}
                     aria-label={showPwd ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                   >
@@ -161,25 +161,25 @@ export default function Login() {
                 </div>
               </Field>
 
-              <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center justify-between text-xs font-semibold">
                 <label className="flex cursor-pointer items-center gap-2 text-slate-500">
-                  <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500/30" />
+                  <input type="checkbox" className="h-4 w-4 rounded-md border-slate-200 text-brand-600 focus:ring-brand-500/10" />
                   Ghi nhớ đăng nhập
                 </label>
-                <a href="#" onClick={(e) => e.preventDefault()} className="font-medium text-brand-600 hover:text-brand-700">
+                <a href="#" onClick={(e) => e.preventDefault()} className="font-bold text-brand-600 hover:text-brand-700">
                   Quên mật khẩu?
                 </a>
               </div>
 
-              <Button type="submit" size="lg" className="w-full" loading={loading} icon={ArrowRight}>
+              <Button type="submit" size="lg" className="w-full font-bold" loading={loading} icon={ArrowRight}>
                 Đăng nhập
               </Button>
             </form>
 
-            <div className="my-6 flex items-center gap-3 text-xs text-slate-400">
-              <span className="h-px flex-1 bg-slate-200" />
+            <div className="my-6 flex items-center gap-3 text-[10px] font-bold tracking-wider text-slate-400/80">
+              <span className="h-px flex-1 bg-slate-100" />
               ĐĂNG NHẬP NHANH (DEMO)
-              <span className="h-px flex-1 bg-slate-200" />
+              <span className="h-px flex-1 bg-slate-100" />
             </div>
 
             <div className="grid grid-cols-2 gap-2.5">
@@ -188,19 +188,19 @@ export default function Login() {
                   key={q.u}
                   type="button"
                   onClick={() => quick(q.u)}
-                  className="group flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left transition hover:border-brand-300 hover:bg-brand-50"
+                  className="group flex items-center gap-2.5 rounded-xl border border-slate-100 bg-white p-2.5 text-left transition-all duration-300 hover:border-brand-200 hover:bg-brand-50/50 hover:shadow-premium-hover active:scale-95"
                 >
-                  <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition group-hover:bg-brand-600 group-hover:text-white">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-slate-500 transition-all duration-300 group-hover:bg-brand-600 group-hover:text-white group-hover:shadow-sm">
                     <q.icon size={15} />
                   </span>
                   <span>
-                    <span className="block text-sm font-semibold text-slate-700 group-hover:text-brand-700">{q.label}</span>
-                    <span className="block text-[11px] text-slate-400">@{q.u}</span>
+                    <span className="block text-xs font-bold text-slate-700 tracking-wide font-display group-hover:text-brand-700">{q.label}</span>
+                    <span className="block text-[10px] text-slate-400/80 font-medium">@{q.u}</span>
                   </span>
                 </button>
               ))}
             </div>
-            <p className="mt-3 text-center text-xs text-slate-400">Mật khẩu demo: <span className="font-medium text-slate-500">password</span></p>
+            <p className="mt-3.5 text-center text-[10px] text-slate-400/70 font-semibold">Mật khẩu demo: <span className="font-bold text-slate-500">password</span></p>
           </div>
         </div>
       </div>

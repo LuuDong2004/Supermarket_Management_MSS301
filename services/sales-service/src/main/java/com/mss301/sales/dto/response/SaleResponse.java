@@ -12,6 +12,7 @@ public record SaleResponse(
         Integer items,
         BigDecimal total,
         String payment,
+        String status,
         Instant createdAt,
         Instant updatedAt
 ) {

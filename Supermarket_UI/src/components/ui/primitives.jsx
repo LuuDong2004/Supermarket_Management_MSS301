@@ -3,16 +3,17 @@ import { Loader2 } from 'lucide-react'
 
 /* ------------------------------ Button ------------------------------ */
 const BTN_VARIANTS = {
-  primary: 'bg-brand-600 text-white hover:bg-brand-700 shadow-sm',
-  secondary: 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50',
-  ghost: 'text-slate-600 hover:bg-slate-100',
-  danger: 'bg-rose-600 text-white hover:bg-rose-700 shadow-sm',
-  success: 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm',
+  primary: 'bg-gradient-to-r from-brand-600 to-brand-500 text-white hover:from-brand-700 hover:to-brand-600 shadow-premium focus:ring-brand-500/20',
+  secondary: 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:border-slate-300 focus:ring-slate-500/10',
+  ghost: 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 focus:ring-slate-500/5',
+  danger: 'bg-gradient-to-r from-rose-600 to-rose-500 text-white hover:from-rose-700 hover:to-rose-600 shadow-premium focus:ring-rose-500/20',
+  success: 'bg-gradient-to-r from-emerald-600 to-emerald-500 text-white hover:from-emerald-700 hover:to-emerald-600 shadow-premium focus:ring-emerald-500/20',
 }
+
 const BTN_SIZES = {
-  sm: 'px-2.5 py-1.5 text-xs gap-1.5',
-  md: 'px-3.5 py-2 text-sm gap-2',
-  lg: 'px-5 py-2.5 text-sm gap-2',
+  sm: 'px-3 py-1.5 text-xs gap-1.5 rounded-lg',
+  md: 'px-4 py-2.5 text-sm gap-2 rounded-xl',
+  lg: 'px-6 py-3.5 text-sm font-semibold gap-2.5 rounded-xl',
 }
 
 export function Button({
@@ -27,7 +28,7 @@ export function Button({
   return (
     <button
       className={cn(
-        'inline-flex items-center justify-center rounded-lg font-medium transition disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-brand-500/30',
+        'inline-flex items-center justify-center font-medium transition-all duration-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100 focus:outline-none focus:ring-4',
         BTN_VARIANTS[variant],
         BTN_SIZES[size],
         className,
@@ -42,9 +43,16 @@ export function Button({
 }
 
 /* ------------------------------ Card -------------------------------- */
-export function Card({ className, children, ...props }) {
+export function Card({ className, children, hoverEffect = false, ...props }) {
   return (
-    <div className={cn('rounded-xl border border-slate-200 bg-white shadow-card', className)} {...props}>
+    <div
+      className={cn(
+        'rounded-2xl border border-slate-100 bg-white/90 shadow-premium backdrop-blur-sm transition-all duration-300',
+        hoverEffect && 'hover:shadow-premium-hover hover:-translate-y-0.5',
+        className
+      )}
+      {...props}
+    >
       {children}
     </div>
   )
@@ -52,43 +60,43 @@ export function Card({ className, children, ...props }) {
 
 export function CardHeader({ title, subtitle, action, icon: Icon, className }) {
   return (
-    <div className={cn('flex items-start justify-between gap-3 border-b border-slate-100 px-5 py-4', className)}>
-      <div className="flex items-start gap-3">
+    <div className={cn('flex items-start justify-between gap-3 border-b border-slate-100/80 px-6 py-4.5', className)}>
+      <div className="flex items-start gap-3.5">
         {Icon && (
-          <span className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
-            <Icon size={18} />
+          <span className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600 shadow-sm border border-brand-100/50">
+            <Icon size={20} />
           </span>
         )}
         <div>
-          <h3 className="font-semibold text-slate-800">{title}</h3>
-          {subtitle && <p className="text-sm text-slate-500">{subtitle}</p>}
+          <h3 className="text-base font-bold text-slate-800 tracking-tight font-display">{title}</h3>
+          {subtitle && <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>}
         </div>
       </div>
-      {action}
+      {action && <div className="flex items-center">{action}</div>}
     </div>
   )
 }
 
 export function CardBody({ className, children }) {
-  return <div className={cn('p-5', className)}>{children}</div>
+  return <div className={cn('p-6', className)}>{children}</div>
 }
 
 /* ------------------------------ Badge ------------------------------- */
 const BADGE_TONES = {
-  slate: 'bg-slate-100 text-slate-700',
-  brand: 'bg-brand-50 text-brand-700',
-  green: 'bg-emerald-50 text-emerald-700',
-  amber: 'bg-amber-50 text-amber-700',
-  red: 'bg-rose-50 text-rose-700',
-  blue: 'bg-sky-50 text-sky-700',
-  violet: 'bg-violet-50 text-violet-700',
+  slate: 'bg-slate-100 text-slate-700 border-slate-200/50',
+  brand: 'bg-brand-50 text-brand-700 border-brand-100',
+  green: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+  amber: 'bg-amber-50 text-amber-700 border-amber-100',
+  red: 'bg-rose-50 text-rose-700 border-rose-100',
+  blue: 'bg-sky-50 text-sky-700 border-sky-100',
+  violet: 'bg-violet-50 text-violet-700 border-violet-100',
 }
 
 export function Badge({ tone = 'slate', children, className, dot }) {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium',
+        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium shadow-sm/5',
         BADGE_TONES[tone],
         className,
       )}
@@ -113,16 +121,16 @@ export function StatusBadge({ status }) {
 /* ----------------------------- Form fields -------------------------- */
 export function Field({ label, hint, required, error, children, className }) {
   return (
-    <label className={cn('block', className)}>
+    <div className={cn('block w-full', className)}>
       {label && (
-        <span className="mb-1.5 block text-sm font-medium text-slate-700">
+        <label className="mb-1.5 block text-sm font-semibold text-slate-700 tracking-tight">
           {label} {required && <span className="text-rose-500">*</span>}
-        </span>
+        </label>
       )}
       {children}
-      {hint && !error && <span className="mt-1 block text-xs text-slate-400">{hint}</span>}
-      {error && <span className="mt-1 block text-xs text-rose-500">{error}</span>}
-    </label>
+      {hint && !error && <span className="mt-1.5 block text-xs text-slate-400">{hint}</span>}
+      {error && <span className="mt-1.5 block text-xs text-rose-500 font-medium">{error}</span>}
+    </div>
   )
 }
 
@@ -131,29 +139,36 @@ export function Input({ className, ...props }) {
 }
 
 export function Textarea({ className, ...props }) {
-  return <textarea className={cn('input-base resize-y', className)} {...props} />
+  return <textarea className={cn('input-base resize-y min-h-[100px]', className)} {...props} />
 }
 
 export function Select({ className, children, ...props }) {
   return (
-    <select className={cn('input-base appearance-none pr-8', className)} {...props}>
-      {children}
-    </select>
+    <div className="relative w-full">
+      <select className={cn('input-base appearance-none pr-10', className)} {...props}>
+        {children}
+      </select>
+      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-slate-400">
+        <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+          <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+        </svg>
+      </div>
+    </div>
   )
 }
 
 /* ----------------------------- Misc --------------------------------- */
 export function EmptyState({ icon: Icon, title, subtitle, action }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-2 px-4 py-12 text-center">
+    <div className="flex flex-col items-center justify-center gap-3 px-6 py-14 text-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/50">
       {Icon && (
-        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">
-          <Icon size={22} />
+        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-sm border border-slate-100 text-slate-400">
+          <Icon size={24} className="text-slate-500" />
         </span>
       )}
-      <p className="font-medium text-slate-700">{title}</p>
-      {subtitle && <p className="max-w-sm text-sm text-slate-500">{subtitle}</p>}
-      {action && <div className="mt-2">{action}</div>}
+      <p className="font-bold text-slate-700 font-display text-base mt-2">{title}</p>
+      {subtitle && <p className="max-w-xs text-xs text-slate-400 mt-1">{subtitle}</p>}
+      {action && <div className="mt-4">{action}</div>}
     </div>
   )
 }
@@ -163,5 +178,5 @@ export function Spinner({ className }) {
 }
 
 export function Divider({ className }) {
-  return <div className={cn('my-4 h-px bg-slate-100', className)} />
+  return <div className={cn('my-5 h-px bg-slate-100', className)} />
 }
