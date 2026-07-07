@@ -1,41 +1,50 @@
-import { useState, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { PageHeader, FilterBar } from '../../components/ui/PageHeader.jsx'
-import { Card, CardHeader, CardBody, Button, Badge, Field, Input, Select, Divider } from '../../components/ui/primitives.jsx'
+import { Card, CardHeader, CardBody, Button, Badge, Field, Input, Select, Divider, Spinner } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { StatCard } from '../../components/ui/StatCard.jsx'
 import { Modal } from '../../components/ui/Modal.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { formatCurrency, formatNumber, formatDate } from '../../lib/format.js'
-import * as db from '../../mock/db.js'
+import { customerService, withFallback, toList, mockCustomers } from '../../services/index.js'
 import { Search, UserPlus, Users, Crown, Star, Phone, Mail, Gift } from 'lucide-react'
 
 const TIER_TONE = { Platinum: 'violet', Gold: 'amber', Silver: 'slate', Member: 'blue' }
 
 export default function Members() {
   const toast = useToast()
-  const [members, setMembers] = useState(db.customers)
+  const [members, setMembers] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [source, setSource] = useState('backend')
   const [search, setSearch] = useState('')
   const [tier, setTier] = useState('all')
   const [register, setRegister] = useState(false)
   const [detail, setDetail] = useState(null)
   const [form, setForm] = useState({ name: '', phone: '', email: '', tier: 'Member' })
 
+  const load = async () => {
+    setLoading(true)
+    const r = await withFallback(() => customerService.list(), mockCustomers)
+    setMembers(toList(r.data)); setSource(r.source); setLoading(false)
+  }
+  useEffect(() => { load() }, [])
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     return members.filter((c) => {
-      const matchQ = !q || c.name.toLowerCase().includes(q) || c.phone.includes(q)
+      const matchQ = !q || (c.name || '').toLowerCase().includes(q) || (c.phone || '').includes(q)
       const matchT = tier === 'all' || c.tier === tier
       return matchQ && matchT
     })
   }, [members, search, tier])
 
   const goldPlus = members.filter((c) => c.tier === 'Gold' || c.tier === 'Platinum').length
-  const avgPoints = members.length ? Math.round(members.reduce((s, c) => s + c.points, 0) / members.length) : 0
+  const avgPoints = members.length ? Math.round(members.reduce((s, c) => s + (c.points || 0), 0) / members.length) : 0
 
-  const submitRegister = () => {
+  const submitRegister = async () => {
     if (!form.name.trim() || !form.phone.trim()) return toast.error('Vui lòng nhập họ tên và số điện thoại.')
-    const newMember = {
-      id: `C${String(members.length + 1).padStart(3, '0')}`,
+    const payload = {
+      code: `C${String(members.length + 1).padStart(3, '0')}`,
       name: form.name.trim(),
       phone: form.phone.trim(),
       tier: form.tier,
@@ -43,10 +52,15 @@ export default function Members() {
       joined: new Date().toISOString().slice(0, 10),
       spent: 0,
     }
-    setMembers((m) => [newMember, ...m])
-    setRegister(false)
-    setForm({ name: '', phone: '', email: '', tier: 'Member' })
-    toast.success(`Đã đăng ký thành viên ${newMember.name}.`)
+    try {
+      await customerService.create(payload)
+      toast.success(`Đã đăng ký thành viên ${payload.name}.`)
+      setRegister(false)
+      setForm({ name: '', phone: '', email: '', tier: 'Member' })
+      await load()
+    } catch (e) {
+      toast.error(e.message)
+    }
   }
 
   return (
@@ -55,7 +69,14 @@ export default function Members() {
         breadcrumb="POS · 3.9.1"
         title="Khách hàng thành viên"
         subtitle="Tra cứu, đăng ký và quản lý thông tin khách hàng thành viên."
-        actions={<Button icon={UserPlus} onClick={() => setRegister(true)}>Đăng ký thành viên</Button>}
+        actions={
+          <div className="flex items-center gap-3">
+            <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
+              {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
+            </Badge>
+            <Button icon={UserPlus} onClick={() => setRegister(true)}>Đăng ký thành viên</Button>
+          </div>
+        }
       />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
@@ -82,6 +103,11 @@ export default function Members() {
         </Field>
       </FilterBar>
 
+      {loading ? (
+        <div className="flex items-center justify-center rounded-xl border border-slate-200 bg-white py-16">
+          <Spinner className="h-7 w-7" />
+        </div>
+      ) : (
       <DataTable
         rows={filtered}
         onRowClick={(r) => setDetail(r)}
@@ -100,6 +126,7 @@ export default function Members() {
           { key: 'spent', header: 'Chi tiêu', align: 'right', render: (r) => <span className="font-semibold text-slate-800">{formatCurrency(r.spent)}</span> },
         ]}
       />
+      )}
 
       {/* Register modal */}
       <Modal

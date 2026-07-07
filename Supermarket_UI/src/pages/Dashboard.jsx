@@ -1,11 +1,16 @@
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import { PageHeader } from '../components/ui/PageHeader.jsx'
 import { StatCard } from '../components/ui/StatCard.jsx'
-import { Card, CardHeader, CardBody, Button, Badge, StatusBadge } from '../components/ui/primitives.jsx'
+import { Card, CardHeader, CardBody, Button, Badge } from '../components/ui/primitives.jsx'
 import { DataTable } from '../components/ui/DataTable.jsx'
-import { AreaTrend, Donut, Bars } from '../components/ui/Charts.jsx'
+import { AreaTrend, Donut } from '../components/ui/Charts.jsx'
 import { roleLabel, formatCurrency, formatNumber } from '../lib/format.js'
+import {
+  reportService, productService, withFallback, toList,
+  mockSalesTrend, mockCategoryShare, mockProducts,
+} from '../services/index.js'
 import * as db from '../mock/db.js'
 import {
   DollarSign, ShoppingCart, Package, Users, AlertTriangle, ArrowRight,
@@ -16,13 +21,42 @@ export default function Dashboard() {
   const { user } = useAuth()
   const role = user?.role
 
-  const lowStock = db.products.filter((p) => p.stock <= 10)
+  const [salesTrend, setSalesTrend] = useState([])
+  const [categoryShare, setCategoryShare] = useState([])
+  const [lowStock, setLowStock] = useState([])
+  const [source, setSource] = useState('backend')
+
+  useEffect(() => {
+    let alive = true
+    ;(async () => {
+      const [trend, share, low] = await Promise.all([
+        withFallback(() => reportService.salesTrend(), mockSalesTrend),
+        withFallback(() => reportService.categoryShare(), mockCategoryShare),
+        withFallback(
+          () => productService.lowStock(),
+          () => mockProducts().filter((p) => (p.stock ?? p.onHand ?? 0) <= 10),
+        ),
+      ])
+      if (!alive) return
+      setSalesTrend(toList(trend.data))
+      setCategoryShare(toList(share.data))
+      setLowStock(toList(low.data))
+      // If any core source fell back, surface a demo badge.
+      setSource([trend.source, share.source, low.source].includes('mock') ? 'mock' : 'backend')
+    })()
+    return () => { alive = false }
+  }, [])
 
   return (
     <div>
       <PageHeader
         title={`Xin chào, ${user?.fullName || user?.username} 👋`}
         subtitle={`Bảng điều khiển ${roleLabel(role)} · ${new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}`}
+        actions={
+          <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
+            {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
+          </Badge>
+        }
       />
 
       {/* KPI row — varies a little by role but shared metrics are fine for a demo */}
@@ -36,11 +70,11 @@ export default function Dashboard() {
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader title="Doanh thu 7 ngày" subtitle="Triệu đồng" icon={TrendingUp} />
-          <CardBody><AreaTrend data={db.salesTrend} x="day" y="revenue" /></CardBody>
+          <CardBody><AreaTrend data={salesTrend} x="label" y="revenue" /></CardBody>
         </Card>
         <Card>
           <CardHeader title="Cơ cấu ngành hàng" icon={Boxes} />
-          <CardBody><Donut data={db.categoryShare} /></CardBody>
+          <CardBody><Donut data={categoryShare} /></CardBody>
         </Card>
       </div>
 
@@ -70,14 +104,17 @@ export default function Dashboard() {
           <CardHeader title="Cảnh báo tồn kho" icon={AlertTriangle} action={<Link to="/app/warehouse/monitor"><Button variant="ghost" size="sm">Tất cả</Button></Link>} />
           <CardBody className="space-y-3">
             {lowStock.map((p) => (
-              <div key={p.id} className="flex items-center justify-between gap-2 rounded-lg border border-slate-100 bg-slate-50/60 px-3 py-2">
+              <div key={p.id || p.code} className="flex items-center justify-between gap-2 rounded-lg border border-slate-100 bg-slate-50/60 px-3 py-2">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-slate-700">{p.name}</p>
                   <p className="text-xs text-slate-400">{p.category}</p>
                 </div>
-                <Badge tone="red">{p.stock} {p.unit}</Badge>
+                <Badge tone="red">{p.stock ?? p.onHand} {p.unit}</Badge>
               </div>
             ))}
+            {lowStock.length === 0 && (
+              <p className="rounded-lg border border-slate-100 bg-slate-50/60 px-3 py-2 text-sm text-slate-400">Không có sản phẩm dưới ngưỡng tồn kho.</p>
+            )}
           </CardBody>
         </Card>
       </div>

@@ -5,6 +5,7 @@ import com.mss301.common.dto.internal.InternalCreateUserRequest;
 import com.mss301.common.dto.internal.InternalUserResponse;
 import com.mss301.common.enums.UserStatus;
 import com.mss301.common.exception.BadRequestException;
+import com.mss301.user.dto.request.AdminUpdateUserRequest;
 import com.mss301.common.exception.ConflictException;
 import com.mss301.common.exception.ErrorCode;
 import com.mss301.common.exception.ResourceNotFoundException;
@@ -54,6 +55,20 @@ public class UserServiceImpl implements UserService {
         User user = findActive(userId);
         user.setFullName(request.fullName());
         user.setPhone(request.phone());
+        return userMapper.toResponse(user);
+    }
+
+    @Override
+    public UserResponse updateUser(UUID userId, AdminUpdateUserRequest request) {
+        User user = findActive(userId);
+        user.setFullName(request.fullName());
+        user.setPhone(request.phone());
+        if (request.role() != null) {
+            user.setRole(request.role());
+        }
+        if (request.status() != null) {
+            user.setStatus(request.status());
+        }
         return userMapper.toResponse(user);
     }
 

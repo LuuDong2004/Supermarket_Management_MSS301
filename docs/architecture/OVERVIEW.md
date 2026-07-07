@@ -6,7 +6,7 @@
 SUPERMARKET_MANAGEMENT/
 ├── services/          deployable business microservices
 ├── shared/            internal libraries (no entities, no DB)
-├── infrastructure/    registry + ops assets (docker/postgres/redis/rabbitmq/monitoring)
+├── infrastructure/    registry + ops assets (docker/mysql/redis/rabbitmq/monitoring)
 ├── docs/              architecture, api, database, diagrams
 ├── scripts/           Windows dev scripts
 ├── pom.xml            aggregator + dependency/plugin management

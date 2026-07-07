@@ -1,11 +1,11 @@
-import { useState, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { PageHeader } from '../../components/ui/PageHeader.jsx'
 import { Card, CardHeader, CardBody, Button, Badge, Field, Input, Select, Divider } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { StatCard } from '../../components/ui/StatCard.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { formatCurrency, formatNumber, formatDate } from '../../lib/format.js'
-import * as db from '../../mock/db.js'
+import { customerService, withFallback, toList, mockCustomers } from '../../services/index.js'
 import { Star, Gift, Coins, Crown, ArrowRightLeft } from 'lucide-react'
 
 const POINT_VALUE = 1000 // 1 điểm = 1.000đ
@@ -19,14 +19,25 @@ const INITIAL_HISTORY = [
 
 export default function Loyalty() {
   const toast = useToast()
-  const [memberId, setMemberId] = useState(db.customers[0].id)
+  const [customers, setCustomers] = useState([])
+  const [source, setSource] = useState('backend')
+  const [memberId, setMemberId] = useState('')
   const [redeem, setRedeem] = useState('')
   const [history, setHistory] = useState(INITIAL_HISTORY)
-  const [balances, setBalances] = useState(() =>
-    Object.fromEntries(db.customers.map((c) => [c.id, c.points])),
-  )
+  const [balances, setBalances] = useState({})
 
-  const member = db.customers.find((c) => c.id === memberId)
+  useEffect(() => {
+    ;(async () => {
+      const r = await withFallback(() => customerService.list(), mockCustomers)
+      const list = toList(r.data)
+      setCustomers(list)
+      setSource(r.source)
+      setBalances(Object.fromEntries(list.map((c) => [c.id, c.points])))
+      if (list.length) setMemberId(list[0].id)
+    })()
+  }, [])
+
+  const member = customers.find((c) => c.id === memberId)
   const balance = balances[memberId] ?? 0
 
   const redeemNum = Number(redeem) || 0
@@ -56,6 +67,11 @@ export default function Loyalty() {
         breadcrumb="POS · 3.9.2"
         title="Điểm thưởng"
         subtitle="Tra cứu số dư điểm và đổi điểm thưởng cho khách hàng thành viên."
+        actions={
+          <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
+            {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
+          </Badge>
+        }
       />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
@@ -70,7 +86,7 @@ export default function Loyalty() {
           <CardBody className="space-y-5">
             <Field label="Thành viên">
               <Select value={memberId} onChange={(e) => { setMemberId(e.target.value); setRedeem('') }}>
-                {db.customers.map((c) => (
+                {customers.map((c) => (
                   <option key={c.id} value={c.id}>{c.name} · {c.phone}</option>
                 ))}
               </Select>
