@@ -1,6 +1,5 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
-import { api, tokenStore, ApiError } from '../lib/api.js'
-import { USE_MOCK, mockLogin } from '../mock/mockApi.js'
+import { api, tokenStore } from '../lib/api.js'
 
 const AuthContext = createContext(null)
 const USER_KEY = 'sms.user'
@@ -14,7 +13,6 @@ export function AuthProvider({ children }) {
     }
   })
   const [loading, setLoading] = useState(false)
-  const [mockMode, setMockMode] = useState(false)
 
   const persist = useCallback((u) => {
     setUser(u)
@@ -24,7 +22,7 @@ export function AuthProvider({ children }) {
 
   // On boot, if we have a token but a stale user, refresh the profile.
   useEffect(() => {
-    if (tokenStore.get() && user && !user.id?.startsWith('demo-')) {
+    if (tokenStore.get() && user) {
       api.get('/users/me').then(persist).catch(() => {})
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -42,19 +40,8 @@ export function AuthProvider({ children }) {
         } catch {
           profile = { username: auth.username, role: auth.role, fullName: auth.username, id: auth.userId }
         }
-        setMockMode(false)
         persist(profile)
         return profile
-      } catch (err) {
-        // Backend unreachable → optional demo fallback so the UI is explorable.
-        if (USE_MOCK && err instanceof ApiError && (err.status === 0 || err.status >= 500)) {
-          const demo = mockLogin(username, password)
-          tokenStore.set('demo-token', 'demo-refresh')
-          setMockMode(true)
-          persist(demo)
-          return demo
-        }
-        throw err
       } finally {
         setLoading(false)
       }
@@ -64,12 +51,11 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(() => {
     const refresh = tokenStore.getRefresh()
-    if (refresh && refresh !== 'demo-refresh') {
+    if (refresh) {
       api.post('/auth/logout', { refreshToken: refresh }).catch(() => {})
     }
     tokenStore.clear()
     persist(null)
-    setMockMode(false)
   }, [persist])
 
   const hasRole = useCallback((roles) => {
@@ -79,7 +65,7 @@ export function AuthProvider({ children }) {
   }, [user])
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, hasRole, mockMode }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, hasRole, mockMode: false }}>
       {children}
     </AuthContext.Provider>
   )

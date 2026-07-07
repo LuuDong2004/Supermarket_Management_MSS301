@@ -24,7 +24,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/monitoring")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN')")
+@PreAuthorize("hasAnyRole('ADMIN','CEO')")
 public class MonitoringController {
 
     private final MonitoringService monitoringService;

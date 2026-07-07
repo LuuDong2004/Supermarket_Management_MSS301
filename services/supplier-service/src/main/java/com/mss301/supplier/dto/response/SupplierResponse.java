@@ -13,6 +13,7 @@ public record SupplierResponse(
         BigDecimal rating,
         String status,
         String terms,
+        String imageUrl,
         Instant createdAt,
         Instant updatedAt
 ) {

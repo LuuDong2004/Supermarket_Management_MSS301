@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
@@ -64,6 +66,14 @@ public class EmployeeController {
     public ApiResponse<EmployeeResponse> update(@PathVariable UUID id,
                                                 @Valid @RequestBody EmployeeRequest request) {
         return ApiResponse.success("Employee updated", employeeService.update(id, request));
+    }
+
+    @Operation(summary = "Upload an employee avatar image")
+    @PreAuthorize("hasAnyRole('ADMIN','CEO')")
+    @PostMapping(value = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponse<EmployeeResponse> uploadImage(@PathVariable UUID id,
+                                                     @RequestParam("file") MultipartFile file) {
+        return ApiResponse.success("Image uploaded", employeeService.uploadImage(id, file));
     }
 
     @Operation(summary = "Soft delete an employee")

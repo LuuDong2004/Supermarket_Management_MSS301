@@ -15,15 +15,15 @@ export function toList(res) {
   return res ?? []
 }
 
-// Run an API call; on any failure (network/backend down/4xx) fall back to `mock`.
-// Returns { data, source } where source is 'backend' | 'mock'.
-export async function withFallback(call, mock) {
+// Backend-only fetch. Demo/mock fallbacks were removed — on error the caller
+// gets an empty result (never fake data). Returns { data, source } where
+// source is 'backend' on success or 'error' on failure.
+export async function withFallback(call) {
   try {
-    const data = await call()
-    return { data, source: 'backend' }
+    return { data: await call(), source: 'backend' }
   } catch (err) {
-    const fallback = typeof mock === 'function' ? mock() : mock
-    return { data: fallback, source: 'mock', error: err }
+    console.error('[api] request failed:', err?.message || err)
+    return { data: [], source: 'error', error: err }
   }
 }
 
@@ -218,4 +218,6 @@ export const settingService = {
   remove: (id) => api.delete(`/settings/${id}`),
 }
 
+// Legacy no-op mock symbols kept only so existing pages' imports resolve.
+// They are never invoked (withFallback no longer takes a fallback argument).
 export * from './fallback.js'

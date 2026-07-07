@@ -33,6 +33,10 @@
             <groupId>com.mss301</groupId>
             <artifactId>event-lib</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.mss301</groupId>
+            <artifactId>storage-lib</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>

@@ -8,10 +8,8 @@ import { DataTable } from '../components/ui/DataTable.jsx'
 import { AreaTrend, Donut } from '../components/ui/Charts.jsx'
 import { roleLabel, formatCurrency, formatNumber } from '../lib/format.js'
 import {
-  reportService, productService, withFallback, toList,
-  mockSalesTrend, mockCategoryShare, mockProducts,
+  reportService, productService, saleService, withFallback, toList,
 } from '../services/index.js'
-import * as db from '../mock/db.js'
 import {
   DollarSign, ShoppingCart, Package, Users, AlertTriangle, ArrowRight,
   TrendingUp, Boxes, ClipboardList, Activity,
@@ -24,25 +22,33 @@ export default function Dashboard() {
   const [salesTrend, setSalesTrend] = useState([])
   const [categoryShare, setCategoryShare] = useState([])
   const [lowStock, setLowStock] = useState([])
+  const [recentSales, setRecentSales] = useState([])
+  const [productCount, setProductCount] = useState(0)
+  const [kpi, setKpi] = useState({ revenue: 0, orders: 0 })
   const [source, setSource] = useState('backend')
 
   useEffect(() => {
     let alive = true
     ;(async () => {
-      const [trend, share, low] = await Promise.all([
-        withFallback(() => reportService.salesTrend(), mockSalesTrend),
-        withFallback(() => reportService.categoryShare(), mockCategoryShare),
-        withFallback(
-          () => productService.lowStock(),
-          () => mockProducts().filter((p) => (p.stock ?? p.onHand ?? 0) <= 10),
-        ),
+      const [prod, trend, share, low, sales] = await Promise.all([
+        withFallback(() => productService.list({ size: 1 })),
+        withFallback(() => reportService.salesTrend()),
+        withFallback(() => reportService.categoryShare()),
+        withFallback(() => productService.lowStock()),
+        withFallback(() => saleService.list()),
       ])
       if (!alive) return
+      setProductCount(prod.data?.totalElements ?? toList(prod.data).length)
       setSalesTrend(toList(trend.data))
       setCategoryShare(toList(share.data))
       setLowStock(toList(low.data))
-      // If any core source fell back, surface a demo badge.
-      setSource([trend.source, share.source, low.source].includes('mock') ? 'mock' : 'backend')
+      const saleRows = toList(sales.data)
+      setRecentSales(saleRows.slice(0, 8))
+      setKpi({
+        revenue: saleRows.reduce((s, x) => s + Number(x.total || 0), 0),
+        orders: saleRows.length,
+      })
+      setSource([prod, trend, share, low, sales].some((r) => r.source !== 'backend') ? 'error' : 'backend')
     })()
     return () => { alive = false }
   }, [])
@@ -54,16 +60,16 @@ export default function Dashboard() {
         subtitle={`Bảng điều khiển ${roleLabel(role)} · ${new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}`}
         actions={
           <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-            {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
+            {source === 'backend' ? 'Dữ liệu backend' : 'Lỗi tải dữ liệu'}
           </Badge>
         }
       />
 
       {/* KPI row — varies a little by role but shared metrics are fine for a demo */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Doanh thu hôm nay" value={formatCurrency(28_640_000, { compact: true })} icon={DollarSign} tone="green" delta={12} hint="so với hôm qua" />
-        <StatCard label="Đơn hàng" value={formatNumber(184)} icon={ShoppingCart} tone="brand" delta={8} hint="hôm nay" />
-        <StatCard label="Sản phẩm" value={formatNumber(db.products.length)} icon={Package} tone="blue" hint="đang kinh doanh" />
+        <StatCard label="Doanh thu gần đây" value={formatCurrency(kpi.revenue, { compact: true })} icon={DollarSign} tone="green" hint="từ giao dịch gần đây" />
+        <StatCard label="Đơn hàng" value={formatNumber(kpi.orders)} icon={ShoppingCart} tone="brand" hint="giao dịch gần đây" />
+        <StatCard label="Sản phẩm" value={formatNumber(productCount)} icon={Package} tone="blue" hint="đang kinh doanh" />
         <StatCard label="Tồn kho thấp" value={formatNumber(lowStock.length)} icon={AlertTriangle} tone="red" hint="cần nhập thêm" />
       </div>
 
@@ -88,10 +94,11 @@ export default function Dashboard() {
           <CardBody className="p-0">
             <DataTable
               className="rounded-none border-0 shadow-none"
-              rows={db.recentSales}
+              rows={recentSales}
+              empty={{ title: 'Chưa có giao dịch', subtitle: 'Chưa có hóa đơn nào gần đây.' }}
               columns={[
-                { key: 'id', header: 'Hóa đơn', render: (r) => <span className="font-mono text-xs">{r.id}</span> },
-                { key: 'time', header: 'Giờ' },
+                { key: 'code', header: 'Hóa đơn', render: (r) => <span className="font-mono text-xs">{r.code}</span> },
+                { key: 'saleTime', header: 'Giờ', render: (r) => r.saleTime },
                 { key: 'items', header: 'SP', align: 'center' },
                 { key: 'payment', header: 'Thanh toán', render: (r) => <Badge tone="slate">{r.payment}</Badge> },
                 { key: 'total', header: 'Tổng', align: 'right', render: (r) => <span className="font-semibold">{formatCurrency(r.total)}</span> },

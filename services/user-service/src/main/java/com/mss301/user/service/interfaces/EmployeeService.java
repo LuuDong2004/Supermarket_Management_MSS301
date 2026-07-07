@@ -4,6 +4,7 @@ import com.mss301.response.PageResponse;
 import com.mss301.user.dto.request.EmployeeRequest;
 import com.mss301.user.dto.response.EmployeeResponse;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
@@ -16,6 +17,8 @@ public interface EmployeeService {
     EmployeeResponse create(EmployeeRequest request);
 
     EmployeeResponse update(UUID id, EmployeeRequest request);
+
+    EmployeeResponse uploadImage(UUID id, MultipartFile file);
 
     void softDelete(UUID id);
 }

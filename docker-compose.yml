@@ -69,8 +69,8 @@ services:
     environment:
       SERVER_PORT: 8081
       DB_URL: jdbc:mysql://mysql:3306/auth_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=utf8
-      DB_USERNAME: ${MYSQL_USER}
-      DB_PASSWORD: ${MYSQL_PASSWORD}
+      DB_USERNAME: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
       JWT_SECRET: ${JWT_SECRET}
       JWT_ACCESS_MINUTES: ${JWT_ACCESS_MINUTES}
@@ -94,10 +94,14 @@ services:
     environment:
       SERVER_PORT: 8082
       DB_URL: jdbc:mysql://mysql:3306/user_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=utf8
-      DB_USERNAME: ${MYSQL_USER}
-      DB_PASSWORD: ${MYSQL_PASSWORD}
+      DB_USERNAME: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
       INTERNAL_API_KEY: ${INTERNAL_API_KEY}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_BUCKET: ${MINIO_BUCKET}
     networks:
       - mss301-net
 
@@ -116,9 +120,13 @@ services:
     environment:
       SERVER_PORT: 8083
       DB_URL: jdbc:mysql://mysql:3306/product_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=utf8
-      DB_USERNAME: ${MYSQL_USER}
-      DB_PASSWORD: ${MYSQL_PASSWORD}
+      DB_USERNAME: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_BUCKET: ${MINIO_BUCKET}
     networks:
       - mss301-net
 
@@ -137,8 +145,8 @@ services:
     environment:
       SERVER_PORT: 8084
       DB_URL: jdbc:mysql://mysql:3306/inventory_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=utf8
-      DB_USERNAME: ${MYSQL_USER}
-      DB_PASSWORD: ${MYSQL_PASSWORD}
+      DB_USERNAME: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
     networks:
       - mss301-net
@@ -158,8 +166,8 @@ services:
     environment:
       SERVER_PORT: 8085
       DB_URL: jdbc:mysql://mysql:3306/sales_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=utf8
-      DB_USERNAME: ${MYSQL_USER}
-      DB_PASSWORD: ${MYSQL_PASSWORD}
+      DB_USERNAME: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
     networks:
       - mss301-net
@@ -179,9 +187,13 @@ services:
     environment:
       SERVER_PORT: 8087
       DB_URL: jdbc:mysql://mysql:3306/supplier_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=utf8
-      DB_USERNAME: ${MYSQL_USER}
-      DB_PASSWORD: ${MYSQL_PASSWORD}
+      DB_USERNAME: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_BUCKET: ${MINIO_BUCKET}
     networks:
       - mss301-net
 
@@ -200,8 +212,8 @@ services:
     environment:
       SERVER_PORT: 8086
       DB_URL: jdbc:mysql://mysql:3306/reporting_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=utf8
-      DB_USERNAME: ${MYSQL_USER}
-      DB_PASSWORD: ${MYSQL_PASSWORD}
+      DB_USERNAME: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
     networks:
       - mss301-net
@@ -221,8 +233,8 @@ services:
     environment:
       SERVER_PORT: 8088
       DB_URL: jdbc:mysql://mysql:3306/notification_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=utf8
-      DB_USERNAME: ${MYSQL_USER}
-      DB_PASSWORD: ${MYSQL_PASSWORD}
+      DB_USERNAME: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
     networks:
       - mss301-net

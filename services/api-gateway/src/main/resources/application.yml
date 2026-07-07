@@ -2,6 +2,9 @@ server:
   port: ${SERVER_PORT:8080}
 
 spring:
+  codec:
+    # Allow proxying multipart image uploads up to 10MB through the gateway.
+    max-in-memory-size: 10MB
   application:
     name: api-gateway
   cloud:
