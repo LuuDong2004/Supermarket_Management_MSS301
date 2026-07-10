@@ -9,6 +9,7 @@ import com.mss301.user.dto.request.UpdateProfileRequest;
 import com.mss301.user.dto.response.UserResponse;
 import com.mss301.user.service.interfaces.UserService;
 import com.mss301.user.util.SecurityUtils;
+import com.mss301.common.enums.UserStatus;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -87,6 +88,34 @@ public class UserController {
     public ApiResponse<UserResponse> update(@PathVariable UUID id,
                                             @Valid @RequestBody AdminUpdateUserRequest request) {
         return ApiResponse.success("User updated", userService.updateUser(id, request));
+    }
+
+    @Operation(summary = "Lock a user account (admin)")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    @PostMapping("/{id}/lock")
+    public ApiResponse<UserResponse> lock(@PathVariable UUID id) {
+        return ApiResponse.success("User locked", userService.updateStatus(id, UserStatus.LOCKED));
+    }
+
+    @Operation(summary = "Unlock a user account (admin)")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    @PostMapping("/{id}/unlock")
+    public ApiResponse<UserResponse> unlock(@PathVariable UUID id) {
+        return ApiResponse.success("User unlocked", userService.updateStatus(id, UserStatus.ACTIVE));
+    }
+
+    @Operation(summary = "Deactivate a user account (admin)")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    @PostMapping("/{id}/deactivate")
+    public ApiResponse<UserResponse> deactivate(@PathVariable UUID id) {
+        return ApiResponse.success("User deactivated", userService.updateStatus(id, UserStatus.INACTIVE));
+    }
+
+    @Operation(summary = "Activate a user account (admin)")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    @PostMapping("/{id}/activate")
+    public ApiResponse<UserResponse> activate(@PathVariable UUID id) {
+        return ApiResponse.success("User activated", userService.updateStatus(id, UserStatus.ACTIVE));
     }
 
     @Operation(summary = "Soft delete a user (admin)")

@@ -1,13 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { PageHeader } from '../../components/ui/PageHeader.jsx'
-import { Card, CardHeader, CardBody, Button, Badge, StatusBadge, Field, Input, Divider, Spinner } from '../../components/ui/primitives.jsx'
+import { Card, CardHeader, CardBody, Button, Badge, StatusBadge, Field, Input, Textarea, Divider, Spinner } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { StatCard } from '../../components/ui/StatCard.jsx'
 import { Modal } from '../../components/ui/Modal.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { formatCurrency, formatNumber, formatDate } from '../../lib/format.js'
 import { useAuth } from '../../context/AuthContext.jsx'
-import { shiftService, withFallback, toList, mockShifts } from '../../services/index.js'
+import { shiftService, saleService, withFallback, toList, mockShifts } from '../../services/index.js'
 import { Clock, DollarSign, ShoppingCart, Banknote, Scale, LockKeyhole, Plus } from 'lucide-react'
 
 const EMPTY_SHIFT = { code: '', cashier: '', open: '', close: '', opening: 0, sales: 0, status: 'Đang mở' }
@@ -15,20 +15,24 @@ const EMPTY_SHIFT = { code: '', cashier: '', open: '', close: '', opening: 0, sa
 export default function Shift() {
   const toast = useToast()
   const { user } = useAuth()
-  const ordersInShift = 24
 
   const [shifts, setShifts] = useState([])
+  const [sales, setSales] = useState([])
   const [loading, setLoading] = useState(true)
   const [source, setSource] = useState('backend')
   const [actual, setActual] = useState('')
+  const [note, setNote] = useState('')
   const [confirm, setConfirm] = useState(false)
   const [openShift, setOpenShift] = useState(false)
   const [openForm, setOpenForm] = useState({ opening: '' })
 
   const load = async () => {
     setLoading(true)
-    const r = await withFallback(() => shiftService.list(), mockShifts)
-    setShifts(toList(r.data)); setSource(r.source); setLoading(false)
+    const [rs, rsale] = await Promise.all([
+      withFallback(() => shiftService.list(), mockShifts),
+      withFallback(() => saleService.list()),
+    ])
+    setShifts(toList(rs.data)); setSales(toList(rsale.data)); setSource(rs.source); setLoading(false)
   }
   useEffect(() => { load() }, [])
 
@@ -36,7 +40,23 @@ export default function Shift() {
   const shift = shifts.find((s) => s.status !== 'Đã đóng') || shifts[0] || EMPTY_SHIFT
   const closed = shift.status === 'Đã đóng'
 
-  const expectedCash = (shift.opening || 0) + (shift.sales || 0)
+  // Real per-shift aggregation: completed sales by this cashier since the shift opened.
+  const live = useMemo(() => {
+    if (!shift || closed) return { sales: shift.sales || 0, orders: shift.orders || 0 }
+    const openedAt = shift.createdAt ? new Date(shift.createdAt).getTime() : 0
+    const mine = sales.filter((s) =>
+      s.status === 'COMPLETED' &&
+      (s.cashier || '') === (shift.cashier || '') &&
+      (!openedAt || (s.createdAt && new Date(s.createdAt).getTime() >= openedAt)))
+    return {
+      sales: mine.reduce((sum, s) => sum + (Number(s.total) || 0), 0),
+      orders: mine.length,
+    }
+  }, [sales, shift, closed])
+
+  const shiftSales = closed ? (shift.sales || 0) : live.sales
+  const shiftOrders = closed ? (shift.orders || 0) : live.orders
+  const expectedCash = (shift.opening || 0) + shiftSales
   const actualNum = Number(actual) || 0
   const diff = actualNum - expectedCash
 
@@ -48,12 +68,15 @@ export default function Shift() {
         openAt: shift.openAt || shift.open,
         closeAt: formatDate(new Date(), true),
         opening: shift.opening || 0,
-        sales: shift.sales || 0,
+        sales: shiftSales,
+        closingActual: actualNum,
+        orders: shiftOrders,
+        varianceNote: note || null,
         status: 'Đã đóng',
       })
       setConfirm(false)
       toast.success(`Đã đóng ca ${shift.code || shift.id}. Chênh lệch ${formatCurrency(diff)}.`)
-      setActual('')
+      setActual(''); setNote('')
       await load()
     } catch (e) { toast.error(e.message) }
   }
@@ -95,8 +118,8 @@ export default function Shift() {
       />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Doanh thu ca" value={formatCurrency(shift.sales, { compact: true })} icon={DollarSign} tone="green" hint={shift.id} />
-        <StatCard label="Số đơn" value={formatNumber(ordersInShift)} icon={ShoppingCart} tone="brand" hint="đã hoàn tất" />
+        <StatCard label="Doanh thu ca" value={formatCurrency(shiftSales, { compact: true })} icon={DollarSign} tone="green" hint={shift.code || '—'} />
+        <StatCard label="Số đơn" value={formatNumber(shiftOrders)} icon={ShoppingCart} tone="brand" hint="đã hoàn tất" />
         <StatCard label="Tiền mặt dự kiến" value={formatCurrency(expectedCash, { compact: true })} icon={Banknote} tone="blue" hint="đầu ca + bán hàng" />
         <StatCard
           label="Chênh lệch"
@@ -115,7 +138,7 @@ export default function Shift() {
               <Info label="Giờ mở ca" value={shift.openAt || shift.open} />
               <Info label="Giờ đóng ca" value={shift.closeAt || shift.close || '—'} />
               <Info label="Tiền đầu ca" value={formatCurrency(shift.opening)} />
-              <Info label="Doanh thu bán hàng" value={formatCurrency(shift.sales)} />
+              <Info label="Doanh thu bán hàng" value={formatCurrency(shiftSales)} />
             </div>
 
             <Divider />
@@ -147,7 +170,7 @@ export default function Shift() {
               variant="danger"
               icon={LockKeyhole}
               className="w-full"
-              disabled={closed || !actual}
+              disabled={closed || !actual || !shift.id}
               onClick={() => setConfirm(true)}
             >
               {closed ? 'Ca đã đóng' : 'Đóng ca'}
@@ -159,7 +182,7 @@ export default function Shift() {
           <CardHeader title="Tóm tắt đối soát" icon={Scale} />
           <CardBody className="space-y-2.5 text-sm">
             <Row label="Tiền đầu ca" value={formatCurrency(shift.opening)} />
-            <Row label="Doanh thu" value={formatCurrency(shift.sales)} tone="green" />
+            <Row label="Doanh thu" value={formatCurrency(shiftSales)} tone="green" />
             <Divider className="my-3" />
             <Row label="Dự kiến trong két" value={formatCurrency(expectedCash)} />
             <Row label="Thực đếm" value={actual ? formatCurrency(actualNum) : '—'} />
@@ -210,9 +233,12 @@ export default function Shift() {
           <Row label="Chênh lệch" value={formatCurrency(diff)} bold tone={diff < 0 ? 'red' : 'green'} />
           {diff !== 0 && (
             <p className="pt-2 text-xs text-amber-600">
-              Có chênh lệch {formatCurrency(Math.abs(diff))}. Vui lòng ghi chú lý do khi đối soát với quản lý.
+              Có chênh lệch {formatCurrency(Math.abs(diff))} ({diff < 0 ? 'thiếu' : 'thừa'}). Vui lòng ghi chú lý do khi đối soát với quản lý.
             </p>
           )}
+          <Field label="Ghi chú chênh lệch" className="pt-2">
+            <Textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Lý do thừa/thiếu tiền (nếu có)..." />
+          </Field>
         </div>
       </Modal>
 

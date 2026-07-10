@@ -1,13 +1,14 @@
 import { createContext, useCallback, useContext, useState } from 'react'
-import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react'
+import { CheckCircle2, AlertCircle, AlertTriangle, Info, X } from 'lucide-react'
 import { cn } from '../../lib/cn.js'
 
 const ToastContext = createContext(null)
 
-const ICONS = { success: CheckCircle2, error: AlertCircle, info: Info }
+const ICONS = { success: CheckCircle2, error: AlertCircle, warning: AlertTriangle, info: Info }
 const STYLES = {
   success: 'border-emerald-200 bg-emerald-50 text-emerald-800',
   error: 'border-rose-200 bg-rose-50 text-rose-800',
+  warning: 'border-amber-200 bg-amber-50 text-amber-800',
   info: 'border-brand-200 bg-brand-50 text-brand-800',
 }
 
@@ -28,6 +29,7 @@ export function ToastProvider({ children }) {
   const toast = {
     success: (m) => push(m, 'success'),
     error: (m) => push(m, 'error'),
+    warning: (m) => push(m, 'warning'),
     info: (m) => push(m, 'info'),
   }
 

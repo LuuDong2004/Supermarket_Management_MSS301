@@ -1,6 +1,7 @@
 package com.mss301.supplier.controller;
 
 import com.mss301.supplier.dto.request.PurchaseOrderRequest;
+import com.mss301.supplier.dto.request.ShipRequest;
 import com.mss301.supplier.dto.response.PurchaseOrderResponse;
 import com.mss301.supplier.service.interfaces.PurchaseOrderService;
 import com.mss301.response.ApiResponse;
@@ -35,6 +36,13 @@ public class PurchaseOrderController {
     @GetMapping
     public ApiResponse<List<PurchaseOrderResponse>> list() {
         return ApiResponse.success(purchaseOrderService.list());
+    }
+
+    @Operation(summary = "List purchase orders addressed to the logged-in supplier")
+    @PreAuthorize("hasRole('SUPPLIER')")
+    @GetMapping("/mine")
+    public ApiResponse<List<PurchaseOrderResponse>> listMine() {
+        return ApiResponse.success(purchaseOrderService.listMine());
     }
 
     @Operation(summary = "Get a purchase order by id")
@@ -77,6 +85,34 @@ public class PurchaseOrderController {
     @PostMapping("/{id}/receive")
     public ApiResponse<PurchaseOrderResponse> receive(@PathVariable UUID id) {
         return ApiResponse.success("Purchase order received", purchaseOrderService.receive(id));
+    }
+
+    @Operation(summary = "Supplier confirms a purchase order")
+    @PreAuthorize("hasRole('SUPPLIER')")
+    @PostMapping("/{id}/confirm")
+    public ApiResponse<PurchaseOrderResponse> confirm(@PathVariable UUID id) {
+        return ApiResponse.success("Đã xác nhận đơn mua", purchaseOrderService.confirmBySupplier(id));
+    }
+
+    @Operation(summary = "Supplier rejects a purchase order")
+    @PreAuthorize("hasRole('SUPPLIER')")
+    @PostMapping("/{id}/reject-by-supplier")
+    public ApiResponse<PurchaseOrderResponse> rejectBySupplier(@PathVariable UUID id) {
+        return ApiResponse.success("Đã từ chối đơn mua", purchaseOrderService.rejectBySupplier(id));
+    }
+
+    @Operation(summary = "Supplier marks a purchase order as shipping")
+    @PreAuthorize("hasRole('SUPPLIER')")
+    @PostMapping("/{id}/ship")
+    public ApiResponse<PurchaseOrderResponse> ship(@PathVariable UUID id, @Valid @RequestBody(required = false) ShipRequest request) {
+        return ApiResponse.success("Đã cập nhật giao hàng", purchaseOrderService.ship(id, request));
+    }
+
+    @Operation(summary = "Supplier marks a purchase order as delivered")
+    @PreAuthorize("hasRole('SUPPLIER')")
+    @PostMapping("/{id}/deliver")
+    public ApiResponse<PurchaseOrderResponse> deliver(@PathVariable UUID id) {
+        return ApiResponse.success("Đã giao hàng", purchaseOrderService.deliver(id));
     }
 
     @Operation(summary = "Delete a purchase order")

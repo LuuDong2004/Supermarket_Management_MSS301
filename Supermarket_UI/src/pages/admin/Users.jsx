@@ -5,7 +5,7 @@ import { DataTable } from '../../components/ui/DataTable.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { roleLabel } from '../../lib/format.js'
 import { userService, withFallback, toList, mockUsers } from '../../services/index.js'
-import { Search, UserPlus, Lock, Unlock, Save, Info, RotateCcw, Trash2 } from 'lucide-react'
+import { Search, UserPlus, Lock, Unlock, Save, Info, RotateCcw, Trash2, Ban } from 'lucide-react'
 
 const ROLES = ['ROLE_CASHIER', 'ROLE_WAREHOUSE', 'ROLE_ADMIN', 'ROLE_CEO', 'ROLE_SUPPLIER']
 
@@ -105,10 +105,19 @@ export default function Users() {
     }
   }
 
-  const toggleLock = () => {
-    const locked = form.status === 'LOCKED'
-    toast.success(locked ? `Đã mở khóa ${form.fullName}.` : `Đã khóa ${form.fullName}.`)
-    setForm({ ...form, status: locked ? 'ACTIVE' : 'LOCKED' })
+  // Real account-status actions (UC-A01) — persisted via user-service endpoints.
+  const changeStatus = async (action) => {
+    if (!form.id) return
+    const verb = { lock: 'khóa', unlock: 'mở khóa', deactivate: 'vô hiệu hóa' }[action]
+    const nextStatus = { lock: 'LOCKED', unlock: 'ACTIVE', deactivate: 'INACTIVE' }[action]
+    try {
+      await userService[action](form.id)
+      toast.success(`Đã ${verb} tài khoản ${form.fullName}.`)
+      setForm({ ...form, status: nextStatus })
+      await load()
+    } catch (e) {
+      toast.error(e.message)
+    }
   }
 
   return (
@@ -216,6 +225,7 @@ export default function Users() {
                 <Select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
                   <option value="ACTIVE">ACTIVE</option>
                   <option value="LOCKED">LOCKED</option>
+                  <option value="INACTIVE">INACTIVE</option>
                 </Select>
               </Field>
               <Field label="Trạng thái phê duyệt">
@@ -228,13 +238,14 @@ export default function Users() {
               <div className="flex flex-wrap gap-2">
                 <Button icon={Save} onClick={save}>{form.id ? 'Lưu thay đổi' : 'Tạo tài khoản'}</Button>
                 {form.id && (
-                  <Button
-                    variant={form.status === 'LOCKED' ? 'success' : 'danger'}
-                    icon={form.status === 'LOCKED' ? Unlock : Lock}
-                    onClick={toggleLock}
-                  >
-                    {form.status === 'LOCKED' ? 'Mở khóa' : 'Khóa'}
-                  </Button>
+                  form.status === 'LOCKED' ? (
+                    <Button variant="success" icon={Unlock} onClick={() => changeStatus('unlock')}>Mở khóa</Button>
+                  ) : (
+                    <Button variant="danger" icon={Lock} onClick={() => changeStatus('lock')}>Khóa</Button>
+                  )
+                )}
+                {form.id && form.status !== 'INACTIVE' && (
+                  <Button variant="secondary" icon={Ban} onClick={() => changeStatus('deactivate')}>Vô hiệu hóa</Button>
                 )}
                 {form.id && <Button variant="danger" icon={Trash2} onClick={remove}>Xóa</Button>}
                 {form.id && <Button variant="ghost" onClick={newUser}>Mới</Button>}

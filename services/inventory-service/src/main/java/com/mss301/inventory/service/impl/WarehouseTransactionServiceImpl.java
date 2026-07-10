@@ -7,6 +7,7 @@ import com.mss301.inventory.dto.request.WarehouseTransactionRequest;
 import com.mss301.inventory.dto.response.WarehouseTransactionResponse;
 import com.mss301.inventory.entity.WarehouseTransaction;
 import com.mss301.inventory.mapper.InventoryMapper;
+import com.mss301.inventory.repository.InventoryItemRepository;
 import com.mss301.inventory.repository.WarehouseTransactionRepository;
 import com.mss301.inventory.service.interfaces.WarehouseTransactionService;
 import lombok.RequiredArgsConstructor;
@@ -21,10 +22,12 @@ import java.util.UUID;
 @Transactional
 public class WarehouseTransactionServiceImpl implements WarehouseTransactionService {
 
+    private static final String STATUS_PENDING = "Chờ duyệt";
     private static final String STATUS_APPROVED = "Đã duyệt";
     private static final String STATUS_REJECTED = "Từ chối";
 
     private final WarehouseTransactionRepository warehouseTransactionRepository;
+    private final InventoryItemRepository inventoryItemRepository;
     private final InventoryMapper inventoryMapper;
 
     @Override
@@ -33,6 +36,7 @@ public class WarehouseTransactionServiceImpl implements WarehouseTransactionServ
             throw new ConflictException(ErrorCode.CONFLICT, "Transaction code already exists: " + request.code());
         }
         WarehouseTransaction transaction = inventoryMapper.toEntity(request);
+        transaction.setStatus(STATUS_PENDING);
         return inventoryMapper.toResponse(warehouseTransactionRepository.save(transaction));
     }
 
@@ -63,8 +67,20 @@ public class WarehouseTransactionServiceImpl implements WarehouseTransactionServ
     @Override
     public WarehouseTransactionResponse approve(UUID id) {
         WarehouseTransaction transaction = find(id);
+        // Apply the movement to stock only on the first approval (guarded to stay idempotent).
+        if (!STATUS_APPROVED.equals(transaction.getStatus())) {
+            applyToStock(transaction);
+        }
         transaction.setStatus(STATUS_APPROVED);
         return inventoryMapper.toResponse(transaction);
+    }
+
+    // Inbound transactions add to on-hand; outbound subtract (never below zero).
+    private void applyToStock(WarehouseTransaction transaction) {
+        boolean outbound = transaction.getType() != null && transaction.getType().contains("Xuất");
+        int delta = outbound ? -transaction.getQty() : transaction.getQty();
+        inventoryItemRepository.findFirstByNameIgnoreCase(transaction.getProduct())
+                .ifPresent(item -> item.setOnHand(Math.max(0, item.getOnHand() + delta)));
     }
 
     @Override

@@ -3,6 +3,7 @@ package com.mss301.product.service.impl;
 import com.mss301.common.exception.ConflictException;
 import com.mss301.common.exception.ErrorCode;
 import com.mss301.common.exception.ResourceNotFoundException;
+import com.mss301.product.dto.internal.StockChangeRequest;
 import com.mss301.product.dto.request.ProductRequest;
 import com.mss301.product.dto.response.ProductResponse;
 import com.mss301.product.entity.Product;
@@ -92,6 +93,41 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     public List<String> categories() {
         return productRepository.findDistinctCategories();
+    }
+
+    @Override
+    public void decrementStock(StockChangeRequest request) {
+        if (request == null || request.lines() == null) {
+            return;
+        }
+        for (StockChangeRequest.StockLine line : request.lines()) {
+            if (line == null || line.code() == null || line.quantity() <= 0) {
+                continue;
+            }
+            Product product = productRepository.findByCode(line.code())
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            ErrorCode.RESOURCE_NOT_FOUND, "Product not found: " + line.code()));
+            int remaining = product.getStock() - line.quantity();
+            if (remaining < 0) {
+                throw new ConflictException(ErrorCode.CONFLICT,
+                        product.getName() + " chỉ còn " + product.getStock() + " trong kho");
+            }
+            product.setStock(remaining);
+        }
+    }
+
+    @Override
+    public void incrementStock(StockChangeRequest request) {
+        if (request == null || request.lines() == null) {
+            return;
+        }
+        for (StockChangeRequest.StockLine line : request.lines()) {
+            if (line == null || line.code() == null || line.quantity() <= 0) {
+                continue;
+            }
+            productRepository.findByCode(line.code()).ifPresent(product ->
+                    product.setStock(product.getStock() + line.quantity()));
+        }
     }
 
     @Override

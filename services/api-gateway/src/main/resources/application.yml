@@ -23,11 +23,11 @@ spring:
             - id: user-service
               uri: lb://user-service
               predicates:
-                - Path=/api/users/**,/api/employees/**,/api/attendance/**
+                - Path=/api/users/**,/api/employees/**,/api/attendance/**,/api/staff-shifts/**
             - id: product-service
               uri: lb://product-service
               predicates:
-                - Path=/api/products/**,/api/promotions/**,/api/vouchers/**
+                - Path=/api/products/**,/api/promotions/**,/api/vouchers/**,/api/categories/**
             - id: inventory-service
               uri: lb://inventory-service
               predicates:
@@ -35,11 +35,11 @@ spring:
             - id: sales-service
               uri: lb://sales-service
               predicates:
-                - Path=/api/sales/**,/api/shifts/**,/api/customers/**
+                - Path=/api/sales/**,/api/shifts/**,/api/customers/**,/api/returns/**
             - id: supplier-service
               uri: lb://supplier-service
               predicates:
-                - Path=/api/suppliers/**,/api/purchase-orders/**
+                - Path=/api/suppliers/**,/api/purchase-orders/**,/api/goods-receipts/**,/api/price-lists/**
             - id: reporting-service
               uri: lb://reporting-service
               predicates:

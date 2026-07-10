@@ -10,6 +10,7 @@ import { Forbidden, NotFound } from './pages/Errors.jsx'
 
 // POS (3.8, 3.9)
 import ProcessSale from './pages/pos/ProcessSale.jsx'
+import Returns from './pages/pos/Returns.jsx'
 import Shift from './pages/pos/Shift.jsx'
 import Members from './pages/pos/Members.jsx'
 import Loyalty from './pages/pos/Loyalty.jsx'
@@ -25,21 +26,38 @@ import Inventory from './pages/warehouse/Inventory.jsx'
 import StockCount from './pages/warehouse/StockCount.jsx'
 import Adjustments from './pages/warehouse/Adjustments.jsx'
 import ApprovalStatus from './pages/warehouse/ApprovalStatus.jsx'
+import Products from './pages/warehouse/Products.jsx'
+import GoodsReceipts from './pages/warehouse/GoodsReceipts.jsx'
+import BarcodePrint from './pages/warehouse/BarcodePrint.jsx'
 
 // HR (3.5)
 import Employees from './pages/hr/Employees.jsx'
+import StaffShifts from './pages/hr/StaffShifts.jsx'
 import Attendance from './pages/hr/Attendance.jsx'
+import Timesheet from './pages/hr/Timesheet.jsx'
 import Performance from './pages/hr/Performance.jsx'
+
+// Supplier portal (3.11)
+import MyPurchaseOrders from './pages/supplier/MyPurchaseOrders.jsx'
+import Catalog from './pages/supplier/Catalog.jsx'
+import SupplierProfile from './pages/supplier/Profile.jsx'
 
 // Admin (3.4)
 import Users from './pages/admin/Users.jsx'
 import ApprovalRequests from './pages/admin/ApprovalRequests.jsx'
 import Monitoring from './pages/admin/Monitoring.jsx'
+import Permissions from './pages/admin/Permissions.jsx'
+import SecurityAlerts from './pages/admin/SecurityAlerts.jsx'
+import Notifications from './pages/admin/Notifications.jsx'
 
 // CEO (3.3)
 import CeoReports from './pages/ceo/Reports.jsx'
 import CeoApprovals from './pages/ceo/Approvals.jsx'
 import Policies from './pages/ceo/Policies.jsx'
+import PromotionApprovals from './pages/ceo/PromotionApprovals.jsx'
+import FinancialReport from './pages/ceo/FinancialReport.jsx'
+import OperationalReport from './pages/ceo/OperationalReport.jsx'
+import StrategicDecisions from './pages/ceo/StrategicDecisions.jsx'
 
 // Reports (3.10)
 import SalesReport from './pages/reports/SalesReport.jsx'
@@ -68,6 +86,7 @@ export default function App() {
 
         {/* POS */}
         <Route path="pos/sale" element={G('/app/pos/sale', <ProcessSale />)} />
+        <Route path="pos/returns" element={G('/app/pos/returns', <Returns />)} />
         <Route path="pos/shift" element={G('/app/pos/shift', <Shift />)} />
         <Route path="pos/members" element={G('/app/pos/members', <Members />)} />
         <Route path="pos/loyalty" element={G('/app/pos/loyalty', <Loyalty />)} />
@@ -83,21 +102,36 @@ export default function App() {
         <Route path="warehouse/stock-count" element={G('/app/warehouse/stock-count', <StockCount />)} />
         <Route path="warehouse/adjustments" element={G('/app/warehouse/adjustments', <Adjustments />)} />
         <Route path="warehouse/approval-status" element={G('/app/warehouse/approval-status', <ApprovalStatus />)} />
+        <Route path="warehouse/products" element={G('/app/warehouse/products', <Products />)} />
+        <Route path="warehouse/goods-receipts" element={G('/app/warehouse/goods-receipts', <GoodsReceipts />)} />
+        <Route path="warehouse/barcode" element={G('/app/warehouse/barcode', <BarcodePrint />)} />
 
         {/* HR */}
         <Route path="hr/employees" element={G('/app/hr/employees', <Employees />)} />
+        <Route path="hr/shifts" element={G('/app/hr/shifts', <StaffShifts />)} />
         <Route path="hr/attendance" element={G('/app/hr/attendance', <Attendance />)} />
+        <Route path="hr/timesheet" element={G('/app/hr/timesheet', <Timesheet />)} />
         <Route path="hr/performance" element={G('/app/hr/performance', <Performance />)} />
+        <Route path="supplier/orders" element={G('/app/supplier/orders', <MyPurchaseOrders />)} />
+        <Route path="supplier/catalog" element={G('/app/supplier/catalog', <Catalog />)} />
+        <Route path="supplier/profile" element={G('/app/supplier/profile', <SupplierProfile />)} />
 
         {/* Admin */}
         <Route path="admin/users" element={G('/app/admin/users', <Users />)} />
         <Route path="admin/approval-requests" element={G('/app/admin/approval-requests', <ApprovalRequests />)} />
         <Route path="admin/monitoring" element={G('/app/admin/monitoring', <Monitoring />)} />
+        <Route path="admin/permissions" element={G('/app/admin/permissions', <Permissions />)} />
+        <Route path="admin/security-alerts" element={G('/app/admin/security-alerts', <SecurityAlerts />)} />
+        <Route path="admin/notifications" element={G('/app/admin/notifications', <Notifications />)} />
 
         {/* CEO */}
         <Route path="ceo/reports" element={G('/app/ceo/reports', <CeoReports />)} />
         <Route path="ceo/approvals" element={G('/app/ceo/approvals', <CeoApprovals />)} />
         <Route path="ceo/policies" element={G('/app/ceo/policies', <Policies />)} />
+        <Route path="ceo/promotions" element={G('/app/ceo/promotions', <PromotionApprovals />)} />
+        <Route path="ceo/financial" element={G('/app/ceo/financial', <FinancialReport />)} />
+        <Route path="ceo/operational" element={G('/app/ceo/operational', <OperationalReport />)} />
+        <Route path="ceo/decisions" element={G('/app/ceo/decisions', <StrategicDecisions />)} />
 
         {/* Reports */}
         <Route path="reports/sales" element={G('/app/reports/sales', <SalesReport />)} />

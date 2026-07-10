@@ -3,13 +3,17 @@ package com.mss301.reporting.service.impl;
 import com.mss301.reporting.dto.response.CategoryShareResponse;
 import com.mss301.reporting.dto.response.DashboardResponse;
 import com.mss301.reporting.dto.response.EmployeePerformanceResponse;
+import com.mss301.reporting.dto.response.FinancialReportResponse;
 import com.mss301.reporting.dto.response.MonthlyRevenueResponse;
+import com.mss301.reporting.dto.response.OperationalMetricResponse;
 import com.mss301.reporting.dto.response.SalesTrendResponse;
 import com.mss301.reporting.entity.SalesTrendPoint;
 import com.mss301.reporting.mapper.ReportingMapper;
 import com.mss301.reporting.repository.CategoryShareRepository;
 import com.mss301.reporting.repository.EmployeePerformanceRepository;
+import com.mss301.reporting.repository.FinancialReportRepository;
 import com.mss301.reporting.repository.MonthlyRevenueRepository;
+import com.mss301.reporting.repository.OperationalMetricRepository;
 import com.mss301.reporting.repository.SalesTrendPointRepository;
 import com.mss301.reporting.service.interfaces.ReportService;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +34,8 @@ public class ReportServiceImpl implements ReportService {
     private final CategoryShareRepository categoryShareRepository;
     private final EmployeePerformanceRepository employeePerformanceRepository;
     private final MonthlyRevenueRepository monthlyRevenueRepository;
+    private final FinancialReportRepository financialReportRepository;
+    private final OperationalMetricRepository operationalMetricRepository;
     private final ReportingMapper reportingMapper;
 
     @Override
@@ -56,6 +62,20 @@ public class ReportServiceImpl implements ReportService {
     @Override
     public List<MonthlyRevenueResponse> monthlyRevenue() {
         return monthlyRevenueRepository.findAllByOrderBySeqAsc().stream()
+                .map(reportingMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    public List<FinancialReportResponse> financialReport() {
+        return financialReportRepository.findAllByOrderBySeqAsc().stream()
+                .map(reportingMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    public List<OperationalMetricResponse> operationalMetrics() {
+        return operationalMetricRepository.findAllByOrderBySeqAsc().stream()
                 .map(reportingMapper::toResponse)
                 .toList();
     }

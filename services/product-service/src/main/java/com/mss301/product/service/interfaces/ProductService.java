@@ -1,5 +1,6 @@
 package com.mss301.product.service.interfaces;
 
+import com.mss301.product.dto.internal.StockChangeRequest;
 import com.mss301.product.dto.request.ProductRequest;
 import com.mss301.product.dto.response.ProductResponse;
 import com.mss301.response.PageResponse;
@@ -24,6 +25,12 @@ public interface ProductService {
     List<ProductResponse> lowStock(int threshold);
 
     List<String> categories();
+
+    /** Reduce stock for each line (POS checkout). Fails if any line lacks stock. */
+    void decrementStock(StockChangeRequest request);
+
+    /** Restore stock for each line (return / refund). */
+    void incrementStock(StockChangeRequest request);
 
     void delete(UUID id);
 }

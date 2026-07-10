@@ -4,11 +4,11 @@ import { Card, CardHeader, CardBody, Button, Badge, Field, Input, Select, Divide
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { StatCard } from '../../components/ui/StatCard.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
-import { formatCurrency, formatNumber, formatDate } from '../../lib/format.js'
+import { formatCurrency, formatNumber, formatDate, isoDate } from '../../lib/format.js'
 import { customerService, withFallback, toList, mockCustomers } from '../../services/index.js'
 import { Star, Gift, Coins, Crown, ArrowRightLeft } from 'lucide-react'
 
-const POINT_VALUE = 1000 // 1 điểm = 1.000đ
+const POINT_VALUE = 100 // 100 điểm = 10.000đ (BR-06)
 const TIER_TONE = { Platinum: 'violet', Gold: 'amber', Silver: 'slate', Member: 'blue' }
 
 const INITIAL_HISTORY = [
@@ -44,21 +44,29 @@ export default function Loyalty() {
   const redeemValue = useMemo(() => redeemNum * POINT_VALUE, [redeemNum])
   const totalRedeemed = history.reduce((s, h) => s + h.points, 0)
 
-  const doRedeem = () => {
+  const doRedeem = async () => {
     if (redeemNum <= 0) return toast.error('Vui lòng nhập số điểm cần đổi.')
+    if (redeemNum % 100 !== 0) return toast.error('Chỉ đổi điểm theo bội số của 100.')
     if (redeemNum > balance) return toast.error(`Số điểm vượt quá số dư (${formatNumber(balance)} điểm).`)
-    const entry = {
-      id: `RD-${119 + history.length}`,
-      customer: member.name,
-      points: redeemNum,
-      value: redeemValue,
-      date: new Date().toISOString().slice(0, 10),
-      note: 'Đổi điểm tại quầy',
+    if (source !== 'backend') return toast.error('Không có kết nối backend.')
+    try {
+      // Persist: deduct points on the member's real balance.
+      await customerService.adjustPoints(memberId, -redeemNum)
+      const entry = {
+        id: `RD-${119 + history.length}`,
+        customer: member.name,
+        points: redeemNum,
+        value: redeemValue,
+        date: isoDate(),
+        note: 'Đổi điểm tại quầy',
+      }
+      setHistory((h) => [entry, ...h])
+      setBalances((b) => ({ ...b, [memberId]: b[memberId] - redeemNum }))
+      setRedeem('')
+      toast.success(`Đã đổi ${formatNumber(redeemNum)} điểm (${formatCurrency(redeemValue)}).`)
+    } catch (e) {
+      toast.error(e.message || 'Không đổi được điểm.')
     }
-    setHistory((h) => [entry, ...h])
-    setBalances((b) => ({ ...b, [memberId]: b[memberId] - redeemNum }))
-    setRedeem('')
-    toast.success(`Đã đổi ${formatNumber(redeemNum)} điểm (${formatCurrency(redeemValue)}).`)
   }
 
   return (
@@ -76,7 +84,7 @@ export default function Loyalty() {
 
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
         <StatCard label="Số dư điểm" value={formatNumber(balance)} icon={Star} tone="violet" hint={member?.name} />
-        <StatCard label="Giá trị quy đổi" value={formatCurrency(balance * POINT_VALUE, { compact: true })} icon={Coins} tone="amber" hint="1 điểm = 1.000đ" />
+        <StatCard label="Giá trị quy đổi" value={formatCurrency(balance * POINT_VALUE, { compact: true })} icon={Coins} tone="amber" hint="100 điểm = 10.000đ" />
         <StatCard label="Đã đổi (kỳ này)" value={formatNumber(totalRedeemed)} icon={Gift} tone="green" hint={`${history.length} lượt`} />
       </div>
 
@@ -126,10 +134,10 @@ export default function Loyalty() {
         <Card>
           <CardHeader title="Quy tắc tích điểm" icon={Coins} />
           <CardBody className="space-y-3 text-sm">
-            <Rule label="Tỷ giá quy đổi" value="1 điểm = 1.000đ" />
-            <Rule label="Tích điểm" value="1đ / 10.000đ chi tiêu" />
+            <Rule label="Tỷ giá quy đổi" value="100 điểm = 10.000đ" />
+            <Rule label="Tích điểm" value="1 điểm / 10.000đ chi tiêu" />
             <Rule label="Hạn sử dụng điểm" value="12 tháng" />
-            <Rule label="Điểm tối thiểu để đổi" value="100 điểm" />
+            <Rule label="Đổi điểm theo bội số" value="100 điểm" />
             <div className="rounded-lg border border-slate-100 bg-slate-50/60 px-4 py-3 text-xs text-slate-500">
               Điểm thưởng có thể dùng để giảm trừ trực tiếp vào hóa đơn hoặc đổi quà tặng tại quầy.
             </div>

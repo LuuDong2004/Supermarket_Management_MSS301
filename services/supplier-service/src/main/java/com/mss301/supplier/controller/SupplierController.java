@@ -1,6 +1,7 @@
 package com.mss301.supplier.controller;
 
 import com.mss301.supplier.dto.request.SupplierRequest;
+import com.mss301.supplier.dto.request.SupplierSelfRequest;
 import com.mss301.supplier.dto.response.SupplierResponse;
 import com.mss301.supplier.service.interfaces.SupplierService;
 import com.mss301.response.ApiResponse;
@@ -41,6 +42,20 @@ public class SupplierController {
             @RequestParam(required = false) String query,
             Pageable pageable) {
         return ApiResponse.success(supplierService.search(query, pageable));
+    }
+
+    @Operation(summary = "Get the logged-in supplier's own profile")
+    @PreAuthorize("hasRole('SUPPLIER')")
+    @GetMapping("/me")
+    public ApiResponse<SupplierResponse> getMine() {
+        return ApiResponse.success(supplierService.getMine());
+    }
+
+    @Operation(summary = "Update the logged-in supplier's own profile")
+    @PreAuthorize("hasRole('SUPPLIER')")
+    @PutMapping("/me")
+    public ApiResponse<SupplierResponse> updateMine(@Valid @RequestBody SupplierSelfRequest request) {
+        return ApiResponse.success("Đã cập nhật hồ sơ", supplierService.updateMine(request));
     }
 
     @Operation(summary = "Get a supplier by id")

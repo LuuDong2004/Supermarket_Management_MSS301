@@ -2,6 +2,7 @@ package com.mss301.user.service.interfaces;
 
 import com.mss301.user.dto.request.AttendanceRequest;
 import com.mss301.user.dto.response.AttendanceResponse;
+import com.mss301.user.dto.response.TimesheetRowResponse;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -18,4 +19,7 @@ public interface AttendanceService {
     AttendanceResponse update(UUID id, AttendanceRequest request);
 
     void softDelete(UUID id);
+
+    /** Aggregated per-employee timesheet over a date range (UC-HR-03 / M09). */
+    List<TimesheetRowResponse> timesheet(LocalDate from, LocalDate to);
 }

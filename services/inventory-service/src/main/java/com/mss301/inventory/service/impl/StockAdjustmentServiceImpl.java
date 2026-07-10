@@ -5,8 +5,10 @@ import com.mss301.common.exception.ErrorCode;
 import com.mss301.common.exception.ResourceNotFoundException;
 import com.mss301.inventory.dto.request.StockAdjustmentRequest;
 import com.mss301.inventory.dto.response.StockAdjustmentResponse;
+import com.mss301.inventory.entity.InventoryItem;
 import com.mss301.inventory.entity.StockAdjustment;
 import com.mss301.inventory.mapper.InventoryMapper;
+import com.mss301.inventory.repository.InventoryItemRepository;
 import com.mss301.inventory.repository.StockAdjustmentRepository;
 import com.mss301.inventory.service.interfaces.StockAdjustmentService;
 import lombok.RequiredArgsConstructor;
@@ -21,10 +23,12 @@ import java.util.UUID;
 @Transactional
 public class StockAdjustmentServiceImpl implements StockAdjustmentService {
 
+    private static final String STATUS_PENDING = "Chờ duyệt";
     private static final String STATUS_APPROVED = "Đã duyệt";
     private static final String STATUS_REJECTED = "Từ chối";
 
     private final StockAdjustmentRepository stockAdjustmentRepository;
+    private final InventoryItemRepository inventoryItemRepository;
     private final InventoryMapper inventoryMapper;
 
     @Override
@@ -33,6 +37,8 @@ public class StockAdjustmentServiceImpl implements StockAdjustmentService {
             throw new ConflictException(ErrorCode.CONFLICT, "Adjustment code already exists: " + request.code());
         }
         StockAdjustment adjustment = inventoryMapper.toEntity(request);
+        // A new request always starts pending; only a manager approval applies it to stock.
+        adjustment.setStatus(STATUS_PENDING);
         return inventoryMapper.toResponse(stockAdjustmentRepository.save(adjustment));
     }
 
@@ -63,6 +69,10 @@ public class StockAdjustmentServiceImpl implements StockAdjustmentService {
     @Override
     public StockAdjustmentResponse approve(UUID id) {
         StockAdjustment adjustment = find(id);
+        // Apply the counted quantity as the new official on-hand stock.
+        // Setting on-hand to the absolute counted value keeps approval idempotent.
+        inventoryItemRepository.findFirstByNameIgnoreCase(adjustment.getProduct())
+                .ifPresent(item -> item.setOnHand(adjustment.getCountedQty()));
         adjustment.setStatus(STATUS_APPROVED);
         return inventoryMapper.toResponse(adjustment);
     }

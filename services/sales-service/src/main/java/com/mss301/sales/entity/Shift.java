@@ -58,6 +58,24 @@ public class Shift {
     @Column(precision = 14, scale = 2)
     private BigDecimal sales;
 
+    /** Cash the cashier declares in the drawer at close. */
+    @Column(name = "closing_actual", precision = 14, scale = 2)
+    private BigDecimal closingActual;
+
+    /** System-calculated cash = opening + sales. */
+    @Column(name = "closing_expected", precision = 14, scale = 2)
+    private BigDecimal closingExpected;
+
+    /** Overage (positive) / shortage (negative) = actual - expected. */
+    @Column(precision = 14, scale = 2)
+    private BigDecimal variance;
+
+    @Column(name = "variance_note", length = 255)
+    private String varianceNote;
+
+    /** Number of orders processed during the shift. */
+    private Integer orders;
+
     @Column(length = 20)
     private String status;
 

@@ -102,6 +102,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public UserResponse updateStatus(UUID id, UserStatus status) {
+        User user = findActive(id);
+        user.setStatus(status);
+        return userMapper.toResponse(user);
+    }
+
+    @Override
     public void softDelete(UUID id) {
         User user = findActive(id);
         userRepository.delete(user); // @SQLDelete flips the deleted flag

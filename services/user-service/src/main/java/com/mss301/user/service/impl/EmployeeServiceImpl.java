@@ -54,10 +54,16 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public EmployeeResponse create(EmployeeRequest request) {
-        if (employeeRepository.existsByCode(request.code())) {
+        Employee employee = employeeMapper.toEntity(request);
+        // BR-03: Employee ID auto-generated when not supplied.
+        if (employee.getCode() == null || employee.getCode().isBlank()) {
+            employee.setCode(generateCode());
+        } else if (employeeRepository.existsByCode(employee.getCode())) {
             throw new ConflictException(ErrorCode.CONFLICT, "Employee code already exists");
         }
-        Employee employee = employeeMapper.toEntity(request);
+        if (employee.getStatus() == null || employee.getStatus().isBlank()) {
+            employee.setStatus("Đang làm");
+        }
         return employeeMapper.toResponse(employeeRepository.save(employee));
     }
 
@@ -77,9 +83,34 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
+    public EmployeeResponse deactivate(UUID id) {
+        Employee employee = findActive(id);
+        employee.setStatus("Nghỉ việc");
+        return employeeMapper.toResponse(employeeRepository.save(employee));
+    }
+
+    @Override
+    public EmployeeResponse activate(UUID id) {
+        Employee employee = findActive(id);
+        employee.setStatus("Đang làm");
+        return employeeMapper.toResponse(employeeRepository.save(employee));
+    }
+
+    @Override
     public void softDelete(UUID id) {
         Employee employee = findActive(id);
         employeeRepository.delete(employee); // @SQLDelete flips the deleted flag
+    }
+
+    /** Generate the next unique EMP-#### code. */
+    private String generateCode() {
+        long n = employeeRepository.count() + 1;
+        String code;
+        do {
+            code = String.format("EMP-%04d", n);
+            n++;
+        } while (employeeRepository.existsByCode(code));
+        return code;
     }
 
     private Employee findActive(UUID id) {

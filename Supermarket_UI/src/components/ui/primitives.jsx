@@ -111,9 +111,9 @@ export function Badge({ tone = 'slate', children, className, dot }) {
 export function StatusBadge({ status }) {
   const s = (status || '').toLowerCase()
   let tone = 'slate'
-  if (/(up|active|đang làm|đang mở|approved|đã duyệt|đúng giờ|received|hoàn thành|đang chạy)/.test(s)) tone = 'green'
-  else if (/(pending|chờ|đi muộn|lên lịch|warn|on hold|partial)/.test(s)) tone = 'amber'
-  else if (/(down|rejected|từ chối|vắng|error|locked|khóa|hết hàng|expired)/.test(s)) tone = 'red'
+  if (/(up|active|đang làm|đang mở|approved|đã duyệt|đúng giờ|received|hoàn thành|hoàn tất|đang chạy|completed|delivered|đã hoàn|đã giao|đã xác nhận|đang bán|đã đóng)/.test(s)) tone = 'green'
+  else if (/(pending|chờ|đi muộn|lên lịch|warn|on hold|partial|đang giao|shipping|tạm nghỉ)/.test(s)) tone = 'amber'
+  else if (/(down|rejected|từ chối|vắng|error|locked|khóa|hết hàng|expired|cancelled|đã hủy|ngừng|nghỉ việc)/.test(s)) tone = 'red'
   else if (/(info|new|mới|draft)/.test(s)) tone = 'blue'
   return <Badge tone={tone} dot>{status}</Badge>
 }

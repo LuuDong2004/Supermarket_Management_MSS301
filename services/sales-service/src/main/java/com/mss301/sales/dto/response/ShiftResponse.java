@@ -12,6 +12,11 @@ public record ShiftResponse(
         String closeAt,
         BigDecimal opening,
         BigDecimal sales,
+        BigDecimal closingActual,
+        BigDecimal closingExpected,
+        BigDecimal variance,
+        String varianceNote,
+        Integer orders,
         String status,
         Instant createdAt,
         Instant updatedAt

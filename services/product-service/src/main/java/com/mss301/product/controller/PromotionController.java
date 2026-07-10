@@ -58,6 +58,20 @@ public class PromotionController {
         return ApiResponse.success("Promotion updated", promotionService.update(id, request));
     }
 
+    @Operation(summary = "Approve a promotion campaign (UC-CEO05)")
+    @PreAuthorize("hasAnyRole('CEO','ADMIN')")
+    @PostMapping("/{id}/approve")
+    public ApiResponse<PromotionResponse> approve(@PathVariable UUID id) {
+        return ApiResponse.success("Promotion approved", promotionService.approve(id));
+    }
+
+    @Operation(summary = "Reject a promotion campaign (UC-CEO05)")
+    @PreAuthorize("hasAnyRole('CEO','ADMIN')")
+    @PostMapping("/{id}/reject")
+    public ApiResponse<PromotionResponse> reject(@PathVariable UUID id) {
+        return ApiResponse.success("Promotion rejected", promotionService.reject(id));
+    }
+
     @Operation(summary = "Delete a promotion")
     @PreAuthorize("hasAnyRole('ADMIN','CEO')")
     @DeleteMapping("/{id}")

@@ -5,9 +5,12 @@ import { DataTable } from '../../components/ui/DataTable.jsx'
 import { StatCard } from '../../components/ui/StatCard.jsx'
 import { Modal } from '../../components/ui/Modal.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
-import { formatCurrency, formatNumber, formatDate, roleLabel, initials } from '../../lib/format.js'
-import { employeeService, withFallback, toList, mockEmployees } from '../../services/index.js'
-import { Users, UserCheck, Building2, Plus, Phone, Calendar, BadgeDollarSign, Search, Trash2, Pencil } from 'lucide-react'
+import { formatCurrency, formatNumber, formatDate, roleLabel, initials, isoDate } from '../../lib/format.js'
+import { employeeService, staffShiftService, withFallback, toList, mockEmployees } from '../../services/index.js'
+import { Users, UserCheck, UserX, Building2, Plus, Phone, Calendar, BadgeDollarSign, Search, Trash2, Pencil } from 'lucide-react'
+
+const todayIso = () => isoDate()
+const isInactive = (status) => (status || '').toLowerCase().includes('nghỉ')
 
 const ROLES = ['ROLE_CASHIER', 'ROLE_WAREHOUSE', 'ROLE_ADMIN', 'ROLE_CEO', 'ROLE_SUPPLIER']
 
@@ -26,14 +29,27 @@ export default function Employees() {
   const [selected, setSelected] = useState(null)
   const [form, setForm] = useState(emptyForm)
 
+  const [todayShifts, setTodayShifts] = useState([])
+
   const load = async () => {
     setLoading(true)
-    const r = await withFallback(() => employeeService.list(), mockEmployees)
+    const [r, rs] = await Promise.all([
+      withFallback(() => employeeService.list({ size: 200 }), mockEmployees),
+      withFallback(() => staffShiftService.list({ from: todayIso(), to: todayIso() })),
+    ])
     setRows(toList(r.data))
+    setTodayShifts(toList(rs.data))
     setSource(r.source)
     setLoading(false)
   }
   useEffect(() => { load() }, [])
+
+  // Today's shift per employee name, for the "Ca hôm nay" column.
+  const shiftByName = useMemo(() => {
+    const m = {}
+    todayShifts.forEach((s) => { if (s.employeeName) m[s.employeeName] = s.shiftType })
+    return m
+  }, [todayShifts])
 
   const depts = useMemo(() => [...new Set(rows.map((e) => e.dept).filter(Boolean))], [rows])
 
@@ -62,7 +78,8 @@ export default function Employees() {
 
   const save = async () => {
     const payload = {
-      code: form.code || form.id || `E-${Date.now()}`,
+      // Blank on create → backend auto-generates EMP-####.
+      code: (form.code || '').trim() || null,
       name: form.name,
       role: form.role,
       dept: form.dept,
@@ -87,6 +104,18 @@ export default function Employees() {
     try {
       await employeeService.remove(row.id)
       toast.success('Đã xóa nhân viên.')
+      setSelected(null)
+      await load()
+    } catch (e) {
+      toast.error(e.message)
+    }
+  }
+
+  const toggleActive = async (row) => {
+    try {
+      if (isInactive(row.status)) await employeeService.activate(row.id)
+      else await employeeService.deactivate(row.id)
+      toast.success(isInactive(row.status) ? `Đã kích hoạt lại ${row.name}.` : `Đã cho ${row.name} nghỉ việc.`)
       setSelected(null)
       await load()
     } catch (e) {
@@ -165,6 +194,9 @@ export default function Employees() {
             },
             { key: 'role', header: 'Vai trò', render: (r) => <Badge tone="brand">{roleLabel(r.role)}</Badge> },
             { key: 'dept', header: 'Phòng ban' },
+            { key: 'shift', header: 'Ca hôm nay', render: (r) => (
+              shiftByName[r.name] ? <Badge tone="violet">{shiftByName[r.name]}</Badge> : <span className="text-xs text-slate-300">—</span>
+            ) },
             { key: 'joined', header: 'Ngày vào', render: (r) => formatDate(r.joined) },
             { key: 'phone', header: 'Điện thoại', render: (r) => <span className="font-mono text-xs">{r.phone}</span> },
             { key: 'status', header: 'Trạng thái', render: (r) => <StatusBadge status={r.status} /> },
@@ -188,8 +220,8 @@ export default function Employees() {
       >
         <div className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Mã nhân viên">
-              <Input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="E005" disabled={!!form.id} />
+            <Field label="Mã nhân viên" hint={form.id ? undefined : 'Để trống để hệ thống tự sinh (EMP-####)'}>
+              <Input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="Tự sinh" disabled={!!form.id} />
             </Field>
             <Field label="Họ và tên" required>
               <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Nguyễn Văn..." />
@@ -236,11 +268,20 @@ export default function Employees() {
         title={selected?.name}
         subtitle={selected ? `${selected.code || selected.id} · ${roleLabel(selected.role)}` : ''}
         footer={
-          <>
-            <Button variant="danger" icon={Trash2} onClick={() => remove(selected)}>Xóa</Button>
-            <Button variant="secondary" icon={Pencil} onClick={() => openEdit(selected)}>Sửa</Button>
-            <Button variant="secondary" onClick={() => setSelected(null)}>Đóng</Button>
-          </>
+          selected && (
+            <>
+              <Button variant="danger" icon={Trash2} onClick={() => remove(selected)}>Xóa</Button>
+              <Button
+                variant={isInactive(selected.status) ? 'success' : 'secondary'}
+                icon={isInactive(selected.status) ? UserCheck : UserX}
+                onClick={() => toggleActive(selected)}
+              >
+                {isInactive(selected.status) ? 'Kích hoạt' : 'Vô hiệu hóa'}
+              </Button>
+              <Button variant="secondary" icon={Pencil} onClick={() => openEdit(selected)}>Sửa</Button>
+              <Button variant="secondary" onClick={() => setSelected(null)}>Đóng</Button>
+            </>
+          )
         }
       >
         {selected && (

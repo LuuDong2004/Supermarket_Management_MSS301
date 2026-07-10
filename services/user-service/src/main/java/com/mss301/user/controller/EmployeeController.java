@@ -76,6 +76,20 @@ public class EmployeeController {
         return ApiResponse.success("Image uploaded", employeeService.uploadImage(id, file));
     }
 
+    @Operation(summary = "Deactivate an employee (Nghỉ việc)")
+    @PreAuthorize("hasAnyRole('ADMIN','CEO','WAREHOUSE_MANAGER')")
+    @PostMapping("/{id}/deactivate")
+    public ApiResponse<EmployeeResponse> deactivate(@PathVariable UUID id) {
+        return ApiResponse.success("Employee deactivated", employeeService.deactivate(id));
+    }
+
+    @Operation(summary = "Reactivate an employee (Đang làm)")
+    @PreAuthorize("hasAnyRole('ADMIN','CEO','WAREHOUSE_MANAGER')")
+    @PostMapping("/{id}/activate")
+    public ApiResponse<EmployeeResponse> activate(@PathVariable UUID id) {
+        return ApiResponse.success("Employee activated", employeeService.activate(id));
+    }
+
     @Operation(summary = "Soft delete an employee")
     @PreAuthorize("hasAnyRole('ADMIN','CEO')")
     @DeleteMapping("/{id}")

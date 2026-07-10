@@ -29,6 +29,18 @@ export function formatPercent(value, digits = 1) {
   return `${(Number(value) || 0).toFixed(digits)}%`
 }
 
+// Local calendar date as YYYY-MM-DD (for <input type="date"> and day matching).
+// Avoids the UTC shift of Date.toISOString() which moves local midnight to the
+// previous day in positive-offset timezones (e.g. GMT+7 Vietnam).
+export function isoDate(value = new Date()) {
+  const d = value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(d.getTime())) return ''
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
 // Human role label from a ROLE_* string.
 export function roleLabel(role) {
   const map = {
@@ -36,6 +48,8 @@ export function roleLabel(role) {
     ROLE_ADMIN: 'Administrator',
     ROLE_CASHIER: 'Cashier',
     ROLE_WAREHOUSE: 'Warehouse',
+    ROLE_WAREHOUSE_MANAGER: 'Warehouse Manager',
+    ROLE_WAREHOUSE_STAFF: 'Warehouse Staff',
     ROLE_SUPPLIER: 'Supplier',
   }
   return map[role] || role || '—'

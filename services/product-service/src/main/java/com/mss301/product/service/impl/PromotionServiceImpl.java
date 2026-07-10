@@ -58,6 +58,20 @@ public class PromotionServiceImpl implements PromotionService {
     }
 
     @Override
+    public PromotionResponse approve(UUID id) {
+        Promotion promotion = find(id);
+        promotion.setStatus("Đã duyệt");
+        return productMapper.toResponse(promotion);
+    }
+
+    @Override
+    public PromotionResponse reject(UUID id) {
+        Promotion promotion = find(id);
+        promotion.setStatus("Từ chối");
+        return productMapper.toResponse(promotion);
+    }
+
+    @Override
     public void delete(UUID id) {
         promotionRepository.delete(find(id));
     }

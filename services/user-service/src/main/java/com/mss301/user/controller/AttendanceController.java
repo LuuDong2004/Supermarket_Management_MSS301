@@ -3,6 +3,7 @@ package com.mss301.user.controller;
 import com.mss301.response.ApiResponse;
 import com.mss301.user.dto.request.AttendanceRequest;
 import com.mss301.user.dto.response.AttendanceResponse;
+import com.mss301.user.dto.response.TimesheetRowResponse;
 import com.mss301.user.service.interfaces.AttendanceService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -41,6 +42,17 @@ public class AttendanceController {
             @RequestParam(name = "date", required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         return ApiResponse.success(attendanceService.getAll(date));
+    }
+
+    @Operation(summary = "Aggregated timesheet report over a date range (UC-HR-03)")
+    @PreAuthorize("hasAnyRole('ADMIN','CEO','WAREHOUSE_MANAGER')")
+    @GetMapping("/timesheet")
+    public ApiResponse<List<TimesheetRowResponse>> timesheet(
+            @RequestParam(name = "from", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(name = "to", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        return ApiResponse.success(attendanceService.timesheet(from, to));
     }
 
     @Operation(summary = "Get an attendance record by id")

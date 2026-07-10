@@ -3,6 +3,8 @@ import {
   Gift, Package, PackagePlus, ClipboardList, ClipboardCheck, AlertTriangle, Boxes,
   ScanLine, Warehouse, FileBarChart, BarChart3, UserCog, ShieldCheck, ScrollText,
   Activity, Settings, BookCheck, Building2, CalendarCheck, Award, FileCheck2, Receipt,
+  Wallet, Gauge, Lightbulb, KeyRound, ShieldAlert, Bell,
+  PackageSearch, FileInput, Barcode, Undo2, CalendarClock, Truck, BookOpen,
 } from 'lucide-react'
 
 const ALL = ['ROLE_CEO', 'ROLE_ADMIN', 'ROLE_CASHIER', 'ROLE_WAREHOUSE', 'ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_STAFF', 'ROLE_SUPPLIER']
@@ -20,6 +22,7 @@ export const NAV = [
     section: 'Bán hàng (POS)',
     items: [
       { to: '/app/pos/sale', label: 'Bán hàng / Thanh toán', icon: ShoppingCart, roles: ['ROLE_CASHIER', 'ROLE_ADMIN'], code: '3.8.1' },
+      { to: '/app/pos/returns', label: 'Trả hàng / Hoàn tiền', icon: Undo2, roles: ['ROLE_CASHIER', 'ROLE_ADMIN'], code: '3.8.4' },
       { to: '/app/pos/shift', label: 'Ca thu ngân', icon: Receipt, roles: ['ROLE_CASHIER', 'ROLE_ADMIN'], code: '3.8.3' },
       { to: '/app/pos/members', label: 'Khách hàng thành viên', icon: Users, roles: ['ROLE_CASHIER', 'ROLE_ADMIN'], code: '3.9.1' },
       { to: '/app/pos/loyalty', label: 'Điểm thưởng', icon: Gift, roles: ['ROLE_CASHIER', 'ROLE_ADMIN'], code: '3.9.2' },
@@ -29,7 +32,7 @@ export const NAV = [
   {
     section: 'Kho hàng',
     items: [
-      { to: '/app/warehouse/purchase-orders', label: 'Đơn mua hàng', icon: ClipboardList, roles: ['ROLE_WAREHOUSE', 'ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_STAFF', 'ROLE_ADMIN', 'ROLE_SUPPLIER'], code: '3.6.1' },
+      { to: '/app/warehouse/purchase-orders', label: 'Đơn mua hàng', icon: ClipboardList, roles: ['ROLE_WAREHOUSE', 'ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_STAFF', 'ROLE_ADMIN'], code: '3.6.1' },
       { to: '/app/warehouse/transactions', label: 'Duyệt giao dịch kho', icon: ClipboardCheck, roles: ['ROLE_WAREHOUSE', 'ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_STAFF', 'ROLE_ADMIN'], code: '3.6.2' },
       { to: '/app/warehouse/monitor', label: 'Giám sát tồn kho', icon: AlertTriangle, roles: ['ROLE_WAREHOUSE', 'ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_STAFF', 'ROLE_ADMIN'], code: '3.6.3' },
       { to: '/app/warehouse/reports', label: 'Báo cáo kho', icon: Warehouse, roles: ['ROLE_WAREHOUSE', 'ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_STAFF', 'ROLE_ADMIN'], code: '3.6.4' },
@@ -38,14 +41,27 @@ export const NAV = [
       { to: '/app/warehouse/stock-count', label: 'Kiểm kê', icon: ScanLine, roles: ['ROLE_WAREHOUSE', 'ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_STAFF', 'ROLE_ADMIN'], code: '3.7.3' },
       { to: '/app/warehouse/adjustments', label: 'Điều chỉnh tồn kho', icon: Package, roles: ['ROLE_WAREHOUSE', 'ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_STAFF', 'ROLE_ADMIN'], code: '3.7.4' },
       { to: '/app/warehouse/approval-status', label: 'Trạng thái duyệt', icon: FileCheck2, roles: ['ROLE_WAREHOUSE', 'ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_STAFF', 'ROLE_ADMIN'], code: '3.7.5' },
+      { to: '/app/warehouse/products', label: 'Quản lý sản phẩm', icon: PackageSearch, roles: ['ROLE_WAREHOUSE_MANAGER', 'ROLE_ADMIN'], code: '3.6.5' },
+      { to: '/app/warehouse/goods-receipts', label: 'Phiếu nhập kho', icon: FileInput, roles: ['ROLE_WAREHOUSE', 'ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_STAFF', 'ROLE_ADMIN'], code: '3.7.6' },
+      { to: '/app/warehouse/barcode', label: 'In tem mã vạch', icon: Barcode, roles: ['ROLE_WAREHOUSE', 'ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_STAFF', 'ROLE_ADMIN'], code: '3.7.7' },
     ],
   },
   {
     section: 'Nhân sự',
     items: [
-      { to: '/app/hr/employees', label: 'Hồ sơ nhân viên', icon: Building2, roles: ['ROLE_ADMIN', 'ROLE_CEO'], code: '3.5.1' },
+      { to: '/app/hr/employees', label: 'Hồ sơ nhân viên', icon: Building2, roles: ['ROLE_ADMIN', 'ROLE_CEO', 'ROLE_WAREHOUSE_MANAGER'], code: '3.5.1' },
+      { to: '/app/hr/shifts', label: 'Phân ca nhân viên', icon: CalendarClock, roles: ['ROLE_ADMIN', 'ROLE_CEO', 'ROLE_WAREHOUSE_MANAGER'], code: '3.5.4' },
       { to: '/app/hr/attendance', label: 'Chấm công', icon: CalendarCheck, roles: ['ROLE_ADMIN', 'ROLE_CEO'], code: '3.5.2' },
+      { to: '/app/hr/timesheet', label: 'Báo cáo chấm công', icon: ClipboardList, roles: ['ROLE_ADMIN', 'ROLE_CEO', 'ROLE_WAREHOUSE_MANAGER'], code: '3.5.5' },
       { to: '/app/hr/performance', label: 'Đánh giá hiệu suất', icon: Award, roles: ['ROLE_ADMIN', 'ROLE_CEO'], code: '3.5.3' },
+    ],
+  },
+  {
+    section: 'Nhà cung cấp',
+    items: [
+      { to: '/app/supplier/orders', label: 'Đơn mua của tôi', icon: Truck, roles: ['ROLE_SUPPLIER', 'ROLE_ADMIN'], code: '3.12.1' },
+      { to: '/app/supplier/catalog', label: 'Bảng giá & danh mục', icon: BookOpen, roles: ['ROLE_SUPPLIER', 'ROLE_ADMIN'], code: '3.12.2' },
+      { to: '/app/supplier/profile', label: 'Hồ sơ nhà cung cấp', icon: Building2, roles: ['ROLE_SUPPLIER', 'ROLE_ADMIN'], code: '3.12.3' },
     ],
   },
   {
@@ -54,6 +70,9 @@ export const NAV = [
       { to: '/app/admin/users', label: 'Tài khoản người dùng', icon: UserCog, roles: ['ROLE_ADMIN'], code: '3.4.1' },
       { to: '/app/admin/approval-requests', label: 'Yêu cầu phê duyệt', icon: FileCheck2, roles: ['ROLE_ADMIN'], code: '3.4.2' },
       { to: '/app/admin/monitoring', label: 'Giám sát hệ thống', icon: Activity, roles: ['ROLE_ADMIN'], code: '3.4.3' },
+      { to: '/app/admin/permissions', label: 'Phân quyền', icon: KeyRound, roles: ['ROLE_ADMIN'], code: '3.4.4' },
+      { to: '/app/admin/security-alerts', label: 'Cảnh báo bảo mật', icon: ShieldAlert, roles: ['ROLE_ADMIN'], code: '3.4.5' },
+      { to: '/app/admin/notifications', label: 'Thông báo hệ thống', icon: Bell, roles: ['ROLE_ADMIN'], code: '3.4.6' },
     ],
   },
   {
@@ -62,6 +81,10 @@ export const NAV = [
       { to: '/app/ceo/reports', label: 'Báo cáo quản trị', icon: BarChart3, roles: ['ROLE_CEO'], code: '3.3.1' },
       { to: '/app/ceo/approvals', label: 'Phê duyệt', icon: ShieldCheck, roles: ['ROLE_CEO'], code: '3.3.2' },
       { to: '/app/ceo/policies', label: 'Chính sách kinh doanh', icon: BookCheck, roles: ['ROLE_CEO'], code: '3.3.3' },
+      { to: '/app/ceo/promotions', label: 'Duyệt khuyến mãi', icon: BadgePercent, roles: ['ROLE_CEO'], code: '3.3.4' },
+      { to: '/app/ceo/financial', label: 'Báo cáo tài chính', icon: Wallet, roles: ['ROLE_CEO'], code: '3.3.5' },
+      { to: '/app/ceo/operational', label: 'Báo cáo vận hành', icon: Gauge, roles: ['ROLE_CEO'], code: '3.3.6' },
+      { to: '/app/ceo/decisions', label: 'Quyết định chiến lược', icon: Lightbulb, roles: ['ROLE_CEO'], code: '3.3.7' },
     ],
   },
   {

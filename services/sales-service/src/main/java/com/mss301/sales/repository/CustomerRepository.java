@@ -14,6 +14,8 @@ public interface CustomerRepository extends JpaRepository<Customer, UUID> {
 
     boolean existsByCode(String code);
 
+    Optional<Customer> findByCode(String code);
+
     Optional<Customer> findByPhone(String phone);
 
     Page<Customer> findByNameContainingIgnoreCaseOrPhoneContainingIgnoreCase(

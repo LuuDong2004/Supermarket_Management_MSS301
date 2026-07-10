@@ -2,6 +2,7 @@ package com.mss301.sales.dto.response;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 public record SaleResponse(
@@ -13,6 +14,16 @@ public record SaleResponse(
         BigDecimal total,
         String payment,
         String status,
+        String customerCode,
+        String customerName,
+        BigDecimal subtotal,
+        BigDecimal discount,
+        BigDecimal vat,
+        BigDecimal amountReceived,
+        BigDecimal changeGiven,
+        Integer pointsEarned,
+        Integer pointsRedeemed,
+        List<SaleItemResponse> lineItems,
         Instant createdAt,
         Instant updatedAt
 ) {

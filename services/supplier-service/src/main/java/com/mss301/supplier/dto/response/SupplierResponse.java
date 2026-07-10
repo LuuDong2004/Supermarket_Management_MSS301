@@ -13,6 +13,8 @@ public record SupplierResponse(
         BigDecimal rating,
         String status,
         String terms,
+        String email,
+        String address,
         String imageUrl,
         Instant createdAt,
         Instant updatedAt

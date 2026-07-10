@@ -4,17 +4,27 @@ import { Menu, Search, Bell, LogOut, ChevronDown, User } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { roleLabel, initials } from '../../lib/format.js'
 import { Badge } from '../ui/primitives.jsx'
+import { notificationService } from '../../services/index.js'
 
 export function Topbar({ onMenu }) {
   const { user, logout, mockMode } = useAuth()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [unread, setUnread] = useState(0)
   const ref = useRef(null)
 
   useEffect(() => {
     const onClick = (e) => ref.current && !ref.current.contains(e.target) && setMenuOpen(false)
     document.addEventListener('mousedown', onClick)
     return () => document.removeEventListener('mousedown', onClick)
+  }, [])
+
+  useEffect(() => {
+    let active = true
+    notificationService.unreadCount()
+      .then((n) => { if (active) setUnread(Number(n) || 0) })
+      .catch(() => {})
+    return () => { active = false }
   }, [])
 
   return (
@@ -35,9 +45,17 @@ export function Topbar({ onMenu }) {
         {mockMode && (
           <Badge tone="amber" className="hidden sm:inline-flex">Chế độ demo (mock)</Badge>
         )}
-        <button className="relative rounded-xl p-2 text-slate-500 hover:bg-slate-100">
+        <button
+          onClick={() => navigate('/app/admin/notifications')}
+          title="Thông báo hệ thống"
+          className="relative rounded-xl p-2 text-slate-500 hover:bg-slate-100"
+        >
           <Bell size={19} />
-          <span className="absolute right-2.5 top-2.5 h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />
+          {unread > 0 && (
+            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
+              {unread > 9 ? '9+' : unread}
+            </span>
+          )}
         </button>
 
         <div className="relative" ref={ref}>

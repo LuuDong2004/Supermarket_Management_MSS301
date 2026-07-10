@@ -5,20 +5,20 @@ import { DataTable } from '../../components/ui/DataTable.jsx'
 import { StatCard } from '../../components/ui/StatCard.jsx'
 import { Modal } from '../../components/ui/Modal.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
-import { formatNumber, formatDate } from '../../lib/format.js'
+import { formatNumber, formatDate, isoDate } from '../../lib/format.js'
 import { attendanceService, withFallback, toList, mockAttendance } from '../../services/index.js'
 import { Clock, AlarmClock, UserX, Hourglass, Download, Plus, Trash2 } from 'lucide-react'
 
 const STATUSES = ['Đúng giờ', 'Đi muộn', 'Vắng']
 
-const emptyForm = { id: null, code: '', employee: '', date: '2026-06-15', checkIn: '', checkOut: '', hours: '', status: 'Đúng giờ' }
+const emptyForm = { id: null, code: '', employee: '', date: isoDate(), checkIn: '', checkOut: '', hours: '', status: 'Đúng giờ' }
 
 export default function Attendance() {
   const toast = useToast()
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
   const [source, setSource] = useState('backend')
-  const [date, setDate] = useState('2026-06-15')
+  const [date, setDate] = useState(isoDate())
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState(emptyForm)
 
@@ -79,6 +79,21 @@ export default function Attendance() {
     }
   }
 
+  const exportCsv = () => {
+    if (filtered.length === 0) return toast.error('Không có dữ liệu để xuất.')
+    const header = ['Nhân viên', 'Ngày', 'Giờ vào', 'Giờ ra', 'Số giờ', 'Trạng thái']
+    const lines = filtered.map((r) => [r.employee, r.date, r.checkIn, r.checkOut, r.hours, r.status])
+    const csv = [header, ...lines].map((c) => c.map((x) => `"${String(x ?? '').replace(/"/g, '""')}"`).join(',')).join('\n')
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `cham-cong_${date || 'tat-ca'}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+    toast.success('Đã xuất báo cáo chấm công (CSV).')
+  }
+
   return (
     <div>
       <PageHeader
@@ -91,7 +106,7 @@ export default function Attendance() {
               {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
             </Badge>
             <Button icon={Plus} onClick={openCreate}>Thêm chấm công</Button>
-            <Button variant="secondary" icon={Download} onClick={() => toast.success('Đã xuất báo cáo chấm công.')}>Xuất báo cáo</Button>
+            <Button variant="secondary" icon={Download} onClick={exportCsv}>Xuất báo cáo</Button>
           </div>
         }
       />

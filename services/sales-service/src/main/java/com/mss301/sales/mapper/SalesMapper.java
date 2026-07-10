@@ -4,10 +4,12 @@ import com.mss301.sales.dto.request.CustomerRequest;
 import com.mss301.sales.dto.request.SaleRequest;
 import com.mss301.sales.dto.request.ShiftRequest;
 import com.mss301.sales.dto.response.CustomerResponse;
+import com.mss301.sales.dto.response.ReturnResponse;
 import com.mss301.sales.dto.response.SaleResponse;
 import com.mss301.sales.dto.response.ShiftResponse;
 import com.mss301.sales.entity.Customer;
 import com.mss301.sales.entity.Sale;
+import com.mss301.sales.entity.SaleReturn;
 import com.mss301.sales.entity.Shift;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
@@ -25,6 +27,10 @@ public interface SalesMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "deleted", ignore = true)
+    @Mapping(target = "lineItems", ignore = true)
+    @Mapping(target = "changeGiven", ignore = true)
+    @Mapping(target = "pointsEarned", ignore = true)
+    @Mapping(target = "effectsApplied", ignore = true)
     Sale toEntity(SaleRequest request);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
@@ -49,6 +55,9 @@ public interface SalesMapper {
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "deleted", ignore = true)
     void update(@MappingTarget Shift shift, ShiftRequest request);
+
+    // ----- Return / Refund -----
+    ReturnResponse toResponse(SaleReturn saleReturn);
 
     // ----- Customer -----
     CustomerResponse toResponse(Customer customer);

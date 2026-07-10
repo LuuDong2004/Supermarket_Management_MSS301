@@ -3,7 +3,9 @@ package com.mss301.reporting.controller;
 import com.mss301.reporting.dto.response.CategoryShareResponse;
 import com.mss301.reporting.dto.response.DashboardResponse;
 import com.mss301.reporting.dto.response.EmployeePerformanceResponse;
+import com.mss301.reporting.dto.response.FinancialReportResponse;
 import com.mss301.reporting.dto.response.MonthlyRevenueResponse;
+import com.mss301.reporting.dto.response.OperationalMetricResponse;
 import com.mss301.reporting.dto.response.SalesTrendResponse;
 import com.mss301.reporting.service.interfaces.ReportService;
 import com.mss301.response.ApiResponse;
@@ -48,6 +50,18 @@ public class ReportController {
     @GetMapping("/monthly-revenue")
     public ApiResponse<List<MonthlyRevenueResponse>> monthlyRevenue() {
         return ApiResponse.success(reportService.monthlyRevenue());
+    }
+
+    @Operation(summary = "Monthly financial report (revenue, cost, profit)")
+    @GetMapping("/financial")
+    public ApiResponse<List<FinancialReportResponse>> financial() {
+        return ApiResponse.success(reportService.financialReport());
+    }
+
+    @Operation(summary = "Operational performance by business area")
+    @GetMapping("/operational")
+    public ApiResponse<List<OperationalMetricResponse>> operational() {
+        return ApiResponse.success(reportService.operationalMetrics());
     }
 
     @Operation(summary = "Dashboard summary")

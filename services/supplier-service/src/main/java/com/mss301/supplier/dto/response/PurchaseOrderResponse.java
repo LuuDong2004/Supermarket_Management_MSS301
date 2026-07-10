@@ -14,6 +14,10 @@ public record PurchaseOrderResponse(
         BigDecimal total,
         String status,
         String approval,
+        String supplierStatus,
+        LocalDate expectedDelivery,
+        LocalDate deliveredDate,
+        String supplierNote,
         Instant createdAt,
         Instant updatedAt
 ) {

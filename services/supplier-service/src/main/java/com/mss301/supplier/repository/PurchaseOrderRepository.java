@@ -13,4 +13,6 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder, UU
     boolean existsByCode(String code);
 
     List<PurchaseOrder> findAllByOrderByOrderDateDesc();
+
+    List<PurchaseOrder> findBySupplierIgnoreCaseOrderByOrderDateDesc(String supplier);
 }

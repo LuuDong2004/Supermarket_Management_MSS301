@@ -5,6 +5,7 @@ import { DataTable } from '../../components/ui/DataTable.jsx'
 import { Tabs } from '../../components/ui/Tabs.jsx'
 import { Modal } from '../../components/ui/Modal.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useAuth } from '../../context/AuthContext.jsx'
 import { formatDate } from '../../lib/format.js'
 import {
   stockAdjustmentService, productService,
@@ -13,9 +14,12 @@ import {
 import { Plus, Check, X } from 'lucide-react'
 
 const REASON_TONE = { 'Hư hỏng': 'amber', 'Vỡ': 'red', 'Thất thoát': 'violet', 'Hết hạn': 'slate' }
+const MANAGER = ['ROLE_WAREHOUSE_MANAGER', 'ROLE_ADMIN']
 
 export default function Adjustments() {
   const toast = useToast()
+  const { user } = useAuth()
+  const isManager = MANAGER.includes(user?.role)
   const [list, setList] = useState([])
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
@@ -138,7 +142,7 @@ export default function Adjustments() {
               header: 'Thao tác',
               align: 'right',
               render: (r) =>
-                r.status === 'Chờ duyệt' ? (
+                r.status === 'Chờ duyệt' && isManager ? (
                   <div className="flex justify-end gap-2">
                     <Button variant="success" size="sm" icon={Check} onClick={() => decide(r, true)}>Duyệt</Button>
                     <Button variant="danger" size="sm" icon={X} onClick={() => decide(r, false)}>Từ chối</Button>

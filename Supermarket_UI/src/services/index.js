@@ -52,6 +52,8 @@ export const promotionService = {
   get: (id) => api.get(`/promotions/${id}`),
   create: (body) => api.post('/promotions', body),
   update: (id, body) => api.put(`/promotions/${id}`, body),
+  approve: (id) => api.post(`/promotions/${id}/approve`),
+  reject: (id) => api.post(`/promotions/${id}/reject`),
   remove: (id) => api.delete(`/promotions/${id}`),
 }
 
@@ -78,7 +80,17 @@ export const warehouseTxnService = {
   get: (id) => api.get(`/warehouse-transactions/${id}`),
   create: (body) => api.post('/warehouse-transactions', body),
   update: (id, body) => api.put(`/warehouse-transactions/${id}`, body),
+  approve: (id) => api.post(`/warehouse-transactions/${id}/approve`),
+  reject: (id) => api.post(`/warehouse-transactions/${id}/reject`),
   remove: (id) => api.delete(`/warehouse-transactions/${id}`),
+}
+
+// Managed product categories (UC-M01), served at /api/categories.
+export const categoryService = {
+  list: () => api.get('/categories'),
+  create: (body) => api.post('/categories', body),
+  update: (id, body) => api.put(`/categories/${id}`, body),
+  remove: (id) => api.delete(`/categories/${id}`),
 }
 
 export const stockAdjustmentService = {
@@ -121,15 +133,27 @@ export const shiftService = {
 export const customerService = {
   list: (params) => api.get(`/customers${qs(params)}`),
   get: (id) => api.get(`/customers/${id}`),
+  byPhone: (phone) => api.get(`/customers/by-phone/${encodeURIComponent(phone)}`),
   create: (body) => api.post('/customers', body),
   update: (id, body) => api.put(`/customers/${id}`, body),
+  adjustPoints: (id, delta) => api.post(`/customers/${id}/points`, { delta }),
   remove: (id) => api.delete(`/customers/${id}`),
+}
+
+// Returns / refunds (UC-C11), served at /api/returns.
+export const returnService = {
+  list: () => api.get('/returns'),
+  get: (id) => api.get(`/returns/${id}`),
+  lookup: (code) => api.get(`/returns/lookup${qs({ code })}`),
+  create: (body) => api.post('/returns', body),
 }
 
 // ---- Supplier service (MySQL) ----
 export const supplierService = {
   list: (params) => api.get(`/suppliers${qs(params)}`),
   get: (id) => api.get(`/suppliers/${id}`),
+  mine: () => api.get('/suppliers/me'),
+  updateMine: (body) => api.put('/suppliers/me', body),
   create: (body) => api.post('/suppliers', body),
   update: (id, body) => api.put(`/suppliers/${id}`, body),
   remove: (id) => api.delete(`/suppliers/${id}`),
@@ -137,10 +161,34 @@ export const supplierService = {
 
 export const purchaseOrderService = {
   list: () => api.get('/purchase-orders'),
+  mine: () => api.get('/purchase-orders/mine'),
   get: (id) => api.get(`/purchase-orders/${id}`),
   create: (body) => api.post('/purchase-orders', body),
   update: (id, body) => api.put(`/purchase-orders/${id}`, body),
+  confirm: (id) => api.post(`/purchase-orders/${id}/confirm`),
+  rejectBySupplier: (id) => api.post(`/purchase-orders/${id}/reject-by-supplier`),
+  ship: (id, body) => api.post(`/purchase-orders/${id}/ship`, body),
+  deliver: (id) => api.post(`/purchase-orders/${id}/deliver`),
   remove: (id) => api.delete(`/purchase-orders/${id}`),
+}
+
+// Supplier catalog / price list (portal), served at /api/price-lists.
+export const priceListService = {
+  mine: () => api.get('/price-lists/mine'),
+  create: (body) => api.post('/price-lists', body),
+  update: (id, body) => api.put(`/price-lists/${id}`, body),
+  remove: (id) => api.delete(`/price-lists/${id}`),
+}
+
+// Goods receipt notes (UC-W01/W06/M05), served at /api/goods-receipts.
+export const goodsReceiptService = {
+  list: () => api.get('/goods-receipts'),
+  get: (id) => api.get(`/goods-receipts/${id}`),
+  create: (body) => api.post('/goods-receipts', body),
+  update: (id, body) => api.put(`/goods-receipts/${id}`, body),
+  approve: (id) => api.post(`/goods-receipts/${id}/approve`),
+  reject: (id) => api.post(`/goods-receipts/${id}/reject`),
+  remove: (id) => api.delete(`/goods-receipts/${id}`),
 }
 
 // ---- Reporting service (PostgreSQL) ----
@@ -149,7 +197,18 @@ export const reportService = {
   categoryShare: () => api.get('/reports/category-share'),
   employeePerformance: () => api.get('/reports/employee-performance'),
   monthlyRevenue: () => api.get('/reports/monthly-revenue'),
+  financial: () => api.get('/reports/financial'),
+  operational: () => api.get('/reports/operational'),
   dashboard: () => api.get('/reports/dashboard'),
+}
+
+// Strategic decisions (UC-CEO07), served under /api/reports/strategic-decisions.
+export const strategicDecisionService = {
+  list: () => api.get('/reports/strategic-decisions'),
+  get: (id) => api.get(`/reports/strategic-decisions/${id}`),
+  create: (body) => api.post('/reports/strategic-decisions', body),
+  update: (id, body) => api.put(`/reports/strategic-decisions/${id}`, body),
+  remove: (id) => api.delete(`/reports/strategic-decisions/${id}`),
 }
 
 export const monitoringService = {
@@ -158,29 +217,58 @@ export const monitoringService = {
   addLog: (body) => api.post('/monitoring/logs', body),
 }
 
+// Security alerts (UC-A05), served under /api/monitoring/security-alerts.
+export const securityAlertService = {
+  list: () => api.get('/monitoring/security-alerts'),
+  resolve: (id) => api.post(`/monitoring/security-alerts/${id}/resolve`),
+}
+
 // ---- User service (PostgreSQL) ----
 export const userService = {
   list: (params) => api.get(`/users${qs(params)}`),
   get: (id) => api.get(`/users/${id}`),
   create: (body) => api.post('/users', body),
   update: (id, body) => api.put(`/users/${id}`, body),
+  lock: (id) => api.post(`/users/${id}/lock`),
+  unlock: (id) => api.post(`/users/${id}/unlock`),
+  deactivate: (id) => api.post(`/users/${id}/deactivate`),
+  activate: (id) => api.post(`/users/${id}/activate`),
   remove: (id) => api.delete(`/users/${id}`),
 }
 
+// Role permission matrix (UC-A02), served under /api/users/permissions.
+export const permissionService = {
+  list: () => api.get('/users/permissions'),
+  update: (id, body) => api.put(`/users/permissions/${id}`, body),
+}
+
 export const employeeService = {
-  list: () => api.get('/employees'),
+  list: (params) => api.get(`/employees${qs(params)}`),
   get: (id) => api.get(`/employees/${id}`),
   create: (body) => api.post('/employees', body),
   update: (id, body) => api.put(`/employees/${id}`, body),
+  deactivate: (id) => api.post(`/employees/${id}/deactivate`),
+  activate: (id) => api.post(`/employees/${id}/activate`),
   remove: (id) => api.delete(`/employees/${id}`),
 }
 
 export const attendanceService = {
-  list: () => api.get('/attendance'),
+  list: (params) => api.get(`/attendance${qs(params)}`),
   get: (id) => api.get(`/attendance/${id}`),
+  timesheet: (params) => api.get(`/attendance/timesheet${qs(params)}`),
   create: (body) => api.post('/attendance', body),
   update: (id, body) => api.put(`/attendance/${id}`, body),
   remove: (id) => api.delete(`/attendance/${id}`),
+}
+
+// Staff shift scheduling (UC-HR-02), served at /api/staff-shifts.
+export const staffShiftService = {
+  list: (params) => api.get(`/staff-shifts${qs(params)}`),
+  get: (id) => api.get(`/staff-shifts/${id}`),
+  create: (body) => api.post('/staff-shifts', body),
+  update: (id, body) => api.put(`/staff-shifts/${id}`, body),
+  complete: (id) => api.post(`/staff-shifts/${id}/complete`),
+  remove: (id) => api.delete(`/staff-shifts/${id}`),
 }
 
 // ---- Notification service (PostgreSQL) ----

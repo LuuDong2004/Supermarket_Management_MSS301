@@ -20,5 +20,11 @@ public interface EmployeeService {
 
     EmployeeResponse uploadImage(UUID id, MultipartFile file);
 
+    /** Deactivate a staff member (status → "Nghỉ việc"). */
+    EmployeeResponse deactivate(UUID id);
+
+    /** Reactivate a staff member (status → "Đang làm"). */
+    EmployeeResponse activate(UUID id);
+
     void softDelete(UUID id);
 }

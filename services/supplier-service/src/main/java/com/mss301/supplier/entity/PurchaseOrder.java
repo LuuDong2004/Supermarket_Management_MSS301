@@ -62,6 +62,20 @@ public class PurchaseOrder {
     @Column(length = 30)
     private String approval;
 
+    // ----- Supplier-side workflow (portal) -----
+    /** Chờ xác nhận / Đã xác nhận / NCC từ chối / Đang giao / Đã giao */
+    @Column(name = "supplier_status", length = 30)
+    private String supplierStatus;
+
+    @Column(name = "expected_delivery")
+    private LocalDate expectedDelivery;
+
+    @Column(name = "delivered_date")
+    private LocalDate deliveredDate;
+
+    @Column(name = "supplier_note", length = 255)
+    private String supplierNote;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

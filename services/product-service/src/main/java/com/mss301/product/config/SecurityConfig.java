@@ -2,7 +2,9 @@ package com.mss301.product.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mss301.product.filter.HeaderAuthenticationFilter;
+import com.mss301.product.filter.InternalApiKeyFilter;
 import com.mss301.response.ApiResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
@@ -22,13 +24,17 @@ public class SecurityConfig {
             "/v3/api-docs/**",
             "/api/products/v3/api-docs/**",
             "/swagger-ui/**",
-            "/swagger-ui.html"
+            "/swagger-ui.html",
+            "/internal/**"
     };
 
     private final ObjectMapper objectMapper;
+    private final String internalApiKey;
 
-    public SecurityConfig(ObjectMapper objectMapper) {
+    public SecurityConfig(ObjectMapper objectMapper,
+                          @Value("${security.internal.api-key}") String internalApiKey) {
         this.objectMapper = objectMapper;
+        this.internalApiKey = internalApiKey;
     }
 
     @Bean
@@ -53,6 +59,8 @@ public class SecurityConfig {
                             objectMapper.writeValue(response.getWriter(),
                                     ApiResponse.error("Access denied"));
                         }))
+                .addFilterBefore(new InternalApiKeyFilter(internalApiKey, objectMapper),
+                        UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new HeaderAuthenticationFilter(),
                         UsernamePasswordAuthenticationFilter.class);
 

@@ -13,6 +13,9 @@ public record ShiftRequest(
         @Size(max = 30) String closeAt,
         @DecimalMin("0.0") BigDecimal opening,
         @DecimalMin("0.0") BigDecimal sales,
+        @DecimalMin("0.0") BigDecimal closingActual,
+        @Size(max = 255) String varianceNote,
+        Integer orders,
         @Size(max = 20) String status
 ) {
 }

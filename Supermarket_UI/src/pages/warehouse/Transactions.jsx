@@ -4,14 +4,18 @@ import { Button, Badge, StatusBadge, Spinner } from '../../components/ui/primiti
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { Tabs } from '../../components/ui/Tabs.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useAuth } from '../../context/AuthContext.jsx'
 import { formatDate } from '../../lib/format.js'
 import { warehouseTxnService, withFallback, toList, mockWarehouseTxns } from '../../services/index.js'
 import { Check, X } from 'lucide-react'
 
 const TYPE_TONE = { 'Nhập kho': 'green', 'Xuất kho': 'blue', 'Điều chỉnh': 'amber' }
+const MANAGER = ['ROLE_WAREHOUSE_MANAGER', 'ROLE_ADMIN']
 
 export default function Transactions() {
   const toast = useToast()
+  const { user } = useAuth()
+  const isManager = MANAGER.includes(user?.role)
   const [txns, setTxns] = useState([])
   const [loading, setLoading] = useState(true)
   const [source, setSource] = useState('backend')
@@ -38,12 +42,10 @@ export default function Transactions() {
   }, [txns, tab])
 
   const decide = async (row, approved) => {
-    const status = approved ? 'Đã duyệt' : 'Từ chối'
     try {
-      await warehouseTxnService.update(row.id, {
-        code: row.code, type: row.type, ref: row.ref, product: row.product,
-        qty: Number(row.qty), txnDate: row.txnDate, status,
-      })
+      // Real approve/reject: approval posts the movement to inventory on-hand.
+      if (approved) await warehouseTxnService.approve(row.id)
+      else await warehouseTxnService.reject(row.id)
       toast[approved ? 'success' : 'info'](`${approved ? 'Đã duyệt' : 'Đã từ chối'} giao dịch ${row.code}.`)
       await load()
     } catch (e) {
@@ -104,7 +106,7 @@ export default function Transactions() {
               header: 'Thao tác',
               align: 'right',
               render: (r) =>
-                r.status === 'Chờ duyệt' ? (
+                r.status === 'Chờ duyệt' && isManager ? (
                   <div className="flex justify-end gap-2">
                     <Button variant="success" size="sm" icon={Check} onClick={() => decide(r, true)}>Duyệt</Button>
                     <Button variant="danger" size="sm" icon={X} onClick={() => decide(r, false)}>Từ chối</Button>

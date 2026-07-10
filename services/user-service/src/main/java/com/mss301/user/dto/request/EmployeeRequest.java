@@ -7,7 +7,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public record EmployeeRequest(
-        @NotBlank @Size(max = 50) String code,
+        // Optional — auto-generated (EMP-####) when blank.
+        @Size(max = 50) String code,
         @NotBlank @Size(max = 150) String name,
         @Size(max = 40) String role,
         @Size(max = 100) String dept,

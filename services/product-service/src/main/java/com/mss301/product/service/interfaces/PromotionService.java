@@ -16,5 +16,9 @@ public interface PromotionService {
 
     List<PromotionResponse> getAll();
 
+    PromotionResponse approve(UUID id);
+
+    PromotionResponse reject(UUID id);
+
     void delete(UUID id);
 }

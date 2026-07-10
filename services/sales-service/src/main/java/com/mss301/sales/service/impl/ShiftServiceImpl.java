@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -40,7 +41,23 @@ public class ShiftServiceImpl implements ShiftService {
             throw new ConflictException(ErrorCode.CONFLICT, "Shift code already exists: " + request.code());
         }
         salesMapper.update(shift, request);
+        reconcile(shift);
         return salesMapper.toResponse(shift);
+    }
+
+    /**
+     * When the cashier declares actual cash at close, compute the system-expected
+     * cash (opening + sales) and the overage/shortage (BR-05).
+     */
+    private void reconcile(Shift shift) {
+        if (shift.getClosingActual() == null) {
+            return;
+        }
+        BigDecimal opening = shift.getOpening() == null ? BigDecimal.ZERO : shift.getOpening();
+        BigDecimal sales = shift.getSales() == null ? BigDecimal.ZERO : shift.getSales();
+        BigDecimal expected = opening.add(sales);
+        shift.setClosingExpected(expected);
+        shift.setVariance(shift.getClosingActual().subtract(expected));
     }
 
     @Override

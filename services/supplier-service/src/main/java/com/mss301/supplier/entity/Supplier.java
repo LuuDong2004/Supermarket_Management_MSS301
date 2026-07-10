@@ -61,6 +61,16 @@ public class Supplier {
     @Column(length = 30)
     private String terms;
 
+    @Column(length = 100)
+    private String email;
+
+    @Column(length = 255)
+    private String address;
+
+    /** Username of the ROLE_SUPPLIER account that owns this supplier. */
+    @Column(name = "account_username", length = 50)
+    private String accountUsername;
+
     @Column(name = "image_url", length = 512)
     private String imageUrl;
 
