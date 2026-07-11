@@ -126,12 +126,7 @@ export default function Users() {
             onRowClick={openEditUser}
             empty={{ title: 'Không có tài khoản', subtitle: 'Thử đổi bộ lọc.' }}
             columns={[
-              { key: 'username', header: 'Username', render: (u) => (
-                <div>
-                  <p className="font-medium text-slate-700">{u.username}</p>
-                  <p className="break-all font-mono text-xs text-slate-400">{u.id}</p>
-                </div>
-              ) },
+              { key: 'username', header: 'Username', render: (u) => <span className="font-medium text-slate-700">{u.username}</span> },
               { key: 'fullName', header: 'Họ tên' },
               { key: 'role', header: 'Vai trò', render: (u) => <Badge tone="brand">{roleLabel(u.role)}</Badge> },
               { key: 'status', header: 'Trạng thái', render: (u) => <StatusBadge status={u.status} /> },

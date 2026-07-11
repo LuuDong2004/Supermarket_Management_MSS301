@@ -66,7 +66,6 @@ export default function MemberDetail() {
               <p className="text-lg font-semibold text-slate-800">{member.name}</p>
               <div className="mt-1 flex items-center gap-2">
                 <Badge tone={TIER_TONE[member.tier] || 'slate'}>{member.tier}</Badge>
-                <span className="font-mono text-xs text-slate-400">{member.id}</span>
               </div>
             </div>
           </div>

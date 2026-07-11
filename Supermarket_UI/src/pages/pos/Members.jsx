@@ -91,7 +91,7 @@ export default function Members() {
       </div>
 
       <FilterBar>
-        <Field label="Tìm kiếm" className="flex-1 min-w-[220px]">
+        <Field label="Tìm kiếm" className="grow">
           <div className="relative">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <Input className="pl-9" placeholder="Tên hoặc số điện thoại..." value={search} onChange={(e) => setSearch(e.target.value)} />
@@ -118,12 +118,7 @@ export default function Members() {
         onRowClick={(r) => navigate(`/app/pos/members/${r.id}`)}
         empty={{ title: 'Không tìm thấy thành viên', subtitle: 'Thử thay đổi từ khóa hoặc bộ lọc hạng.' }}
         columns={[
-          { key: 'name', header: 'Họ tên', render: (r) => (
-            <div>
-              <p className="font-medium text-slate-700">{r.name}</p>
-              <p className="font-mono text-xs text-slate-400">{r.id}</p>
-            </div>
-          ) },
+          { key: 'name', header: 'Họ tên', render: (r) => <span className="font-medium text-slate-700">{r.name}</span> },
           { key: 'phone', header: 'Số điện thoại', render: (r) => <span className="font-mono text-sm">{r.phone}</span> },
           { key: 'tier', header: 'Hạng', align: 'center', render: (r) => <Badge tone={TIER_TONE[r.tier] || 'slate'}>{r.tier}</Badge> },
           { key: 'points', header: 'Điểm', align: 'right', render: (r) => <span className="font-semibold">{formatNumber(r.points)}</span> },

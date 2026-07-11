@@ -159,12 +159,7 @@ export default function Promotions() {
               onRowClick={editPromo}
               empty={{ title: 'Chưa có chương trình khuyến mãi' }}
               columns={[
-                { key: 'name', header: 'Chương trình', render: (r) => (
-                  <div>
-                    <p className="font-medium text-slate-700">{r.name}</p>
-                    <p className="font-mono text-xs text-slate-400">{r.code || r.id}</p>
-                  </div>
-                ) },
+                { key: 'name', header: 'Chương trình', render: (r) => <span className="font-medium text-slate-700">{r.name}</span> },
                 { key: 'scope', header: 'Phạm vi', render: (r) => <Badge tone="slate">{r.scope}</Badge> },
                 { key: 'discount', header: 'Giảm', align: 'center', render: (r) => <span className="font-semibold text-brand-700">{r.discount}%</span> },
                 { key: 'range', header: 'Thời gian', render: (r) => (

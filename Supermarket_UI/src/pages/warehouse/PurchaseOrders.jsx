@@ -70,7 +70,7 @@ export default function PurchaseOrders() {
 
       <div className="mt-6">
         <FilterBar>
-          <Field label="Tìm kiếm" className="flex-1 min-w-[200px]">
+          <Field label="Tìm kiếm" className="grow">
             <div className="relative">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <Input className="pl-9" placeholder="Mã đơn mua..." value={search} onChange={(e) => setSearch(e.target.value)} />
