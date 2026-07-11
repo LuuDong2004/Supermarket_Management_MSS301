@@ -4,6 +4,7 @@ import { Card, CardHeader, CardBody, Button, Field, Input, Badge } from '../../c
 import { Modal } from '../../components/ui/Modal.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { formatCurrency, formatNumber } from '../../lib/format.js'
+import { escapeHtml } from '../../lib/escapeHtml.js'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { DEFAULT_SEPAY_CONFIG, buildVietQrUrl, normalizeSePayConfig } from '../../config/sepay.js'
 import {
@@ -81,14 +82,14 @@ function printReceipt(o) {
   if (!o) return
   const rows = (o.items || []).map((x) => `
     <tr>
-      <td>${x.name}</td>
-      <td style="text-align:center">${x.qty}</td>
+      <td>${escapeHtml(x.name)}</td>
+      <td style="text-align:center">${escapeHtml(x.qty)}</td>
       <td style="text-align:right">${new Intl.NumberFormat('vi-VN').format(x.price || 0)}</td>
       <td style="text-align:right">${new Intl.NumberFormat('vi-VN').format((x.price || 0) * x.qty)}</td>
     </tr>`).join('')
   const money = (n) => `${new Intl.NumberFormat('vi-VN').format(Math.round(n || 0))} ₫`
   const line = (label, val) => `<div class="row"><span>${label}</span><span>${val}</span></div>`
-  const html = `<!doctype html><html><head><meta charset="utf-8"><title>${o.code}</title>
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(o.code)}</title>
     <style>
       *{box-sizing:border-box} body{font-family:Arial,sans-serif;color:#0f172a;padding:16px;max-width:360px;margin:0 auto}
       h1{font-size:18px;text-align:center;margin:0} .muted{color:#64748b;font-size:12px;text-align:center;margin:2px 0}
@@ -99,13 +100,13 @@ function printReceipt(o) {
       .row{display:flex;justify-content:space-between;padding:2px 0} .grand{font-weight:800;font-size:15px}
       .center{text-align:center;margin-top:14px;font-size:12px;color:#334155}
     </style></head><body>
-    <h1>${STORE.name}</h1>
-    <div class="muted">${STORE.address}</div>
-    <div class="muted">ĐT: ${STORE.phone}</div>
+    <h1>${escapeHtml(STORE.name)}</h1>
+    <div class="muted">${escapeHtml(STORE.address)}</div>
+    <div class="muted">ĐT: ${escapeHtml(STORE.phone)}</div>
     <div class="muted" style="margin-top:8px;font-weight:700;color:#0f172a">HÓA ĐƠN BÁN HÀNG</div>
-    <div class="muted">Số HĐ: ${o.code}</div>
-    <div class="muted">${o.dateTime || ''} · Thu ngân: ${o.cashier || ''}</div>
-    ${o.customerName ? `<div class="muted">Khách hàng: ${o.customerName}</div>` : ''}
+    <div class="muted">Số HĐ: ${escapeHtml(o.code)}</div>
+    <div class="muted">${escapeHtml(o.dateTime || '')} · Thu ngân: ${escapeHtml(o.cashier || '')}</div>
+    ${o.customerName ? `<div class="muted">Khách hàng: ${escapeHtml(o.customerName)}</div>` : ''}
     <table>
       <thead><tr><th>Sản phẩm</th><th style="text-align:center">SL</th><th style="text-align:right">Đơn giá</th><th style="text-align:right">T.Tiền</th></tr></thead>
       <tbody>${rows}</tbody>
@@ -113,12 +114,12 @@ function printReceipt(o) {
     <div class="totals">
       ${line('Tạm tính', money(o.subtotal))}
       ${o.discount > 0 ? line('Giảm giá', '- ' + money(o.discount)) : ''}
-      ${o.pointsRedeemed > 0 ? line('Đổi điểm', o.pointsRedeemed + ' điểm') : ''}
+      ${o.pointsRedeemed > 0 ? line('Đổi điểm', escapeHtml(o.pointsRedeemed) + ' điểm') : ''}
       <div class="row grand"><span>Tổng cộng</span><span>${money(o.total)}</span></div>
-      ${line('Thanh toán', o.methodLabel || '')}
+      ${line('Thanh toán', escapeHtml(o.methodLabel || ''))}
       ${o.givenNum > 0 ? line('Tiền khách đưa', money(o.givenNum)) : ''}
       ${o.givenNum > 0 ? line('Tiền thối lại', money(o.change)) : ''}
-      ${o.pointsEarned > 0 ? line('Điểm tích lũy', '+ ' + o.pointsEarned + ' điểm') : ''}
+      ${o.pointsEarned > 0 ? line('Điểm tích lũy', '+ ' + escapeHtml(o.pointsEarned) + ' điểm') : ''}
     </div>
     <div class="center">Cảm ơn quý khách. Hẹn gặp lại!</div>
     </body></html>`

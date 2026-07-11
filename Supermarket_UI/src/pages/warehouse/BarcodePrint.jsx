@@ -3,6 +3,7 @@ import { PageHeader, FilterBar } from '../../components/ui/PageHeader.jsx'
 import { Card, CardBody, Button, Badge, Field, Input, EmptyState } from '../../components/ui/primitives.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { formatCurrency } from '../../lib/format.js'
+import { escapeHtml } from '../../lib/escapeHtml.js'
 import { productService, withFallback, toList } from '../../services/index.js'
 import { Search, Printer, Barcode as BarcodeIcon, CheckSquare, Square } from 'lucide-react'
 
@@ -18,29 +19,44 @@ function moduleWidths(text) {
   return widths.length ? widths : [1]
 }
 
-function barsSvg(value, { w = 220, h = 54 } = {}) {
+// Bar geometry only (numbers) — safe to render as JSX or serialize into SVG markup.
+function barRects(value, { w = 220 } = {}) {
   const widths = moduleWidths(value)
   const unit = w / widths.reduce((a, b) => a + b, 0)
   let x = 0
-  const rects = widths.map((wd, i) => {
+  const rects = []
+  widths.forEach((wd, i) => {
     const rw = wd * unit
-    const rect = i % 2 === 0 ? `<rect x="${x.toFixed(2)}" y="0" width="${rw.toFixed(2)}" height="${h}" fill="#0f172a"/>` : ''
+    if (i % 2 === 0) rects.push({ x: Number(x.toFixed(2)), width: Number(rw.toFixed(2)) })
     x += rw
-    return rect
-  }).join('')
+  })
+  return rects
+}
+
+function barsSvg(value, { w = 220, h = 54 } = {}) {
+  const rects = barRects(value, { w })
+    .map((r) => `<rect x="${r.x}" y="0" width="${r.width}" height="${h}" fill="#0f172a"/>`)
+    .join('')
   return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">${rects}</svg>`
 }
 
-function Barcode({ value }) {
-  return <span dangerouslySetInnerHTML={{ __html: barsSvg(value, { w: 200, h: 48 }) }} />
+function Barcode({ value, w = 200, h = 48 }) {
+  const rects = barRects(value, { w })
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} width={w} height={h} xmlns="http://www.w3.org/2000/svg">
+      {rects.map((r, i) => (
+        <rect key={i} x={r.x} y="0" width={r.width} height={h} fill="#0f172a" />
+      ))}
+    </svg>
+  )
 }
 
 function printLabels(labels) {
   const cells = labels.map((l) => `
     <div class="label">
-      <div class="name">${l.name}</div>
+      <div class="name">${escapeHtml(l.name)}</div>
       ${barsSvg(l.barcode || l.code, { w: 200, h: 50 })}
-      <div class="code">${l.barcode || l.code}</div>
+      <div class="code">${escapeHtml(l.barcode || l.code)}</div>
       <div class="price">${new Intl.NumberFormat('vi-VN').format(l.price || 0)} đ</div>
     </div>`).join('')
   const html = `<!doctype html><html><head><meta charset="utf-8"><title>Tem mã vạch</title>

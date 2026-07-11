@@ -8,6 +8,7 @@ import { useToast } from '../../components/ui/Toast.jsx'
 import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { formatCurrency, formatDate } from '../../lib/format.js'
+import { escapeHtml } from '../../lib/escapeHtml.js'
 import { goodsReceiptService, withFallback, toList } from '../../services/index.js'
 import { Plus, CheckCircle2, XCircle, Printer, FileInput, Clock, PackageCheck, Eye } from 'lucide-react'
 
@@ -15,20 +16,20 @@ const MANAGER = ['ROLE_WAREHOUSE_MANAGER', 'ROLE_ADMIN']
 
 export function printReceipt(r) {
   const rows = `
-    <tr><td>Nhà cung cấp</td><td>${r.supplier || ''}</td></tr>
-    <tr><td>Đơn mua (PO)</td><td>${r.poCode || '—'}</td></tr>
-    <tr><td>Ngày nhận</td><td>${r.receiveDate || ''}</td></tr>
-    <tr><td>Người nhận</td><td>${r.receivedBy || '—'}</td></tr>
-    <tr><td>Số mặt hàng</td><td>${r.items ?? ''}</td></tr>
+    <tr><td>Nhà cung cấp</td><td>${escapeHtml(r.supplier || '')}</td></tr>
+    <tr><td>Đơn mua (PO)</td><td>${escapeHtml(r.poCode || '—')}</td></tr>
+    <tr><td>Ngày nhận</td><td>${escapeHtml(r.receiveDate || '')}</td></tr>
+    <tr><td>Người nhận</td><td>${escapeHtml(r.receivedBy || '—')}</td></tr>
+    <tr><td>Số mặt hàng</td><td>${escapeHtml(r.items ?? '')}</td></tr>
     <tr><td>Tổng giá trị</td><td>${new Intl.NumberFormat('vi-VN').format(r.total || 0)} đ</td></tr>
-    <tr><td>Trạng thái</td><td>${r.status || ''}</td></tr>
-    <tr><td>Ghi chú</td><td>${r.note || '—'}</td></tr>`
-  const html = `<!doctype html><html><head><meta charset="utf-8"><title>${r.code}</title>
+    <tr><td>Trạng thái</td><td>${escapeHtml(r.status || '')}</td></tr>
+    <tr><td>Ghi chú</td><td>${escapeHtml(r.note || '—')}</td></tr>`
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(r.code)}</title>
     <style>body{font-family:Arial,sans-serif;padding:32px;color:#0f172a}h1{font-size:20px;margin:0 0 4px}
     .sub{color:#64748b;font-size:13px;margin-bottom:20px}table{width:100%;border-collapse:collapse}
     td{border:1px solid #e2e8f0;padding:8px 10px;font-size:14px}td:first-child{width:180px;color:#64748b;font-weight:600}
     .sign{margin-top:48px;display:flex;justify-content:space-between;text-align:center;font-size:13px;color:#334155}</style></head>
-    <body><h1>PHIẾU NHẬP KHO — ${r.code}</h1><div class="sub">Siêu thị MSS301 · Goods Receipt Note</div>
+    <body><h1>PHIẾU NHẬP KHO — ${escapeHtml(r.code)}</h1><div class="sub">Siêu thị MSS301 · Goods Receipt Note</div>
     <table>${rows}</table>
     <div class="sign"><div>Người lập phiếu<br/><br/><br/>__________</div><div>Quản lý kho<br/><br/><br/>__________</div></div>
     </body></html>`
