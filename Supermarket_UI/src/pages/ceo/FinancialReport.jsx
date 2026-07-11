@@ -44,8 +44,6 @@ export default function FinancialReport() {
         breadcrumb="Điều hành · 3.3.5"
         title="Báo cáo tài chính"
         subtitle="Doanh thu, giá vốn và lợi nhuận theo tháng phục vụ quyết định chiến lược."
-        actions={
-        }
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

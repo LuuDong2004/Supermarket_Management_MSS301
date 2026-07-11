@@ -75,8 +75,6 @@ export default function Loyalty() {
         breadcrumb="POS · 3.9.2"
         title="Điểm thưởng"
         subtitle="Tra cứu số dư điểm và đổi điểm thưởng cho khách hàng thành viên."
-        actions={
-        }
       />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-3">

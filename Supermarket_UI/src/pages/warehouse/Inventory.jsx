@@ -51,8 +51,6 @@ export default function Inventory() {
         breadcrumb="Kho · 3.7.2"
         title="Thông tin tồn kho"
         subtitle="Tra cứu chi tiết hàng hóa, số lượng tồn và hạn sử dụng."
-        actions={
-        }
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

@@ -64,8 +64,6 @@ export default function Notifications() {
         breadcrumb="Quản trị · 3.4.6"
         title="Thông báo hệ thống"
         subtitle="Cảnh báo sự cố và thông báo vận hành gửi tới quản trị viên."
-        actions={
-        }
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

@@ -49,8 +49,6 @@ export default function Monitor() {
         breadcrumb="Kho · 3.6.3"
         title="Giám sát tồn kho"
         subtitle="Cảnh báo hàng tồn thấp, hết hàng và sản phẩm cận hạn sử dụng."
-        actions={
-        }
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

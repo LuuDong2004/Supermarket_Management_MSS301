@@ -101,8 +101,6 @@ export default function Promotions() {
         breadcrumb="POS · 3.9.3"
         title="Khuyến mãi & Voucher"
         subtitle="Quản lý chương trình khuyến mãi và kiểm tra mã giảm giá."
-        actions={
-        }
       />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-3">

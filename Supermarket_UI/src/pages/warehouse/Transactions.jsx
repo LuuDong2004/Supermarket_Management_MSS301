@@ -59,8 +59,6 @@ export default function Transactions() {
         breadcrumb="Kho · 3.6.2"
         title="Duyệt giao dịch kho"
         subtitle="Xem xét và phê duyệt các giao dịch nhập, xuất và điều chỉnh tồn kho."
-        actions={
-        }
       />
 
       <Tabs

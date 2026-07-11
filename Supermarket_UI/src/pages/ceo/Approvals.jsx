@@ -66,8 +66,6 @@ export default function Approvals() {
         breadcrumb="Điều hành · 3.3.2"
         title="Phê duyệt"
         subtitle="Hàng đợi phê duyệt của CEO — duyệt hoặc từ chối các yêu cầu."
-        actions={
-        }
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

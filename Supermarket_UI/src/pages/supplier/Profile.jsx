@@ -51,8 +51,6 @@ export default function SupplierProfile() {
         breadcrumb="Nhà cung cấp · 3.11.3"
         title="Hồ sơ nhà cung cấp"
         subtitle="Xem và cập nhật thông tin liên hệ của bạn."
-        actions={
-        }
       />
 
       <div className="grid gap-6 lg:grid-cols-3">

@@ -67,8 +67,6 @@ export default function StaffShifts() {
         breadcrumb="Nhân sự · 3.5.4"
         title="Phân ca nhân viên"
         subtitle="Xếp lịch làm việc theo ca Sáng / Chiều / Đêm. Mỗi nhân viên tối đa 1 ca/ngày."
-        actions={
-        }
       />
 
       <Card>

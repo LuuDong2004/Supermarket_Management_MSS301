@@ -86,8 +86,6 @@ export default function Permissions() {
         breadcrumb="Quản trị · 3.4.4"
         title="Cấu hình phân quyền"
         subtitle="Ma trận vai trò × chức năng. Nhấn ô để cấp hoặc thu hồi quyền truy cập."
-        actions={
-        }
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

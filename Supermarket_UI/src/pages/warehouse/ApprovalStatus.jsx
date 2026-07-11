@@ -78,8 +78,6 @@ export default function ApprovalStatus() {
         breadcrumb="Kho · 3.7.5"
         title="Trạng thái duyệt"
         subtitle="Theo dõi tiến trình phê duyệt các yêu cầu do nhân viên kho gửi lên."
-        actions={
-        }
       />
 
       <div className="grid gap-4 sm:grid-cols-3">

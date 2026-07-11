@@ -42,8 +42,6 @@ export default function OperationalReport() {
         breadcrumb="Điều hành · 3.3.6"
         title="Báo cáo vận hành"
         subtitle="Hiệu suất tồn kho, đơn hàng và nhân sự theo từng ngành hàng."
-        actions={
-        }
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

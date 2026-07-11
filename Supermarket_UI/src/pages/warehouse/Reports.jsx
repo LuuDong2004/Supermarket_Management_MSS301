@@ -60,8 +60,6 @@ export default function Reports() {
         breadcrumb="Kho · 3.6.4"
         title="Báo cáo kho"
         subtitle="Tổng quan giá trị tồn kho, cơ cấu ngành hàng và lưu lượng nhập xuất."
-        actions={
-        }
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

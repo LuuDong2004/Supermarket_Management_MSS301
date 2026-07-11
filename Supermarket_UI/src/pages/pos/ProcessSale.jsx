@@ -456,8 +456,6 @@ export default function ProcessSale() {
         breadcrumb="POS · 3.8.1"
         title="Bán hàng & Thanh toán"
         subtitle="Quét mã hoặc tìm sản phẩm để thêm vào giỏ. Hoàn tất quy trình trên cùng một màn hình."
-        actions={
-        }
       />
 
       <div className="grid gap-6 lg:grid-cols-3">

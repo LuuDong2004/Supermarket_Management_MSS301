@@ -60,8 +60,6 @@ export default function Reports() {
         breadcrumb="Điều hành · 3.3.1"
         title="Báo cáo quản trị"
         subtitle="Tổng quan kết quả kinh doanh cho ban điều hành."
-        actions={
-        }
       />
 
       <FilterBar>

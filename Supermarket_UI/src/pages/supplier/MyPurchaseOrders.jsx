@@ -60,8 +60,6 @@ export default function MyPurchaseOrders() {
         breadcrumb="Nhà cung cấp · 3.12.1"
         title="Đơn mua của tôi"
         subtitle="Xác nhận, cập nhật giao hàng cho các đơn mua từ siêu thị."
-        actions={
-        }
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

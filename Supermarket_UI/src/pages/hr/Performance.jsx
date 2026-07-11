@@ -57,8 +57,6 @@ export default function Performance() {
         breadcrumb="Nhân sự · 3.5.3"
         title="Đánh giá hiệu suất"
         subtitle="Xếp hạng nhân viên theo doanh số, độ chính xác và giờ công."
-        actions={
-        }
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

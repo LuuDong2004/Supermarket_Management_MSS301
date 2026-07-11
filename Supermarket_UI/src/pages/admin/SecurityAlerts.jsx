@@ -44,8 +44,6 @@ export default function SecurityAlerts() {
         breadcrumb="Quản trị · 3.4.5"
         title="Cảnh báo bảo mật"
         subtitle="Giám sát truy cập đáng ngờ, rủi ro phân quyền và sự kiện bảo mật."
-        actions={
-        }
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

@@ -59,8 +59,6 @@ export default function Dashboard() {
       <PageHeader
         title={`Xin chào, ${user?.fullName || user?.username} 👋`}
         subtitle={`Bảng điều khiển ${roleLabel(role)} · ${new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}`}
-        actions={
-        }
       />
 
       {/* KPI row — varies a little by role but shared metrics are fine for a demo */}

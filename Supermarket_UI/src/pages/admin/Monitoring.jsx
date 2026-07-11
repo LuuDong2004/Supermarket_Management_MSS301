@@ -70,8 +70,6 @@ export default function Monitoring() {
         breadcrumb="Quản trị · 3.4.3"
         title="Giám sát hệ thống"
         subtitle="Trạng thái microservices, tài nguyên và nhật ký hệ thống."
-        actions={
-        }
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

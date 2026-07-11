@@ -55,8 +55,6 @@ export default function PromotionApprovals() {
         breadcrumb="Điều hành · 3.3.4"
         title="Duyệt khuyến mãi"
         subtitle="Phê duyệt hoặc từ chối các chiến dịch khuyến mãi trước khi áp dụng vào bán hàng."
-        actions={
-        }
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
