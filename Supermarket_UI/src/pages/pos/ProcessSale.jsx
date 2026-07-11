@@ -586,8 +586,8 @@ export default function ProcessSale() {
           </Card>
         </div>
 
-        {/* Right Side: Checkout Summary (col-span-1) */}
-        <div className="space-y-6">
+        {/* Right Side: Checkout Summary (col-span-1) — sticky so it follows the cart while scrolling */}
+        <div className="space-y-6 lg:sticky lg:top-4 lg:self-start">
           <Card hoverEffect>
             <CardHeader title="Khách hàng & Khuyến mãi" icon={UserPlus} />
             <CardBody className="space-y-4">
