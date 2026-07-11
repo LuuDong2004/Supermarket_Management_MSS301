@@ -198,7 +198,7 @@ function DateInput({ value, onChange, disabled, min, max, className, placeholder
       </button>
 
       {open && (
-        <div className="absolute z-30 mt-1.5 w-64 rounded-xl border border-slate-200 bg-white p-2.5 shadow-xl shadow-slate-200/60">
+        <div className="absolute z-30 mt-1.5 w-full min-w-[15rem] rounded-xl border border-slate-200 bg-white p-2.5 shadow-xl shadow-slate-200/60">
           <div className="mb-2 flex items-center justify-between">
             <button type="button" onClick={() => setView(new Date(view.getFullYear(), view.getMonth() - 1, 1))}
               className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-50 hover:text-slate-800">
