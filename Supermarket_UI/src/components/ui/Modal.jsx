@@ -33,7 +33,7 @@ export function Modal({ open, onClose, title, subtitle, children, footer, size =
       >
         <div className="flex items-start justify-between border-b border-slate-100 px-5 py-4">
           <div>
-            <h3 id={titleId} className="text-lg font-semibold text-slate-900">{title}</h3>
+            <h3 id={titleId} className="text-base font-semibold text-slate-900">{title}</h3>
             {subtitle && <p id={subtitleId} className="text-sm text-slate-500">{subtitle}</p>}
           </div>
           <button

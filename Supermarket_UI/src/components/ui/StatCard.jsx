@@ -16,12 +16,12 @@ export function StatCard({ label, value, icon: Icon, tone = 'brand', delta, hint
     <div className="rounded-2xl border border-slate-100 bg-white/90 p-5 shadow-premium transition-all duration-300 hover:shadow-premium-hover hover:-translate-y-0.5 backdrop-blur-sm">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{label}</p>
-          <p className="mt-2 text-2xl font-extrabold tracking-tight text-slate-800 font-display">{value}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{label}</p>
+          <p className="mt-1.5 text-xl font-bold tracking-tight text-slate-800 font-display">{value}</p>
         </div>
         {Icon && (
-          <span className={cn('flex h-11 w-11 items-center justify-center rounded-xl shadow-sm border border-slate-100/50', TONES[tone])}>
-            <Icon size={20} />
+          <span className={cn('flex h-9 w-9 items-center justify-center rounded-lg border border-slate-100/50', TONES[tone])}>
+            <Icon size={16} />
           </span>
         )}
       </div>

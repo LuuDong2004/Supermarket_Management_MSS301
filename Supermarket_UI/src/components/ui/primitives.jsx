@@ -12,9 +12,9 @@ const BTN_VARIANTS = {
 }
 
 const BTN_SIZES = {
-  sm: 'px-3 py-1.5 text-xs gap-1.5 rounded-lg',
-  md: 'px-4 py-2.5 text-sm gap-2 rounded-xl',
-  lg: 'px-6 py-3.5 text-sm font-semibold gap-2.5 rounded-xl',
+  sm: 'px-2.5 py-1.5 text-xs gap-1.5 rounded-lg',
+  md: 'px-3.5 py-2 text-sm gap-1.5 rounded-lg',
+  lg: 'px-5 py-2.5 text-sm font-semibold gap-2 rounded-xl',
 }
 
 export function Button({
@@ -61,15 +61,15 @@ export function Card({ className, children, hoverEffect = false, ...props }) {
 
 export function CardHeader({ title, subtitle, action, icon: Icon, className }) {
   return (
-    <div className={cn('flex items-start justify-between gap-3 border-b border-slate-100/80 px-6 py-4.5', className)}>
-      <div className="flex items-start gap-3.5">
+    <div className={cn('flex items-center justify-between gap-3 border-b border-slate-100/80 px-5 py-3', className)}>
+      <div className="flex items-center gap-2.5">
         {Icon && (
-          <span className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600 shadow-sm border border-brand-100/50">
-            <Icon size={20} />
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 text-brand-600 border border-brand-100/50">
+            <Icon size={15} />
           </span>
         )}
         <div>
-          <h3 className="text-base font-bold text-slate-800 tracking-tight font-display">{title}</h3>
+          <h3 className="text-sm font-semibold text-slate-800 tracking-tight font-display">{title}</h3>
           {subtitle && <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>}
         </div>
       </div>
@@ -79,7 +79,7 @@ export function CardHeader({ title, subtitle, action, icon: Icon, className }) {
 }
 
 export function CardBody({ className, children }) {
-  return <div className={cn('p-6', className)}>{children}</div>
+  return <div className={cn('p-5', className)}>{children}</div>
 }
 
 /* ------------------------------ Badge ------------------------------- */
@@ -124,7 +124,7 @@ export function Field({ label, hint, required, error, children, className }) {
   return (
     <div className={cn('block w-full', className)}>
       {label && (
-        <label className="mb-1.5 block text-sm font-semibold text-slate-700 tracking-tight">
+        <label className="mb-1 block text-[13px] font-medium text-slate-600 tracking-tight">
           {label} {required && <span className="text-rose-500">*</span>}
         </label>
       )}
