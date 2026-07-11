@@ -1,5 +1,6 @@
+import { Children, isValidElement, useEffect, useRef, useState } from 'react'
 import { cn } from '../../lib/cn.js'
-import { Loader2 } from 'lucide-react'
+import { Check, Loader2 } from 'lucide-react'
 
 /* ------------------------------ Button ------------------------------ */
 const BTN_VARIANTS = {
@@ -142,17 +143,90 @@ export function Textarea({ className, ...props }) {
   return <textarea className={cn('input-base resize-y min-h-[100px]', className)} {...props} />
 }
 
-export function Select({ className, children, ...props }) {
+// Flatten <option> children (including arrays/fragments from .map) into plain items.
+function collectOptions(children, out = []) {
+  Children.forEach(children, (child) => {
+    if (!isValidElement(child)) return
+    if (child.type === 'option') {
+      out.push({
+        value: child.props.value ?? child.props.children,
+        label: child.props.children,
+        disabled: !!child.props.disabled,
+      })
+    } else if (child.props?.children) {
+      collectOptions(child.props.children, out)
+    }
+  })
+  return out
+}
+
+/**
+ * Custom dropdown that keeps the native-select API (value, onChange(e.target.value),
+ * <option> children) but renders a rounded popup list instead of the browser's
+ * square native one.
+ */
+export function Select({ className, children, value, onChange, disabled, ...props }) {
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef(null)
+  const options = collectOptions(children)
+  const selected = options.find((o) => String(o.value) === String(value)) || options[0]
+
+  useEffect(() => {
+    if (!open) return
+    const onDocClick = (e) => { if (!rootRef.current?.contains(e.target)) setOpen(false) }
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('mousedown', onDocClick)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDocClick)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+
+  const pick = (o) => {
+    setOpen(false)
+    // Native selects always report string values — keep that contract.
+    onChange?.({ target: { value: String(o.value ?? '') } })
+  }
+
   return (
-    <div className="relative w-full">
-      <select className={cn('input-base appearance-none pr-10', className)} {...props}>
-        {children}
-      </select>
-      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-slate-400">
-        <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+    <div ref={rootRef} className="relative w-full" {...props}>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setOpen((v) => !v)}
+        className={cn('input-base flex items-center justify-between gap-2 pr-3 text-left', className)}
+      >
+        <span className={cn('truncate', selected == null && 'text-slate-400')}>{selected?.label ?? '—'}</span>
+        <svg className={cn('h-4 w-4 shrink-0 fill-current text-slate-400 transition-transform', open && 'rotate-180')} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
           <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
         </svg>
-      </div>
+      </button>
+
+      {open && (
+        <ul className="absolute z-30 mt-1.5 max-h-64 w-full overflow-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl shadow-slate-200/60">
+          {options.map((o, i) => {
+            const isSelected = String(o.value) === String(value)
+            return (
+              <li key={`${o.value}-${i}`}>
+                <button
+                  type="button"
+                  disabled={o.disabled}
+                  onClick={() => pick(o)}
+                  className={cn(
+                    'flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm transition',
+                    isSelected ? 'bg-brand-50 font-medium text-brand-700' : 'text-slate-700 hover:bg-slate-50',
+                    o.disabled && 'cursor-not-allowed text-slate-300 hover:bg-transparent',
+                  )}
+                >
+                  <span className="truncate">{o.label}</span>
+                  {isSelected && <Check size={14} className="shrink-0 text-brand-600" />}
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      )}
     </div>
   )
 }
