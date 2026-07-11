@@ -2,10 +2,13 @@ package com.mss301.response;
 
 import com.mss301.common.exception.ApiException;
 import com.mss301.common.exception.ErrorCode;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -55,6 +58,16 @@ public class GlobalExceptionHandler {
         ErrorResponse error = ErrorResponse.of(ErrorCode.VALIDATION_ERROR.name(), ex.getMessage());
         return ResponseEntity.status(ErrorCode.VALIDATION_ERROR.status())
                 .body(ApiResponse.error(ErrorCode.VALIDATION_ERROR.defaultMessage(), error));
+    }
+
+    @ExceptionHandler({AuthorizationDeniedException.class, AccessDeniedException.class})
+    public ResponseEntity<ApiResponse<ErrorResponse>> handleAccessDenied(Exception ex, HttpServletRequest request) {
+        log.warn("Access denied [{} {}]: {}", request.getMethod(), request.getRequestURI(), ex.getMessage());
+        ErrorResponse error = ErrorResponse.of(
+                ErrorCode.ACCESS_DENIED.name(),
+                ErrorCode.ACCESS_DENIED.defaultMessage());
+        return ResponseEntity.status(ErrorCode.ACCESS_DENIED.status())
+                .body(ApiResponse.error(ErrorCode.ACCESS_DENIED.defaultMessage(), error));
     }
 
     @ExceptionHandler(Exception.class)

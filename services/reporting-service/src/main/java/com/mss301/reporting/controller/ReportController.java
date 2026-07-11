@@ -23,48 +23,54 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/reports")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('CEO','ADMIN')")
 public class ReportController {
 
     private final ReportService reportService;
 
     @Operation(summary = "Weekly sales trend")
+    @PreAuthorize("hasAnyRole('CEO','ADMIN','WAREHOUSE_MANAGER','WAREHOUSE_STAFF')")
     @GetMapping("/sales-trend")
     public ApiResponse<List<SalesTrendResponse>> salesTrend() {
         return ApiResponse.success(reportService.salesTrend());
     }
 
     @Operation(summary = "Revenue share by category")
+    @PreAuthorize("hasAnyRole('CEO','ADMIN','WAREHOUSE_MANAGER','WAREHOUSE_STAFF')")
     @GetMapping("/category-share")
     public ApiResponse<List<CategoryShareResponse>> categoryShare() {
         return ApiResponse.success(reportService.categoryShare());
     }
 
     @Operation(summary = "Employee performance metrics")
+    @PreAuthorize("hasAnyRole('CEO','ADMIN')")
     @GetMapping("/employee-performance")
     public ApiResponse<List<EmployeePerformanceResponse>> employeePerformance() {
         return ApiResponse.success(reportService.employeePerformance());
     }
 
     @Operation(summary = "Monthly revenue vs target")
+    @PreAuthorize("hasAnyRole('CEO','ADMIN')")
     @GetMapping("/monthly-revenue")
     public ApiResponse<List<MonthlyRevenueResponse>> monthlyRevenue() {
         return ApiResponse.success(reportService.monthlyRevenue());
     }
 
     @Operation(summary = "Monthly financial report (revenue, cost, profit)")
+    @PreAuthorize("hasAnyRole('CEO','ADMIN')")
     @GetMapping("/financial")
     public ApiResponse<List<FinancialReportResponse>> financial() {
         return ApiResponse.success(reportService.financialReport());
     }
 
     @Operation(summary = "Operational performance by business area")
+    @PreAuthorize("hasAnyRole('CEO','ADMIN')")
     @GetMapping("/operational")
     public ApiResponse<List<OperationalMetricResponse>> operational() {
         return ApiResponse.success(reportService.operationalMetrics());
     }
 
     @Operation(summary = "Dashboard summary")
+    @PreAuthorize("hasAnyRole('CEO','ADMIN')")
     @GetMapping("/dashboard")
     public ApiResponse<DashboardResponse> dashboard() {
         return ApiResponse.success(reportService.dashboard());

@@ -121,9 +121,9 @@ export default function Login() {
   }
 
   return (
-    <div className="grid min-h-screen w-full bg-gradient-to-b from-[#eaf1fd] via-[#eef4fe] to-white lg:h-screen lg:grid-cols-[1.12fr_0.88fr] lg:overflow-hidden">
+    <div className="grid min-h-screen w-full bg-gradient-to-b from-[#eaf1fd] via-[#eef4fe] to-white lg:h-screen lg:grid-cols-2 lg:overflow-hidden">
       {/* ---------------- Brand panel ---------------- */}
-      <div className="relative ml-auto flex w-full max-w-2xl flex-col justify-between gap-4 overflow-y-auto p-6 sm:p-8 xl:py-10 xl:pr-10">
+      <div className="relative mx-auto flex w-full max-w-xl flex-col justify-between gap-4 overflow-y-auto p-6 sm:p-8 lg:px-10 xl:py-10">
             {/* logo */}
             <div className="flex items-center gap-2.5">
               <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-600 text-white shadow-lg shadow-brand-600/25">
@@ -175,7 +175,7 @@ export default function Login() {
           </div>
 
           {/* ---------------- Form panel (raised card) ---------------- */}
-          <div className="mr-auto flex w-full max-w-xl items-center justify-start overflow-y-auto p-5 sm:p-8 lg:py-10 lg:pl-6 lg:pr-8">
+          <div className="mx-auto flex w-full max-w-xl items-center justify-center overflow-y-auto p-5 sm:p-8 lg:px-10 lg:py-10">
             <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-[0_24px_60px_-24px_rgba(30,58,138,0.45)] ring-1 ring-slate-100 sm:p-8">
               {/* lock badge + heading */}
               <div className="flex flex-col items-center text-center">

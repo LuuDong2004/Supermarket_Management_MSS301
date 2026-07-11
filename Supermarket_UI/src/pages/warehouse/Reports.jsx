@@ -6,8 +6,8 @@ import { StatCard } from '../../components/ui/StatCard.jsx'
 import { Donut, Bars } from '../../components/ui/Charts.jsx'
 import { formatCurrency, formatNumber } from '../../lib/format.js'
 import {
-  productService, warehouseTxnService, reportService,
-  withFallback, toList, mockProducts, mockWarehouseTxns, mockCategoryShare,
+  productService, warehouseTxnService,
+  withFallback, toList, mockProducts, mockWarehouseTxns,
 } from '../../services/index.js'
 import { Boxes, ArrowDownToLine, ArrowUpFromLine, Warehouse, BarChart3 } from 'lucide-react'
 
@@ -30,14 +30,14 @@ export default function Reports() {
 
   const load = async () => {
     setLoading(true)
-    const [prod, txn, cat] = await Promise.all([
+    const [prod, txn] = await Promise.all([
       withFallback(() => productService.list(), mockProducts),
       withFallback(() => warehouseTxnService.list(), mockWarehouseTxns),
-      withFallback(() => reportService.categoryShare(), mockCategoryShare),
     ])
-    setProducts(toList(prod.data))
+    const productRows = toList(prod.data)
+    setProducts(productRows)
     setTxns(toList(txn.data))
-    setCategoryShare(toList(cat.data))
+    setCategoryShare(categoryShareFromProducts(productRows))
     setSource(prod.source)
     setLoading(false)
   }
@@ -123,4 +123,15 @@ export default function Reports() {
       )}
     </div>
   )
+}
+
+function categoryShareFromProducts(products) {
+  const totals = products.reduce((acc, product) => {
+    const category = product.category || 'Khác'
+    const value = Number(product.cost || product.price || 0) * Number(product.stock || product.onHand || 0)
+    acc[category] = (acc[category] || 0) + value
+    return acc
+  }, {})
+
+  return Object.entries(totals).map(([name, value]) => ({ name, value }))
 }

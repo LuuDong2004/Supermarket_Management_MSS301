@@ -18,6 +18,7 @@ import {
 export default function Dashboard() {
   const { user } = useAuth()
   const role = user?.role
+  const canViewReports = ['ROLE_ADMIN', 'ROLE_CEO'].includes(role)
 
   const [salesTrend, setSalesTrend] = useState([])
   const [categoryShare, setCategoryShare] = useState([])
@@ -32,8 +33,8 @@ export default function Dashboard() {
     ;(async () => {
       const [prod, trend, share, low, sales] = await Promise.all([
         withFallback(() => productService.list({ size: 1 })),
-        withFallback(() => reportService.salesTrend()),
-        withFallback(() => reportService.categoryShare()),
+        canViewReports ? withFallback(() => reportService.salesTrend()) : Promise.resolve({ data: [], source: 'backend' }),
+        canViewReports ? withFallback(() => reportService.categoryShare()) : Promise.resolve({ data: [], source: 'backend' }),
         withFallback(() => productService.lowStock()),
         withFallback(() => saleService.list()),
       ])
@@ -51,7 +52,7 @@ export default function Dashboard() {
       setSource([prod, trend, share, low, sales].some((r) => r.source !== 'backend') ? 'error' : 'backend')
     })()
     return () => { alive = false }
-  }, [])
+  }, [canViewReports])
 
   return (
     <div>

@@ -7,8 +7,8 @@ import { Bars, Donut } from '../../components/ui/Charts.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { formatNumber } from '../../lib/format.js'
 import {
-  inventoryService, reportService, withFallback, toList,
-  mockInventory, mockCategoryShare,
+  inventoryService, withFallback, toList,
+  mockInventory,
 } from '../../services/index.js'
 import {
   Warehouse, Package, AlertTriangle, PackageX, FileSpreadsheet, Boxes, BarChart3,
@@ -25,9 +25,9 @@ export default function InventoryReport() {
 
   const load = async () => {
     const inv = await withFallback(() => inventoryService.list(), mockInventory)
-    const s = await withFallback(() => reportService.categoryShare(), mockCategoryShare)
-    setItems(toList(inv.data))
-    setShare(toList(s.data))
+    const itemRows = toList(inv.data)
+    setItems(itemRows)
+    setShare(categoryShareFromInventory(itemRows))
     setSource(inv.source)
   }
   useEffect(() => { load() }, [])
@@ -147,4 +147,14 @@ export default function InventoryReport() {
       </div>
     </div>
   )
+}
+
+function categoryShareFromInventory(items) {
+  const totals = items.reduce((acc, item) => {
+    const category = item.category || 'Khác'
+    acc[category] = (acc[category] || 0) + Number(item.onHand || item.stock || 0)
+    return acc
+  }, {})
+
+  return Object.entries(totals).map(([name, value]) => ({ name, value }))
 }

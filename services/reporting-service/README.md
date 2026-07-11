@@ -13,8 +13,8 @@ status and system logs. Backs the CEO/Admin analytics and monitoring screens
 
 | Method | Path | Roles | Notes |
 |--------|------|-------|-------|
-| GET    | `/api/reports/sales-trend` | CEO, ADMIN | weekly trend, ordered |
-| GET    | `/api/reports/category-share` | CEO, ADMIN | revenue share by category |
+| GET    | `/api/reports/sales-trend` | CEO, ADMIN, WAREHOUSE_MANAGER, WAREHOUSE_STAFF | weekly trend, ordered |
+| GET    | `/api/reports/category-share` | CEO, ADMIN, WAREHOUSE_MANAGER, WAREHOUSE_STAFF | revenue share by category |
 | GET    | `/api/reports/employee-performance` | CEO, ADMIN | staff metrics |
 | GET    | `/api/reports/monthly-revenue` | CEO, ADMIN | revenue vs target, ordered |
 | GET    | `/api/reports/dashboard` | CEO, ADMIN | summary KPIs |
