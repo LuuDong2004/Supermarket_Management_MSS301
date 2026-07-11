@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { PageHeader, FilterBar } from '../../components/ui/PageHeader.jsx'
 import { Card, CardBody, Button, Badge, Field, Input, Select, Textarea } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
@@ -9,18 +10,17 @@ import { formatCurrency, formatNumber, formatDate } from '../../lib/format.js'
 import { productService, categoryService, withFallback, toList } from '../../services/index.js'
 import { Plus, Pencil, Trash2, Search } from 'lucide-react'
 
-const emptyProduct = { id: null, code: '', barcode: '', name: '', category: '', price: '', cost: '', stock: '', unit: 'cái', expiry: '' }
 const emptyCategory = { id: null, name: '', description: '', active: true }
 
 export default function Products() {
   const toast = useToast()
+  const navigate = useNavigate()
   const [tab, setTab] = useState('products')
   const [products, setProducts] = useState([])
   const [categories, setCategories] = useState([])
   const [source, setSource] = useState('backend')
   const [search, setSearch] = useState('')
 
-  const [pForm, setPForm] = useState(null) // product form object or null
   const [cForm, setCForm] = useState(null) // category form object or null
 
   const load = async () => {
@@ -32,34 +32,17 @@ export default function Products() {
   }
   useEffect(() => { load() }, [])
 
-  const activeCats = useMemo(() => categories.filter((c) => c.active), [categories])
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase()
     if (!q) return products
     return products.filter((p) => (p.name || '').toLowerCase().includes(q) || (p.code || '').toLowerCase().includes(q) || (p.barcode || '').toLowerCase().includes(q))
   }, [products, search])
 
-  // ---- Products ----
-  const openNewProduct = () => setPForm({ ...emptyProduct, category: activeCats[0]?.name || '' })
-  const openEditProduct = (p) => setPForm({
-    id: p.id, code: p.code, barcode: p.barcode || '', name: p.name, category: p.category,
-    price: p.price, cost: p.cost, stock: p.stock, unit: p.unit || '', expiry: (p.expiry || '').slice(0, 10),
-  })
-  const saveProduct = async () => {
-    if (!pForm.name.trim() || !pForm.code.trim()) { toast.error('Nhập mã và tên sản phẩm.'); return }
-    if (source !== 'backend') { toast.error('Không có kết nối backend.'); return }
-    const body = {
-      code: pForm.code, barcode: pForm.barcode || null, name: pForm.name, category: pForm.category,
-      price: Number(pForm.price) || 0, cost: Number(pForm.cost) || 0, stock: Number(pForm.stock) || 0,
-      unit: pForm.unit || null, expiry: pForm.expiry || null,
-    }
-    try {
-      if (pForm.id) await productService.update(pForm.id, body)
-      else await productService.create(body)
-      toast.success(pForm.id ? `Đã cập nhật ${pForm.name}.` : `Đã thêm ${pForm.name}.`)
-      setPForm(null)
-      await load()
-    } catch (e) { toast.error(e.message) }
+  // ---- Products (create/edit live on their own page: /app/warehouse/products/new, /:id/edit) ----
+  const openNewProduct = () => navigate('/app/warehouse/products/new')
+  const openEditProduct = (p) => {
+    if (!p.id) { toast.error('Không có kết nối backend.'); return }
+    navigate(`/app/warehouse/products/${p.id}/edit`)
   }
   const removeProduct = async (p) => {
     if (source !== 'backend' || !p.id) { toast.error('Không có kết nối backend.'); return }
@@ -137,13 +120,13 @@ export default function Products() {
               { key: 'category', header: 'Danh mục', render: (p) => <Badge tone="brand">{p.category}</Badge> },
               { key: 'price', header: 'Giá bán', align: 'right', render: (p) => formatCurrency(p.price) },
               { key: 'stock', header: 'Tồn', align: 'right', render: (p) => formatNumber(p.stock) },
-              { key: 'actions', header: '', align: 'right', render: (p) => (
-                <div className="flex justify-end gap-2">
-                  <Button size="sm" variant="secondary" icon={Pencil} onClick={(e) => { e.stopPropagation(); openEditProduct(p) }}>Sửa</Button>
-                  <Button size="sm" variant="danger" icon={Trash2} onClick={(e) => { e.stopPropagation(); removeProduct(p) }}>Xóa</Button>
-                </div>
-              ) },
             ]}
+            actions={(p) => (
+              <>
+                <Button size="sm" variant="secondary" icon={Pencil} onClick={() => openEditProduct(p)}>Sửa</Button>
+                <Button size="sm" variant="danger" icon={Trash2} onClick={() => removeProduct(p)}>Xóa</Button>
+              </>
+            )}
           />
         </>
       ) : (
@@ -156,46 +139,17 @@ export default function Products() {
             { key: 'name', header: 'Danh mục', render: (c) => <span className="font-medium text-slate-700">{c.name}</span> },
             { key: 'description', header: 'Mô tả', render: (c) => <span className="text-slate-500">{c.description || '—'}</span> },
             { key: 'active', header: 'Trạng thái', render: (c) => <Badge tone={c.active ? 'green' : 'slate'}>{c.active ? 'Đang dùng' : 'Ẩn'}</Badge> },
-            { key: 'actions', header: '', align: 'right', render: (c) => (
-              <div className="flex justify-end gap-2">
-                <Button size="sm" variant="secondary" icon={Pencil} onClick={(e) => { e.stopPropagation(); openEditCategory(c) }}>Sửa</Button>
-                <Button size="sm" variant="danger" icon={Trash2} onClick={(e) => { e.stopPropagation(); removeCategory(c) }}>Xóa</Button>
-              </div>
-            ) },
           ]}
+          actions={(c) => (
+            <>
+              <Button size="sm" variant="secondary" icon={Pencil} onClick={() => openEditCategory(c)}>Sửa</Button>
+              <Button size="sm" variant="danger" icon={Trash2} onClick={() => removeCategory(c)}>Xóa</Button>
+            </>
+          )}
         />
       )}
 
-      {/* Product modal */}
-      <Modal
-        open={!!pForm}
-        onClose={() => setPForm(null)}
-        title={pForm?.id ? 'Sửa sản phẩm' : 'Thêm sản phẩm'}
-        subtitle={pForm?.id ? pForm.code : 'Tạo sản phẩm mới'}
-        size="lg"
-        footer={<><Button variant="secondary" onClick={() => setPForm(null)}>Hủy</Button><Button onClick={saveProduct}>{pForm?.id ? 'Lưu' : 'Thêm'}</Button></>}
-      >
-        {pForm && (
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Mã sản phẩm" required><Input value={pForm.code} onChange={(e) => setPForm({ ...pForm, code: e.target.value })} disabled={!!pForm.id} /></Field>
-            <Field label="Barcode"><Input value={pForm.barcode} onChange={(e) => setPForm({ ...pForm, barcode: e.target.value })} /></Field>
-            <Field label="Tên sản phẩm" required className="sm:col-span-2"><Input value={pForm.name} onChange={(e) => setPForm({ ...pForm, name: e.target.value })} /></Field>
-            <Field label="Danh mục">
-              <Select value={pForm.category} onChange={(e) => setPForm({ ...pForm, category: e.target.value })}>
-                {activeCats.length === 0 && <option value="">—</option>}
-                {activeCats.map((c) => <option key={c.name} value={c.name}>{c.name}</option>)}
-              </Select>
-            </Field>
-            <Field label="Đơn vị"><Input value={pForm.unit} onChange={(e) => setPForm({ ...pForm, unit: e.target.value })} placeholder="cái, chai, thùng..." /></Field>
-            <Field label="Giá bán" required><Input type="number" value={pForm.price} onChange={(e) => setPForm({ ...pForm, price: e.target.value })} /></Field>
-            <Field label="Giá vốn" required><Input type="number" value={pForm.cost} onChange={(e) => setPForm({ ...pForm, cost: e.target.value })} /></Field>
-            <Field label="Tồn kho" required><Input type="number" value={pForm.stock} onChange={(e) => setPForm({ ...pForm, stock: e.target.value })} /></Field>
-            <Field label="Hạn dùng"><Input type="date" value={pForm.expiry} onChange={(e) => setPForm({ ...pForm, expiry: e.target.value })} /></Field>
-          </div>
-        )}
-      </Modal>
-
-      {/* Category modal */}
+      {/* Category modal (small form — stays a popup) */}
       <Modal
         open={!!cForm}
         onClose={() => setCForm(null)}

@@ -4,9 +4,11 @@ import { Inbox } from 'lucide-react'
 
 /**
  * Lightweight declarative table.
- * columns: [{ key, header, render?(row), align?, className?, width? }]
+ * columns: [{ key, header, render?(row, index), align?, className?, width? }]
+ * stt: auto "STT" index column (default true, pass false to hide)
+ * actions: (row) => JSX — appends a "Thao tác" column; clicks inside it never trigger onRowClick
  */
-export function DataTable({ columns, rows, rowKey = 'id', onRowClick, empty, className, dense }) {
+export function DataTable({ columns, rows, rowKey = 'id', onRowClick, empty, className, dense, stt = true, actions }) {
   if (!rows || rows.length === 0) {
     return (
       <div className={cn('rounded-xl border border-slate-200 bg-white', className)}>
@@ -15,7 +17,23 @@ export function DataTable({ columns, rows, rowKey = 'id', onRowClick, empty, cla
     )
   }
 
-  const renderCell = (column, row) => (column.render ? column.render(row) : row[column.key])
+  const allColumns = [
+    ...(stt ? [{
+      key: '__stt', header: 'STT', align: 'center', width: 56,
+      render: (_row, i) => <span className="text-xs font-medium text-slate-400">{i + 1}</span>,
+    }] : []),
+    ...columns,
+    ...(actions ? [{
+      key: '__actions', header: 'Thao tác', align: 'right',
+      render: (row) => (
+        <div className="flex flex-wrap items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+          {actions(row)}
+        </div>
+      ),
+    }] : []),
+  ]
+
+  const renderCell = (column, row, index) => (column.render ? column.render(row, index) : row[column.key])
 
   return (
     <div className={cn('overflow-hidden rounded-xl border border-slate-200 bg-white shadow-card', className)}>
@@ -29,8 +47,8 @@ export function DataTable({ columns, rows, rowKey = 'id', onRowClick, empty, cla
               onRowClick && 'cursor-pointer hover:bg-slate-50/80',
             )}
           >
-            {columns.map((c, ci) => {
-              const content = renderCell(c, row)
+            {allColumns.filter((c) => c.key !== '__stt').map((c, ci) => {
+              const content = renderCell(c, row, i)
               if (!c.header) {
                 return (
                   <div key={c.key} className="flex justify-end pt-1">
@@ -55,7 +73,7 @@ export function DataTable({ columns, rows, rowKey = 'id', onRowClick, empty, cla
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-              {columns.map((c) => (
+              {allColumns.map((c) => (
                 <th
                   key={c.key}
                   style={c.width ? { width: c.width } : undefined}
@@ -76,7 +94,7 @@ export function DataTable({ columns, rows, rowKey = 'id', onRowClick, empty, cla
                   onRowClick && 'cursor-pointer',
                 )}
               >
-                {columns.map((c) => (
+                {allColumns.map((c) => (
                   <td
                     key={c.key}
                     className={cn(
@@ -87,7 +105,7 @@ export function DataTable({ columns, rows, rowKey = 'id', onRowClick, empty, cla
                       c.className,
                     )}
                   >
-                    {renderCell(c, row)}
+                    {renderCell(c, row, i)}
                   </td>
                 ))}
               </tr>

@@ -14,11 +14,15 @@ export function PageHeader({ title, subtitle, actions, breadcrumb }) {
 }
 
 // Horizontal filter bar wrapper used on list screens.
+// Children (Field, button groups...) share one row: flex-basis is forced so the
+// w-full on Field does not push each control onto its own line; they wrap only
+// when the screen is too narrow.
 export function FilterBar({ children, className }) {
   return (
     <div
       className={cn(
         'mb-5 flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-card',
+        '[&>*]:grow [&>*]:shrink [&>*]:basis-52 [&>*]:min-w-[160px]',
         className,
       )}
     >
