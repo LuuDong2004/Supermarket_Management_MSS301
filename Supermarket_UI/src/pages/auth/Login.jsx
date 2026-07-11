@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate, Navigate } from 'react-router-dom'
 import {
   Lock, User, ArrowRight, Eye, EyeOff, ShieldCheck, ShoppingCart,
-  Boxes, BarChart3, Crown, Wrench,
+  Boxes, BarChart3, Crown, Wrench, Package, Truck,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
@@ -12,7 +12,9 @@ const QUICK = [
   { u: 'ceo', label: 'CEO', icon: Crown },
   { u: 'admin', label: 'Admin', icon: ShieldCheck },
   { u: 'cashier', label: 'Thu ngân', icon: ShoppingCart },
-  { u: 'warehouse', label: 'Kho', icon: Wrench },
+  { u: 'warehouse', label: 'Quản lý kho', icon: Wrench },
+  { u: 'staff', label: 'Nhân viên kho', icon: Package },
+  { u: 'supplier', label: 'Nhà cung cấp', icon: Truck },
 ]
 
 const FEATURES = [
@@ -115,9 +117,17 @@ export default function Login() {
     }
   }
 
-  const quick = (u) => {
+  // Quick login signs straight in with the demo password.
+  const quick = async (u) => {
     setUsername(u)
     setPassword('123456')
+    try {
+      const usr = await login(u, '123456')
+      toast.success(`Xin chào, ${usr.fullName || usr.username}!`)
+      navigate('/app/dashboard')
+    } catch (err) {
+      toast.error(err.message || 'Đăng nhập thất bại')
+    }
   }
 
   return (
