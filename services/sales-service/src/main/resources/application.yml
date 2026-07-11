@@ -7,7 +7,7 @@ spring:
   datasource:
     url: ${DB_URL:jdbc:mysql://localhost:3306/sales_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=utf8}
     username: root
-    password: ""
+    password: ${DB_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
@@ -31,7 +31,7 @@ eureka:
 
 security:
   internal:
-    api-key: ${INTERNAL_API_KEY:internal-dev-key-change-me}
+    api-key: ${INTERNAL_API_KEY}
 
 management:
   endpoints:
@@ -41,8 +41,10 @@ management:
 
 springdoc:
   api-docs:
+    enabled: ${SPRINGDOC_ENABLED:false}
     path: /api/sales/v3/api-docs
   swagger-ui:
+    enabled: ${SPRINGDOC_ENABLED:false}
     path: /swagger-ui.html
 
 logging:
@@ -50,8 +52,8 @@ logging:
     com.mss301.sales: INFO
 
 sepay:
-  webhook-token: ${SEPAY_WEBHOOK_TOKEN:dev-token}
+  webhook-token: ${SEPAY_WEBHOOK_TOKEN}
   bank-id: ${SEPAY_BANK_ID:MB}
-  account-no: ${SEPAY_ACCOUNT_NO:0369666456}
-  account-name: ${SEPAY_ACCOUNT_NAME:NGUYEN DUY THANG}
+  account-no: ${SEPAY_ACCOUNT_NO:0000000000}
+  account-name: ${SEPAY_ACCOUNT_NAME:DEMO ACCOUNT}
 

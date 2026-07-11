@@ -19,3 +19,10 @@ Thumbs.db
 
 # Local env overrides
 .env.local
+
+# Secrets — never commit
+.env
+**/.env
+!.env.example
+!Supermarket_UI/.env
+.codex-audit/
