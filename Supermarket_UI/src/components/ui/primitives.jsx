@@ -1,6 +1,6 @@
 import { Children, isValidElement, useEffect, useRef, useState } from 'react'
 import { cn } from '../../lib/cn.js'
-import { Check, Loader2 } from 'lucide-react'
+import { Calendar, Check, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 
 /* ------------------------------ Button ------------------------------ */
 const BTN_VARIANTS = {
@@ -136,7 +136,124 @@ export function Field({ label, hint, required, error, children, className }) {
 }
 
 export function Input({ className, ...props }) {
+  // All date fields get the custom rounded calendar picker automatically.
+  if (props.type === 'date') return <DateInput className={className} {...props} />
   return <input className={cn('input-base', className)} {...props} />
+}
+
+/* --------------------------- Date picker ---------------------------- */
+const pad2 = (n) => String(n).padStart(2, '0')
+const toIso = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
+const WEEKDAYS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN']
+
+/**
+ * Custom calendar replacing native <input type="date">. Same contract:
+ * ISO yyyy-mm-dd value, onChange(e.target.value), optional min/max.
+ */
+function DateInput({ value, onChange, disabled, min, max, className, placeholder = 'Chọn ngày...' }) {
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef(null)
+  const selected = value ? new Date(`${value}T00:00:00`) : null
+  const [view, setView] = useState(() => selected || new Date())
+
+  useEffect(() => {
+    if (!open) return
+    if (selected) setView(selected)
+    const onDocClick = (e) => { if (!rootRef.current?.contains(e.target)) setOpen(false) }
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('mousedown', onDocClick)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDocClick)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const inRange = (iso) => (!min || iso >= min) && (!max || iso <= max)
+  const pick = (iso) => { setOpen(false); onChange?.({ target: { value: iso } }) }
+
+  // Monday-first 6-week grid around the viewed month.
+  const first = new Date(view.getFullYear(), view.getMonth(), 1)
+  const start = new Date(first)
+  start.setDate(1 - ((first.getDay() + 6) % 7))
+  const days = Array.from({ length: 42 }, (_, i) => {
+    const d = new Date(start)
+    d.setDate(start.getDate() + i)
+    return d
+  })
+  const todayIso = toIso(new Date())
+
+  return (
+    <div ref={rootRef} className="relative w-full">
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setOpen((v) => !v)}
+        className={cn('input-base flex items-center justify-between gap-2 pr-3 text-left', className)}
+      >
+        <span className={cn('truncate', !selected && 'text-slate-400')}>
+          {selected ? `${pad2(selected.getDate())}/${pad2(selected.getMonth() + 1)}/${selected.getFullYear()}` : placeholder}
+        </span>
+        <Calendar size={15} className="shrink-0 text-slate-400" />
+      </button>
+
+      {open && (
+        <div className="absolute z-30 mt-1.5 w-72 rounded-xl border border-slate-200 bg-white p-3 shadow-xl shadow-slate-200/60">
+          <div className="mb-2 flex items-center justify-between">
+            <button type="button" onClick={() => setView(new Date(view.getFullYear(), view.getMonth() - 1, 1))}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-50 hover:text-slate-800">
+              <ChevronLeft size={16} />
+            </button>
+            <p className="text-sm font-semibold text-slate-800">Tháng {view.getMonth() + 1}, {view.getFullYear()}</p>
+            <button type="button" onClick={() => setView(new Date(view.getFullYear(), view.getMonth() + 1, 1))}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-50 hover:text-slate-800">
+              <ChevronRight size={16} />
+            </button>
+          </div>
+          <div className="grid grid-cols-7 gap-0.5 text-center">
+            {WEEKDAYS.map((w) => (
+              <span key={w} className="py-1 text-[11px] font-semibold uppercase text-slate-400">{w}</span>
+            ))}
+            {days.map((d) => {
+              const iso = toIso(d)
+              const isSelected = value === iso
+              const isToday = iso === todayIso
+              const inMonth = d.getMonth() === view.getMonth()
+              const enabled = inRange(iso)
+              return (
+                <button
+                  key={iso}
+                  type="button"
+                  disabled={!enabled}
+                  onClick={() => pick(iso)}
+                  className={cn(
+                    'flex h-8 items-center justify-center rounded-lg text-sm transition',
+                    isSelected ? 'bg-brand-600 font-semibold text-white shadow-sm'
+                      : isToday ? 'font-semibold text-brand-600 ring-1 ring-inset ring-brand-200 hover:bg-brand-50'
+                      : inMonth ? 'text-slate-700 hover:bg-slate-100'
+                      : 'text-slate-300 hover:bg-slate-50',
+                    !enabled && 'cursor-not-allowed text-slate-200 hover:bg-transparent',
+                  )}
+                >
+                  {d.getDate()}
+                </button>
+              )
+            })}
+          </div>
+          <div className="mt-2 flex justify-between border-t border-slate-100 pt-2">
+            <button type="button" onClick={() => pick(todayIso)}
+              className="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-brand-600 transition hover:bg-brand-50">
+              Hôm nay
+            </button>
+            <button type="button" onClick={() => pick('')}
+              className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-400 transition hover:bg-slate-50 hover:text-slate-600">
+              Xóa
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 export function Textarea({ className, ...props }) {
