@@ -542,7 +542,7 @@ export default function ProcessSale() {
                 <div className="px-5 py-12 text-center text-sm text-slate-400">Giỏ hàng trống. Thêm sản phẩm để bắt đầu.</div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
+                  <table className="w-full min-w-max text-sm">
                     <thead>
                       <tr className="border-b border-slate-100 bg-slate-50/50 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400">
                         <th className="px-5 py-3.5">Sản phẩm</th>

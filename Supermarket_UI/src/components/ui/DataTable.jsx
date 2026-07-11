@@ -136,10 +136,12 @@ export function DataTable({ columns, rows, rowKey = 'id', onRowClick, empty, cla
         ))}
       </div>
 
+      {/* Columns never squish: the table keeps its natural width and the
+          wrapper scrolls horizontally (scrollbar at the bottom). */}
       <div className="hidden overflow-x-auto sm:block">
-        <table className="w-full text-sm">
+        <table className="w-full min-w-max text-sm">
           <thead>
-            <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <tr className="border-b-2 border-slate-200 bg-slate-100/80 text-left text-xs font-bold uppercase tracking-wider text-slate-600">
               {allColumns.map((c) => (
                 <th
                   key={c.key}

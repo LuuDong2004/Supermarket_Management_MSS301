@@ -130,7 +130,8 @@ export default function Receive() {
             <Card>
               <CardHeader title="Phiếu nhận hàng" subtitle={`${sheet.length} mặt hàng · ${formatNumber(totalReceived)} đơn vị`} icon={PackageCheck} />
               <CardBody className="p-0">
-                <table className="w-full text-sm">
+                <div className="overflow-x-auto">
+                <table className="w-full min-w-max text-sm">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                       <th className="px-4 py-3">Sản phẩm</th>
@@ -166,6 +167,7 @@ export default function Receive() {
                     ))}
                   </tbody>
                 </table>
+                </div>
               </CardBody>
             </Card>
           ) : (
