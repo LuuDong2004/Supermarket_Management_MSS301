@@ -198,7 +198,7 @@ function DateInput({ value, onChange, disabled, min, max, className, placeholder
       </button>
 
       {open && (
-        <div className="absolute z-30 mt-1.5 w-72 rounded-xl border border-slate-200 bg-white p-3 shadow-xl shadow-slate-200/60">
+        <div className="absolute z-30 mt-1.5 w-64 rounded-xl border border-slate-200 bg-white p-2.5 shadow-xl shadow-slate-200/60">
           <div className="mb-2 flex items-center justify-between">
             <button type="button" onClick={() => setView(new Date(view.getFullYear(), view.getMonth() - 1, 1))}
               className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-50 hover:text-slate-800">
@@ -227,7 +227,7 @@ function DateInput({ value, onChange, disabled, min, max, className, placeholder
                   disabled={!enabled}
                   onClick={() => pick(iso)}
                   className={cn(
-                    'flex h-8 items-center justify-center rounded-lg text-sm transition',
+                    'flex h-7 items-center justify-center rounded-lg text-[13px] transition',
                     isSelected ? 'bg-brand-600 font-semibold text-white shadow-sm'
                       : isToday ? 'font-semibold text-brand-600 ring-1 ring-inset ring-brand-200 hover:bg-brand-50'
                       : inMonth ? 'text-slate-700 hover:bg-slate-100'
@@ -331,7 +331,7 @@ export function Select({ className, children, value, onChange, disabled, ...prop
                   disabled={o.disabled}
                   onClick={() => pick(o)}
                   className={cn(
-                    'flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm transition',
+                    'flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm transition',
                     isSelected ? 'bg-brand-50 font-medium text-brand-700' : 'text-slate-700 hover:bg-slate-50',
                     o.disabled && 'cursor-not-allowed text-slate-300 hover:bg-transparent',
                   )}
