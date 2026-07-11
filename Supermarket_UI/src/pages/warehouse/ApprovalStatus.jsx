@@ -79,9 +79,6 @@ export default function ApprovalStatus() {
         title="Trạng thái duyệt"
         subtitle="Theo dõi tiến trình phê duyệt các yêu cầu do nhân viên kho gửi lên."
         actions={
-          <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-            {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-          </Badge>
         }
       />
 

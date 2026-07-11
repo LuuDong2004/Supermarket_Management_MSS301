@@ -65,9 +65,6 @@ export default function Notifications() {
         title="Thông báo hệ thống"
         subtitle="Cảnh báo sự cố và thông báo vận hành gửi tới quản trị viên."
         actions={
-          <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-            {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-          </Badge>
         }
       />
 

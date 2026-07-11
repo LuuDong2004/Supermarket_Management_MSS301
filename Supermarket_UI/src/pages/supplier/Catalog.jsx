@@ -47,9 +47,6 @@ export default function Catalog() {
         subtitle="Quản lý danh mục sản phẩm và báo giá bạn cung cấp cho siêu thị."
         actions={
           <div className="flex items-center gap-3">
-            <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-              {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-            </Badge>
             <Button icon={Plus} onClick={() => navigate('/app/supplier/catalog/new')}>Thêm mặt hàng</Button>
           </div>
         }

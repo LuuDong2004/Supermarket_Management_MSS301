@@ -45,9 +45,6 @@ export default function SecurityAlerts() {
         title="Cảnh báo bảo mật"
         subtitle="Giám sát truy cập đáng ngờ, rủi ro phân quyền và sự kiện bảo mật."
         actions={
-          <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-            {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-          </Badge>
         }
       />
 

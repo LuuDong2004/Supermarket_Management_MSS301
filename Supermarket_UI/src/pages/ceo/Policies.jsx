@@ -99,9 +99,6 @@ export default function Policies() {
         subtitle="Quản lý các quy tắc và ngưỡng vận hành toàn hệ thống."
         actions={
           <div className="flex items-center gap-3">
-            <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-              {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-            </Badge>
             <Button icon={Plus} onClick={openNew}>Thêm chính sách</Button>
           </div>
         }

@@ -93,9 +93,6 @@ export default function Receive() {
         subtitle="Đối chiếu số lượng thực nhận với đơn mua đã duyệt và ghi nhận tình trạng hàng."
         actions={
           <div className="flex items-center gap-3">
-            <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-              {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-            </Badge>
             <Button icon={PackageCheck} disabled={!selectedPO} onClick={() => setConfirm(true)}>Xác nhận nhận hàng</Button>
           </div>
         }

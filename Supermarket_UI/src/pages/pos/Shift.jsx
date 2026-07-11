@@ -108,9 +108,6 @@ export default function Shift() {
         subtitle="Quản lý mở/đóng ca và đối soát tiền mặt cuối ca."
         actions={
           <div className="flex items-center gap-3">
-            <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-              {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-            </Badge>
             <StatusBadge status={shift.status} />
             <Button variant="secondary" icon={Plus} onClick={() => setOpenShift(true)}>Mở ca</Button>
           </div>

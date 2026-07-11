@@ -78,9 +78,6 @@ export default function Employees() {
         subtitle="Quản lý thông tin, phòng ban và lương của nhân viên."
         actions={
           <div className="flex items-center gap-3">
-            <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-              {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-            </Badge>
             <Button icon={Plus} onClick={() => navigate('/app/hr/employees/new')}>Thêm nhân viên</Button>
           </div>
         }

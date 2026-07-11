@@ -60,9 +60,6 @@ export default function Dashboard() {
         title={`Xin chào, ${user?.fullName || user?.username} 👋`}
         subtitle={`Bảng điều khiển ${roleLabel(role)} · ${new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}`}
         actions={
-          <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-            {source === 'backend' ? 'Dữ liệu backend' : 'Lỗi tải dữ liệu'}
-          </Badge>
         }
       />
 

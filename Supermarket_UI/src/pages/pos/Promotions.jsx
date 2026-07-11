@@ -102,9 +102,6 @@ export default function Promotions() {
         title="Khuyến mãi & Voucher"
         subtitle="Quản lý chương trình khuyến mãi và kiểm tra mã giảm giá."
         actions={
-          <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-            {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-          </Badge>
         }
       />
 

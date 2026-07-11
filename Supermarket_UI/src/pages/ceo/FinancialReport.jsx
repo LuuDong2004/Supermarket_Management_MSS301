@@ -45,9 +45,6 @@ export default function FinancialReport() {
         title="Báo cáo tài chính"
         subtitle="Doanh thu, giá vốn và lợi nhuận theo tháng phục vụ quyết định chiến lược."
         actions={
-          <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-            {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-          </Badge>
         }
       />
 

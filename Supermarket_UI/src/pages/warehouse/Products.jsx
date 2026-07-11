@@ -79,9 +79,6 @@ export default function Products() {
         subtitle="Tạo, cập nhật sản phẩm và duy trì danh mục hàng hóa."
         actions={
           <div className="flex items-center gap-3">
-            <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-              {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-            </Badge>
             {tab === 'products'
               ? <Button icon={Plus} onClick={openNewProduct}>Thêm sản phẩm</Button>
               : <Button icon={Plus} onClick={openNewCategory}>Thêm danh mục</Button>}

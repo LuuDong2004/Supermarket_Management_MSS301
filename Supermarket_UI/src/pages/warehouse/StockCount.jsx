@@ -54,9 +54,6 @@ export default function StockCount() {
         subtitle="Tạo và theo dõi các phiếu kiểm kê tồn kho theo khu vực."
         actions={
           <div className="flex items-center gap-3">
-            <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-              {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-            </Badge>
             <Button icon={Plus} onClick={() => navigate('/app/warehouse/stock-count/new')}>Tạo phiếu</Button>
           </div>
         }

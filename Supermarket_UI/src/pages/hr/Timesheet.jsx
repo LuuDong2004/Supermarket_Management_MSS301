@@ -62,9 +62,6 @@ export default function Timesheet() {
         subtitle="Tổng hợp giờ công, đúng giờ / đi muộn / vắng và mức độ hoàn thành ca theo nhân viên."
         actions={
           <div className="flex items-center gap-3">
-            <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-              {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-            </Badge>
             <Button icon={Download} onClick={doExport}>Xuất báo cáo</Button>
           </div>
         }

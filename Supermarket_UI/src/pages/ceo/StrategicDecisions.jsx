@@ -59,9 +59,6 @@ export default function StrategicDecisions() {
         subtitle="Ban hành và theo dõi các chỉ đạo chiến lược của ban điều hành."
         actions={
           <div className="flex items-center gap-3">
-            <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-              {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-            </Badge>
             <Button icon={Plus} onClick={() => navigate('/app/ceo/decisions/new')}>Ban hành quyết định</Button>
           </div>
         }

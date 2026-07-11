@@ -50,9 +50,6 @@ export default function Monitor() {
         title="Giám sát tồn kho"
         subtitle="Cảnh báo hàng tồn thấp, hết hàng và sản phẩm cận hạn sử dụng."
         actions={
-          <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-            {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-          </Badge>
         }
       />
 

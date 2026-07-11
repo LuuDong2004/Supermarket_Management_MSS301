@@ -52,9 +52,6 @@ export default function Inventory() {
         title="Thông tin tồn kho"
         subtitle="Tra cứu chi tiết hàng hóa, số lượng tồn và hạn sử dụng."
         actions={
-          <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-            {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-          </Badge>
         }
       />
 

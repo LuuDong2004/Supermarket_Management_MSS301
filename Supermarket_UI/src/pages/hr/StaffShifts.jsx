@@ -68,9 +68,6 @@ export default function StaffShifts() {
         title="Phân ca nhân viên"
         subtitle="Xếp lịch làm việc theo ca Sáng / Chiều / Đêm. Mỗi nhân viên tối đa 1 ca/ngày."
         actions={
-          <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-            {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-          </Badge>
         }
       />
 

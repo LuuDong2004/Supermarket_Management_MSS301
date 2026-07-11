@@ -66,9 +66,6 @@ export default function Attendance() {
         subtitle="Theo dõi giờ vào/ra và trạng thái chấm công theo ngày."
         actions={
           <div className="flex items-center gap-3">
-            <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-              {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-            </Badge>
             <Button icon={Plus} onClick={() => navigate('/app/hr/attendance/new')}>Thêm chấm công</Button>
             <Button variant="secondary" icon={Download} onClick={exportCsv}>Xuất báo cáo</Button>
           </div>

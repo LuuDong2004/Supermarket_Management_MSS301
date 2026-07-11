@@ -74,9 +74,6 @@ export default function Users() {
         subtitle="Quản lý tài khoản, vai trò và trạng thái phê duyệt."
         actions={
           <div className="flex flex-wrap items-center gap-3">
-            <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-              {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-            </Badge>
             <Button icon={UserPlus} onClick={openNewUser}>Tạo tài khoản</Button>
           </div>
         }

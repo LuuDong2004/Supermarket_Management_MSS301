@@ -67,9 +67,6 @@ export default function Approvals() {
         title="Phê duyệt"
         subtitle="Hàng đợi phê duyệt của CEO — duyệt hoặc từ chối các yêu cầu."
         actions={
-          <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-            {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-          </Badge>
         }
       />
 

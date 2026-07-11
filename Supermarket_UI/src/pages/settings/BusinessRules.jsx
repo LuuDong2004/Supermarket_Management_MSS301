@@ -110,9 +110,6 @@ export default function BusinessRules() {
         subtitle="Quản lý quy tắc nghiệp vụ và truy vết mọi thay đổi (ai · khi nào · việc gì)."
         actions={
           <div className="flex items-center gap-3">
-            <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-              {source === 'backend' ? 'Dữ liệu backend' : 'Lỗi tải dữ liệu'}
-            </Badge>
             <Button icon={Plus} onClick={() => navigate('/app/settings/rules/new')}>Thêm quy tắc</Button>
           </div>
         }

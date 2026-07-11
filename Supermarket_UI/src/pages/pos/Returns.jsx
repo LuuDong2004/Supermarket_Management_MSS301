@@ -61,9 +61,6 @@ export default function Returns() {
         subtitle="Tra cứu hóa đơn gốc, chọn mặt hàng trả và tạo phiếu hoàn tiền (trong 7 ngày)."
         actions={
           <div className="flex items-center gap-3">
-            <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-              {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-            </Badge>
             <Button icon={Plus} onClick={() => navigate('/app/pos/returns/new')}>Tạo phiếu trả</Button>
           </div>
         }

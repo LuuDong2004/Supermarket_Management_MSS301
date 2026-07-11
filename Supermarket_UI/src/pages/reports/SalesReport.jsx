@@ -68,9 +68,6 @@ export default function SalesReport() {
         subtitle="Tổng quan hiệu quả kinh doanh theo khoảng thời gian."
         actions={
           <div className="flex items-center gap-3">
-            <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-              {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-            </Badge>
             <Button icon={FileSpreadsheet} onClick={exportReport}>Xuất Excel</Button>
           </div>
         }

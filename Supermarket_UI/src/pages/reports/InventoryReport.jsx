@@ -74,9 +74,6 @@ export default function InventoryReport() {
         subtitle="Giá trị tồn kho, cảnh báo tồn thấp và hàng cận hạn sử dụng."
         actions={
           <div className="flex items-center gap-3">
-            <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-              {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-            </Badge>
             <Button icon={FileSpreadsheet} onClick={exportReport}>Xuất Excel</Button>
           </div>
         }

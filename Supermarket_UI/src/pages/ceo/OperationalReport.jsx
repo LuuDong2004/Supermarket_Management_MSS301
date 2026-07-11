@@ -43,9 +43,6 @@ export default function OperationalReport() {
         title="Báo cáo vận hành"
         subtitle="Hiệu suất tồn kho, đơn hàng và nhân sự theo từng ngành hàng."
         actions={
-          <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-            {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-          </Badge>
         }
       />
 

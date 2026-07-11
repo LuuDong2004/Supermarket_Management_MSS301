@@ -56,9 +56,6 @@ export default function PromotionApprovals() {
         title="Duyệt khuyến mãi"
         subtitle="Phê duyệt hoặc từ chối các chiến dịch khuyến mãi trước khi áp dụng vào bán hàng."
         actions={
-          <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-            {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-          </Badge>
         }
       />
 

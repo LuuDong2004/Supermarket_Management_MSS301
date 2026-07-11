@@ -110,9 +110,6 @@ export default function SystemSettings() {
         subtitle="Thiết lập thông tin cửa hàng, thuế, thông báo và tích hợp."
         actions={
           <div className="flex items-center gap-3">
-            <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-              {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-            </Badge>
             <Button icon={Plus} onClick={openNew}>Thêm cấu hình</Button>
           </div>
         }

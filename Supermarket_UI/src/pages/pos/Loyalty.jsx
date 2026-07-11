@@ -76,9 +76,6 @@ export default function Loyalty() {
         title="Điểm thưởng"
         subtitle="Tra cứu số dư điểm và đổi điểm thưởng cho khách hàng thành viên."
         actions={
-          <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-            {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-          </Badge>
         }
       />
 

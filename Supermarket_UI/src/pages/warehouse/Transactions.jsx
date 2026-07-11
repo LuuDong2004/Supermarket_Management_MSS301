@@ -60,9 +60,6 @@ export default function Transactions() {
         title="Duyệt giao dịch kho"
         subtitle="Xem xét và phê duyệt các giao dịch nhập, xuất và điều chỉnh tồn kho."
         actions={
-          <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-            {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-          </Badge>
         }
       />
 

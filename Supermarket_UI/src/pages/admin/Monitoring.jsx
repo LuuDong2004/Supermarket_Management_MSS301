@@ -71,9 +71,6 @@ export default function Monitoring() {
         title="Giám sát hệ thống"
         subtitle="Trạng thái microservices, tài nguyên và nhật ký hệ thống."
         actions={
-          <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-            {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-          </Badge>
         }
       />
 

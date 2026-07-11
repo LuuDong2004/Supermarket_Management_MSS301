@@ -52,9 +52,6 @@ export default function SupplierProfile() {
         title="Hồ sơ nhà cung cấp"
         subtitle="Xem và cập nhật thông tin liên hệ của bạn."
         actions={
-          <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-            {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-          </Badge>
         }
       />
 

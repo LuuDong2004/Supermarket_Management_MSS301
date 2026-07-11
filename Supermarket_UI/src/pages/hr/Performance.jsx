@@ -58,9 +58,6 @@ export default function Performance() {
         title="Đánh giá hiệu suất"
         subtitle="Xếp hạng nhân viên theo doanh số, độ chính xác và giờ công."
         actions={
-          <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-            {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-          </Badge>
         }
       />
 

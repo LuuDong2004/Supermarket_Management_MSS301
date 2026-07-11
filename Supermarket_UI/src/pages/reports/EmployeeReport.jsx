@@ -49,9 +49,6 @@ export default function EmployeeReport() {
         subtitle="Đánh giá doanh số, độ chính xác và giờ làm theo từng nhân viên."
         actions={
           <div className="flex items-center gap-3">
-            <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-              {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-            </Badge>
             <Button icon={FileSpreadsheet} onClick={exportReport}>Xuất Excel</Button>
           </div>
         }

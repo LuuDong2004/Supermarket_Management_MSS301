@@ -61,9 +61,6 @@ export default function Reports() {
         title="Báo cáo kho"
         subtitle="Tổng quan giá trị tồn kho, cơ cấu ngành hàng và lưu lượng nhập xuất."
         actions={
-          <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-            {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-          </Badge>
         }
       />
 

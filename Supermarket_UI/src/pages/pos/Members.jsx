@@ -72,9 +72,6 @@ export default function Members() {
         subtitle="Tra cứu, đăng ký và quản lý thông tin khách hàng thành viên."
         actions={
           <div className="flex items-center gap-3">
-            <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-              {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-            </Badge>
             <Button icon={UserPlus} onClick={() => setRegister(true)}>Đăng ký thành viên</Button>
           </div>
         }

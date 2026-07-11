@@ -79,9 +79,6 @@ export default function GoodsReceipts() {
         subtitle="Lập, duyệt và in phiếu nhập hàng từ nhà cung cấp."
         actions={
           <div className="flex items-center gap-3">
-            <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-              {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-            </Badge>
             <Button icon={Plus} onClick={() => navigate('/app/warehouse/goods-receipts/new')}>Lập phiếu</Button>
           </div>
         }

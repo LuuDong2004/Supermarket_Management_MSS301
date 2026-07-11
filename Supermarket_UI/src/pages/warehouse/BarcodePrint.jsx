@@ -104,9 +104,6 @@ export default function BarcodePrint() {
         subtitle="Chọn sản phẩm và in tem nhãn mã vạch cho hàng hóa."
         actions={
           <div className="flex items-center gap-3">
-            <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-              {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-            </Badge>
             <Field label="" className="w-24"><Input type="number" min="1" value={copies} onChange={(e) => setCopies(e.target.value)} title="Số bản/nhãn" /></Field>
             <Button icon={Printer} onClick={doPrint} disabled={labels.length === 0}>In {labels.length > 0 ? `(${labels.length})` : ''}</Button>
           </div>

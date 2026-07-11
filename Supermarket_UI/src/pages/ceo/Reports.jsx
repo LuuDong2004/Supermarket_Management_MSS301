@@ -61,9 +61,6 @@ export default function Reports() {
         title="Báo cáo quản trị"
         subtitle="Tổng quan kết quả kinh doanh cho ban điều hành."
         actions={
-          <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-            {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-          </Badge>
         }
       />
 

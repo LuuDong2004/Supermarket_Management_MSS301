@@ -87,9 +87,6 @@ export default function Permissions() {
         title="Cấu hình phân quyền"
         subtitle="Ma trận vai trò × chức năng. Nhấn ô để cấp hoặc thu hồi quyền truy cập."
         actions={
-          <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-            {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-          </Badge>
         }
       />
 

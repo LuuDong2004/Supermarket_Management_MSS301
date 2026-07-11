@@ -60,9 +60,6 @@ export default function Adjustments() {
         subtitle="Tạo và theo dõi các yêu cầu điều chỉnh số lượng tồn kho."
         actions={
           <div className="flex items-center gap-3">
-            <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-              {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-            </Badge>
             <Button icon={Plus} onClick={() => navigate('/app/warehouse/adjustments/new')}>Tạo yêu cầu điều chỉnh</Button>
           </div>
         }

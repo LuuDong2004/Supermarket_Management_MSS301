@@ -98,9 +98,6 @@ export default function ApprovalRequests() {
         subtitle="Theo dõi các yêu cầu cần CEO phê duyệt."
         actions={
           <div className="flex items-center gap-3">
-            <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-              {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-            </Badge>
             <Button icon={Plus} onClick={() => setCreating(true)}>Gửi yêu cầu mới</Button>
           </div>
         }

@@ -457,9 +457,6 @@ export default function ProcessSale() {
         title="Bán hàng & Thanh toán"
         subtitle="Quét mã hoặc tìm sản phẩm để thêm vào giỏ. Hoàn tất quy trình trên cùng một màn hình."
         actions={
-          <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-            {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-          </Badge>
         }
       />
 

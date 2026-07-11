@@ -56,9 +56,6 @@ export default function PurchaseOrders() {
         subtitle="Quản lý đơn đặt mua từ nhà cung cấp và theo dõi trạng thái duyệt."
         actions={
           <div className="flex items-center gap-3">
-            <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-              {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-            </Badge>
             <Button icon={Plus} onClick={() => navigate('/app/warehouse/purchase-orders/new')}>Tạo đơn mua</Button>
           </div>
         }

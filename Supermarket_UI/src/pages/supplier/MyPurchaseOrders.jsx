@@ -61,9 +61,6 @@ export default function MyPurchaseOrders() {
         title="Đơn mua của tôi"
         subtitle="Xác nhận, cập nhật giao hàng cho các đơn mua từ siêu thị."
         actions={
-          <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-            {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-          </Badge>
         }
       />
 
