@@ -51,10 +51,10 @@ public class SaleServiceImpl implements SaleService {
     @Value("${sepay.bank-id:MB}")
     private String sepayBankId;
 
-    @Value("${sepay.account-no:0369666456}")
+    @Value("${sepay.account-no:0000000000}")
     private String sepayAccountNo;
 
-    @Value("${sepay.account-name:NGUYEN DUY THANG}")
+    @Value("${sepay.account-name:DEMO ACCOUNT}")
     private String sepayAccountName;
 
     @Override

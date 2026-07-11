@@ -23,7 +23,7 @@ class SaleControllerSePayWebhookTest {
                 67049590L,
                 "MBBank",
                 "2026-07-07 22:17:00",
-                "0369666456",
+                "0000000000",
                 null,
                 new BigDecimal("18000"),
                 null,

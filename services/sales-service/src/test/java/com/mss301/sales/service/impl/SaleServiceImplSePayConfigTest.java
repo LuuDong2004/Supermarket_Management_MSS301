@@ -25,11 +25,11 @@ class SaleServiceImplSePayConfigTest {
             .withBean(SaleServiceImpl.class);
 
     @Test
-    void defaultSePayConfigUsesRegisteredMBAccount() {
+    void defaultSePayConfigUsesPlaceholderAccountUntilEnvSuppliesTheRealOne() {
         contextRunner.run(context -> assertThat(context.getBean(SaleServiceImpl.class).getSePayConfig())
                 .containsEntry("bankId", "MB")
-                .containsEntry("accountNo", "0369666456")
-                .containsEntry("accountName", "NGUYEN DUY THANG"));
+                .containsEntry("accountNo", "0000000000")
+                .containsEntry("accountName", "DEMO ACCOUNT"));
     }
 
     @Test

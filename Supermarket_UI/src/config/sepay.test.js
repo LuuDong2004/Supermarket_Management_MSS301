@@ -6,8 +6,8 @@ import { DEFAULT_SEPAY_CONFIG, buildVietQrUrl } from './sepay.js'
 test('default SePay config uses the registered MB account', () => {
   assert.deepEqual(DEFAULT_SEPAY_CONFIG, {
     bankId: 'MB',
-    accountNo: '0369666456',
-    accountName: 'NGUYEN DUY THANG',
+    accountNo: '0000000000',
+    accountName: 'DEMO ACCOUNT',
   })
 })
 
@@ -18,8 +18,8 @@ test('buildVietQrUrl targets the configured account and encodes transfer data', 
   }))
 
   assert.equal(url.origin, 'https://img.vietqr.io')
-  assert.equal(url.pathname, '/image/MB-0369666456-compact.jpg')
+  assert.equal(url.pathname, '/image/MB-0000000000-compact.jpg')
   assert.equal(url.searchParams.get('amount'), '125000')
   assert.equal(url.searchParams.get('addInfo'), 'INV-1720282531000')
-  assert.equal(url.searchParams.get('accountName'), 'NGUYEN DUY THANG')
+  assert.equal(url.searchParams.get('accountName'), 'DEMO ACCOUNT')
 })

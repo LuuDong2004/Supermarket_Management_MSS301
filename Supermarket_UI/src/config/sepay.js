@@ -1,7 +1,10 @@
+// Placeholder payee only. The real account is supplied by the backend
+// (/sales/sepay-config, itself fed from SEPAY_* env vars) — never hardcode a
+// live bank account here: this file ships in the public frontend bundle.
 export const DEFAULT_SEPAY_CONFIG = Object.freeze({
   bankId: 'MB',
-  accountNo: '0369666456',
-  accountName: 'NGUYEN DUY THANG',
+  accountNo: '0000000000',
+  accountName: 'DEMO ACCOUNT',
 })
 
 export function normalizeSePayConfig(config) {
