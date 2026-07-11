@@ -34,6 +34,8 @@ const REDEEM_BLOCK = 100
 const REDEEM_VALUE = 10000
 const STORE = { name: 'Siêu thị MSS301', address: '123 Đường Trần Phú, Hà Nội', phone: '1900 1234' }
 
+const PRODUCT_IMAGE_FALLBACK = 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=160&auto=format&fit=crop&q=70'
+
 const getProductImage = (name, category) => {
   const n = (name || '').toLowerCase()
   const c = (category || '').toLowerCase()
@@ -52,6 +54,25 @@ const getProductImage = (name, category) => {
   if (c.includes('khô')) return 'https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?w=100&auto=format&fit=crop&q=60'
   if (c.includes('tươi')) return 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=100&auto=format&fit=crop&q=60'
   return 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=100&auto=format&fit=crop&q=60'
+}
+
+function ProductImage({ name, category, className }) {
+  const handleError = (event) => {
+    const img = event.currentTarget
+    if (img.dataset.fallbackApplied) return
+    img.dataset.fallbackApplied = '1'
+    img.src = PRODUCT_IMAGE_FALLBACK
+  }
+
+  return (
+    <img
+      src={getProductImage(name, category)}
+      alt={name || 'Sản phẩm'}
+      className={className}
+      loading="lazy"
+      onError={handleError}
+    />
+  )
 }
 
 // Real printable receipt (C10): store info, date/time, itemized lines, totals,
@@ -469,7 +490,7 @@ export default function ProcessSale() {
                           className={`flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left text-sm transition-colors ${active ? 'bg-brand-50 border-l-4 border-brand-600' : 'hover:bg-slate-50'}`}
                         >
                           <span className="flex items-center gap-3.5">
-                            <img src={getProductImage(p.name, p.category)} alt={p.name} className="h-9 w-9 rounded-xl border border-slate-100 object-cover flex-shrink-0 bg-slate-50 shadow-sm" />
+                            <ProductImage name={p.name} category={p.category} className="h-9 w-9 flex-shrink-0 rounded-xl border border-slate-100 bg-slate-50 object-cover shadow-sm" />
                             <span className="flex flex-col">
                               <span className="font-semibold text-slate-700">{p.name}</span>
                               <span className="font-mono text-xs text-slate-400 mt-0.5">
@@ -500,9 +521,9 @@ export default function ProcessSale() {
                         className="group flex flex-col items-center rounded-2xl border border-slate-100 bg-slate-50/50 p-3 text-center transition-all duration-300 hover:bg-brand-50/50 hover:border-brand-200 hover:shadow-premium-hover disabled:opacity-50 disabled:hover:bg-slate-50/50 disabled:hover:border-slate-100 disabled:hover:shadow-none"
                       >
                         <div className="relative h-14 w-14 overflow-hidden rounded-xl bg-white shadow-sm border border-slate-100">
-                          <img
-                            src={getProductImage(p.name, p.category)}
-                            alt={p.name}
+                          <ProductImage
+                            name={p.name}
+                            category={p.category}
                             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                           />
                           {outOfStock && (
@@ -541,7 +562,7 @@ export default function ProcessSale() {
                         <tr key={x.id} className="hover:bg-slate-50/30 transition-colors border-b border-slate-100 last:border-b-0">
                           <td className="px-5 py-3.5">
                             <div className="flex items-center gap-3">
-                              <img src={getProductImage(x.name, x.category)} alt={x.name} className="h-10 w-10 rounded-xl border border-slate-100 object-cover flex-shrink-0 bg-slate-50 shadow-sm" />
+                              <ProductImage name={x.name} category={x.category} className="h-10 w-10 flex-shrink-0 rounded-xl border border-slate-100 bg-slate-50 object-cover shadow-sm" />
                               <div>
                                 <p className="font-semibold text-slate-700">{x.name}</p>
                                 <p className="font-mono text-[10px] text-slate-400 mt-0.5">{x.barcode} · <span className="text-brand-600 font-bold uppercase text-[9px]">{x.category}</span></p>

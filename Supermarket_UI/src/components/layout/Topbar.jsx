@@ -12,6 +12,7 @@ export function Topbar({ onMenu }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [unread, setUnread] = useState(0)
   const ref = useRef(null)
+  const canViewNotifications = user?.role === 'ROLE_ADMIN'
 
   useEffect(() => {
     const onClick = (e) => ref.current && !ref.current.contains(e.target) && setMenuOpen(false)
@@ -20,16 +21,20 @@ export function Topbar({ onMenu }) {
   }, [])
 
   useEffect(() => {
+    if (!canViewNotifications) {
+      setUnread(0)
+      return
+    }
     let active = true
     notificationService.unreadCount()
       .then((n) => { if (active) setUnread(Number(n) || 0) })
       .catch(() => {})
     return () => { active = false }
-  }, [])
+  }, [canViewNotifications])
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-slate-100 bg-white/80 px-4 backdrop-blur-md lg:px-6 shadow-sm">
-      <button onClick={onMenu} className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 lg:hidden">
+    <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-slate-100 bg-white/80 px-4 backdrop-blur-md shadow-sm lg:px-6">
+      <button onClick={onMenu} className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 lg:hidden" aria-label="Mở menu">
         <Menu size={20} />
       </button>
 
@@ -37,7 +42,7 @@ export function Topbar({ onMenu }) {
         <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
         <input
           placeholder="Tìm module, sản phẩm, khách hàng..."
-          className="w-full rounded-xl border border-slate-100 bg-slate-50/80 py-2 pl-10 pr-4 text-sm placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-brand-500/10 transition-all duration-200"
+          className="w-full rounded-xl border border-slate-100 bg-slate-50/80 py-2 pl-10 pr-4 text-sm placeholder:text-slate-400 transition-all duration-200 focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-brand-500/10"
         />
       </div>
 
@@ -45,25 +50,27 @@ export function Topbar({ onMenu }) {
         {mockMode && (
           <Badge tone="amber" className="hidden sm:inline-flex">Chế độ demo (mock)</Badge>
         )}
-        <button
-          onClick={() => navigate('/app/admin/notifications')}
-          title="Thông báo hệ thống"
-          className="relative rounded-xl p-2 text-slate-500 hover:bg-slate-100"
-        >
-          <Bell size={19} />
-          {unread > 0 && (
-            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
-              {unread > 9 ? '9+' : unread}
-            </span>
-          )}
-        </button>
+        {canViewNotifications && (
+          <button
+            onClick={() => navigate('/app/admin/notifications')}
+            title="Thông báo hệ thống"
+            className="relative rounded-xl p-2 text-slate-500 hover:bg-slate-100"
+          >
+            <Bell size={19} />
+            {unread > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
+                {unread > 9 ? '9+' : unread}
+              </span>
+            )}
+          </button>
+        )}
 
         <div className="relative" ref={ref}>
           <button
             onClick={() => setMenuOpen((o) => !o)}
-            className="flex items-center gap-2 rounded-xl py-1.5 pl-1.5 pr-2 hover:bg-slate-100 transition-colors"
+            className="flex items-center gap-2 rounded-xl py-1.5 pl-1.5 pr-2 transition-colors hover:bg-slate-100"
           >
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-brand-600 to-brand-500 text-xs font-bold text-white shadow-premium border border-brand-400/20">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl border border-brand-400/20 bg-gradient-to-br from-brand-600 to-brand-500 text-xs font-bold text-white shadow-premium">
               {initials(user?.fullName || user?.username || 'U')}
             </span>
             <span className="hidden text-left leading-tight sm:block">
@@ -74,7 +81,7 @@ export function Topbar({ onMenu }) {
           </button>
 
           {menuOpen && (
-            <div className="absolute right-0 mt-2 w-52 rounded-xl border border-slate-200 bg-white py-1.5 shadow-card-hover animate-fade-in">
+            <div className="absolute right-0 mt-2 w-52 animate-fade-in rounded-xl border border-slate-200 bg-white py-1.5 shadow-card-hover">
               <div className="border-b border-slate-100 px-4 py-2.5">
                 <p className="text-sm font-semibold text-slate-800">{user?.fullName || user?.username}</p>
                 <p className="text-xs text-slate-400">{user?.email || '—'}</p>

@@ -1,9 +1,12 @@
-import { useEffect } from 'react'
+import { useEffect, useId } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { cn } from '../../lib/cn.js'
 
 export function Modal({ open, onClose, title, subtitle, children, footer, size = 'md' }) {
+  const titleId = useId()
+  const subtitleId = useId()
+
   useEffect(() => {
     if (!open) return
     const onKey = (e) => e.key === 'Escape' && onClose?.()
@@ -20,14 +23,25 @@ export function Modal({ open, onClose, title, subtitle, children, footer, size =
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
-      <div className={cn('relative z-10 w-full rounded-xl bg-white shadow-xl animate-fade-in', sizes[size])}>
+      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? titleId : undefined}
+        aria-describedby={subtitle ? subtitleId : undefined}
+        className={cn('relative z-10 w-full rounded-xl bg-white shadow-xl animate-fade-in', sizes[size])}
+      >
         <div className="flex items-start justify-between border-b border-slate-100 px-5 py-4">
           <div>
-            <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
-            {subtitle && <p className="text-sm text-slate-500">{subtitle}</p>}
+            <h3 id={titleId} className="text-lg font-semibold text-slate-900">{title}</h3>
+            {subtitle && <p id={subtitleId} className="text-sm text-slate-500">{subtitle}</p>}
           </div>
-          <button onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Đóng"
+            className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+          >
             <X size={18} />
           </button>
         </div>

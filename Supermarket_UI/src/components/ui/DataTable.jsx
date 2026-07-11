@@ -14,9 +14,44 @@ export function DataTable({ columns, rows, rowKey = 'id', onRowClick, empty, cla
       </div>
     )
   }
+
+  const renderCell = (column, row) => (column.render ? column.render(row) : row[column.key])
+
   return (
     <div className={cn('overflow-hidden rounded-xl border border-slate-200 bg-white shadow-card', className)}>
-      <div className="overflow-x-auto">
+      <div className="divide-y divide-slate-100 sm:hidden">
+        {rows.map((row, i) => (
+          <div
+            key={row[rowKey] ?? i}
+            onClick={onRowClick ? () => onRowClick(row) : undefined}
+            className={cn(
+              'space-y-3 px-4 py-4 transition',
+              onRowClick && 'cursor-pointer hover:bg-slate-50/80',
+            )}
+          >
+            {columns.map((c, ci) => {
+              const content = renderCell(c, row)
+              if (!c.header) {
+                return (
+                  <div key={c.key} className="flex justify-end pt-1">
+                    {content}
+                  </div>
+                )
+              }
+              return (
+                <div key={c.key} className={cn('grid grid-cols-[7.5rem_minmax(0,1fr)] gap-3 text-sm', ci === 0 && 'items-start')}>
+                  <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">{c.header}</span>
+                  <div className={cn('min-w-0 text-slate-700', ci === 0 && 'font-medium')}>
+                    {content}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        ))}
+      </div>
+
+      <div className="hidden overflow-x-auto sm:block">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -52,7 +87,7 @@ export function DataTable({ columns, rows, rowKey = 'id', onRowClick, empty, cla
                       c.className,
                     )}
                   >
-                    {c.render ? c.render(row) : row[c.key]}
+                    {renderCell(c, row)}
                   </td>
                 ))}
               </tr>
