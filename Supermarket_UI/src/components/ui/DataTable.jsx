@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { cn } from '../../lib/cn.js'
 import { EmptyState } from './primitives.jsx'
 import { Inbox, MoreVertical } from 'lucide-react'
@@ -50,7 +51,9 @@ function RowActionsMenu({ children }) {
       >
         <MoreVertical size={16} />
       </button>
-      {pos && (
+      {pos && createPortal(
+        // Portal to <body>: transformed/overflow ancestors can neither clip
+        // nor offset the fixed-position panel.
         <div
           ref={menuRef}
           style={{ position: 'fixed', top: pos.top, right: pos.right, zIndex: 40 }}
@@ -58,7 +61,8 @@ function RowActionsMenu({ children }) {
           onClick={() => setPos(null)}
         >
           {children}
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   )
