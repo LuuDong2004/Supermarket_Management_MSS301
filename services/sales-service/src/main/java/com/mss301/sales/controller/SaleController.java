@@ -36,7 +36,7 @@ public class SaleController {
 
     private final SaleService saleService;
 
-    @Value("${sepay.webhook-token:dev-token}")
+    @Value("${sepay.webhook-token}")
     private String sepayWebhookToken;
 
     @Operation(summary = "List sales (newest first)")
@@ -88,6 +88,7 @@ public class SaleController {
     }
 
     @Operation(summary = "Get SePay configuration")
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/sepay-config")
     public ApiResponse<Map<String, String>> getSePayConfig() {
         return ApiResponse.success(saleService.getSePayConfig());
