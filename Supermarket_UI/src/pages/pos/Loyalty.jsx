@@ -94,7 +94,7 @@ export default function Loyalty() {
         <Card className="lg:col-span-2">
           <CardHeader title="Đổi điểm thưởng" icon={ArrowRightLeft} subtitle="Chọn thành viên và số điểm cần đổi" />
           <CardBody className="space-y-5">
-            <Field label="Thành viên">
+            <Field label="Thành viên" className="max-w-sm">
               <Select value={memberId} onChange={(e) => { setMemberId(e.target.value); setRedeem('') }}>
                 {customers.map((c) => (
                   <option key={c.id} value={c.id}>{c.name} · {c.phone}</option>
@@ -115,21 +115,25 @@ export default function Loyalty() {
 
             <Divider />
 
-            <Field label="Số điểm muốn đổi" hint={`Tối đa ${formatNumber(balance)} điểm`}>
-              <Input
-                type="number"
-                placeholder="Nhập số điểm..."
-                value={redeem}
-                onChange={(e) => setRedeem(e.target.value)}
-              />
-            </Field>
-            <div className="flex items-center justify-between rounded-lg bg-slate-50 px-4 py-3">
-              <span className="text-sm font-medium text-slate-600">Giá trị quy đổi</span>
-              <span className="text-lg font-bold text-emerald-600">{formatCurrency(redeemValue)}</span>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Số điểm muốn đổi" hint={`Tối đa ${formatNumber(balance)} điểm`}>
+                <Input
+                  type="number"
+                  placeholder="Nhập số điểm..."
+                  value={redeem}
+                  onChange={(e) => setRedeem(e.target.value)}
+                />
+              </Field>
+              <div className="flex items-center justify-between self-start rounded-lg bg-slate-50 px-4 py-2.5 sm:mt-7">
+                <span className="text-sm font-medium text-slate-600">Giá trị quy đổi</span>
+                <span className="text-lg font-bold text-emerald-600">{formatCurrency(redeemValue)}</span>
+              </div>
             </div>
-            <Button size="lg" icon={ArrowRightLeft} className="w-full" disabled={redeemNum <= 0} onClick={doRedeem}>
-              Đổi điểm
-            </Button>
+            <div className="flex justify-end">
+              <Button icon={ArrowRightLeft} disabled={redeemNum <= 0} onClick={doRedeem}>
+                Đổi điểm
+              </Button>
+            </div>
           </CardBody>
         </Card>
 

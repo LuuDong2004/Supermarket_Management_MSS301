@@ -152,33 +152,35 @@ export default function Shift() {
                 <span className="text-slate-500">Tiền mặt dự kiến</span>
                 <span className="font-semibold text-slate-800">{formatCurrency(expectedCash)}</span>
               </div>
-              <Field label="Tiền mặt thực đếm" hint="Nhập số tiền kiểm đếm thực tế trong két cuối ca">
-                <Input
-                  type="number"
-                  placeholder="Nhập số tiền thực đếm..."
-                  value={actual}
-                  onChange={(e) => setActual(e.target.value)}
-                  disabled={closed}
-                />
-              </Field>
-              <div className="flex items-center justify-between rounded-lg bg-slate-50 px-4 py-3">
-                <span className="text-sm font-medium text-slate-600">Chênh lệch</span>
-                <span className={'text-lg font-bold ' + (diff === 0 ? 'text-emerald-600' : diff < 0 ? 'text-rose-600' : 'text-amber-600')}>
-                  {formatCurrency(diff)}
-                </span>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Tiền mặt thực đếm" hint="Số tiền kiểm đếm thực tế trong két cuối ca">
+                  <Input
+                    type="number"
+                    placeholder="Nhập số tiền thực đếm..."
+                    value={actual}
+                    onChange={(e) => setActual(e.target.value)}
+                    disabled={closed}
+                  />
+                </Field>
+                <div className="flex items-center justify-between self-start rounded-lg bg-slate-50 px-4 py-2.5 sm:mt-7">
+                  <span className="text-sm font-medium text-slate-600">Chênh lệch</span>
+                  <span className={'text-lg font-bold ' + (diff === 0 ? 'text-emerald-600' : diff < 0 ? 'text-rose-600' : 'text-amber-600')}>
+                    {formatCurrency(diff)}
+                  </span>
+                </div>
               </div>
             </div>
 
-            <Button
-              size="lg"
-              variant="danger"
-              icon={LockKeyhole}
-              className="w-full"
-              disabled={closed || !actual || !shift.id}
-              onClick={() => setConfirm(true)}
-            >
-              {closed ? 'Ca đã đóng' : 'Đóng ca'}
-            </Button>
+            <div className="flex justify-end">
+              <Button
+                variant="danger"
+                icon={LockKeyhole}
+                disabled={closed || !actual || !shift.id}
+                onClick={() => setConfirm(true)}
+              >
+                {closed ? 'Ca đã đóng' : 'Đóng ca'}
+              </Button>
+            </div>
           </CardBody>
         </Card>
 
