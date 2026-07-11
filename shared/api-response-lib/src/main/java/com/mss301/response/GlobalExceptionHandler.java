@@ -34,9 +34,13 @@ public class GlobalExceptionHandler {
         } else {
             log.warn("API exception [{}]: {}", code, ex.getMessage());
         }
-        ErrorResponse error = ErrorResponse.of(code.name(), ex.getMessage());
+        // Never echo internal 5xx details to clients — they are logged above instead.
+        String clientMessage = code.status().is5xxServerError()
+                ? code.defaultMessage()
+                : ex.getMessage();
+        ErrorResponse error = ErrorResponse.of(code.name(), clientMessage);
         return ResponseEntity.status(code.status())
-                .body(ApiResponse.error(ex.getMessage(), error));
+                .body(ApiResponse.error(clientMessage, error));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

@@ -13,6 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Locale;
 import java.util.UUID;
 
@@ -24,6 +26,9 @@ import java.util.UUID;
 public class MinioStorageService implements StorageService {
 
     private static final Logger log = LoggerFactory.getLogger(MinioStorageService.class);
+
+    /** Hard cap on uploaded image size (5 MB), enforced regardless of container config. */
+    private static final long MAX_UPLOAD_BYTES = 5L * 1024 * 1024;
 
     private final MinioClient client;
     private final MinioProperties props;
@@ -56,9 +61,16 @@ public class MinioStorageService implements StorageService {
         if (file == null || file.isEmpty()) {
             throw new BadRequestException("File is empty");
         }
+        if (file.getSize() > MAX_UPLOAD_BYTES) {
+            throw new BadRequestException("Image must not exceed 5MB");
+        }
         String contentType = file.getContentType();
         if (contentType == null || !contentType.startsWith("image/")) {
             throw new BadRequestException("Only image files are allowed");
+        }
+        // Client-supplied Content-Type is untrusted — verify the real file signature.
+        if (!hasImageMagicBytes(file)) {
+            throw new BadRequestException("Only JPEG, PNG, GIF or WEBP images are allowed");
         }
         String object = buildObjectName(folder, file.getOriginalFilename());
         try {
@@ -90,6 +102,49 @@ public class MinioStorageService implements StorageService {
         } catch (Exception e) {
             log.warn("MinIO delete failed for '{}': {}", object, e.getMessage());
         }
+    }
+
+    /**
+     * Sniffs the first bytes of the upload and accepts only JPEG, PNG, GIF or WEBP.
+     */
+    private boolean hasImageMagicBytes(MultipartFile file) {
+        byte[] head = new byte[12];
+        int read;
+        try (InputStream in = file.getInputStream()) {
+            read = in.readNBytes(head, 0, head.length);
+        } catch (IOException e) {
+            throw new BadRequestException("Unable to read uploaded file");
+        }
+        if (read < 4) {
+            return false;
+        }
+        // JPEG: FF D8 FF
+        if (matches(head, read, 0, 0xFF, 0xD8, 0xFF)) {
+            return true;
+        }
+        // PNG: 89 50 4E 47
+        if (matches(head, read, 0, 0x89, 0x50, 0x4E, 0x47)) {
+            return true;
+        }
+        // GIF: 47 49 46 38 ("GIF8")
+        if (matches(head, read, 0, 0x47, 0x49, 0x46, 0x38)) {
+            return true;
+        }
+        // WEBP: "RIFF" ---- "WEBP"
+        return matches(head, read, 0, 0x52, 0x49, 0x46, 0x46)
+                && matches(head, read, 8, 0x57, 0x45, 0x42, 0x50);
+    }
+
+    private static boolean matches(byte[] data, int length, int offset, int... signature) {
+        if (offset + signature.length > length) {
+            return false;
+        }
+        for (int i = 0; i < signature.length; i++) {
+            if ((data[offset + i] & 0xFF) != signature[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private String buildObjectName(String folder, String originalName) {

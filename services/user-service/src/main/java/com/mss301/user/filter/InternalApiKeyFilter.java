@@ -12,6 +12,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 
 /**
  * Defence-in-depth for /internal/** endpoints. These paths are not routed by
@@ -41,7 +43,9 @@ public class InternalApiKeyFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         String provided = request.getHeader(HEADER);
-        if (!StringUtils.hasText(provided) || !expectedKey.equals(provided)) {
+        if (!StringUtils.hasText(provided) || !MessageDigest.isEqual(
+                expectedKey.getBytes(StandardCharsets.UTF_8),
+                provided.getBytes(StandardCharsets.UTF_8))) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
             objectMapper.writeValue(response.getWriter(),
