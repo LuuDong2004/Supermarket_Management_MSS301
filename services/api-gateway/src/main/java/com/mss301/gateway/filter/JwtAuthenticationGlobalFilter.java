@@ -67,14 +67,6 @@ public class JwtAuthenticationGlobalFilter implements GlobalFilter, Ordered {
         }
 
         String token = authHeader.substring(SecurityConstants.BEARER_PREFIX.length());
-        if ("demo-token".equals(token)) {
-            ServerHttpRequest authorized = sanitized.mutate()
-                    .header(GatewayHeaders.USER_ID, "demo-cashier")
-                    .header(GatewayHeaders.USERNAME, "mock-cashier")
-                    .header(GatewayHeaders.ROLES, "ROLE_CASHIER")
-                    .build();
-            return chain.filter(exchange.mutate().request(authorized).build());
-        }
 
         try {
             Claims claims = jwtTokenProvider.parseClaims(token);
