@@ -5,6 +5,7 @@ import { Card, CardBody, Button, Badge, StatusBadge, Field, Select, EmptyState }
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { StatCard } from '../../components/ui/StatCard.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { formatDate } from '../../lib/format.js'
 import { strategicDecisionService, withFallback, toList } from '../../services/index.js'
 import { Plus, Pencil, Trash2, Lightbulb, Flag, Rocket, CheckCircle2 } from 'lucide-react'
@@ -16,6 +17,7 @@ const prioTone = (p) => ({ Cao: 'red', 'Trung bình': 'amber', Thấp: 'slate' }
 
 export default function StrategicDecisions() {
   const toast = useToast()
+  const confirm = useConfirm()
   const navigate = useNavigate()
   const [decisions, setDecisions] = useState([])
   const [source, setSource] = useState('backend')
@@ -42,6 +44,7 @@ export default function StrategicDecisions() {
 
   const remove = async (d) => {
     if (source !== 'backend' || !d.id) { toast.error('Không có kết nối backend để xóa.'); return }
+    if (!(await confirm({ title: 'Xóa quyết định?', message: `Quyết định "${d.title}" sẽ bị xóa vĩnh viễn.`, confirmLabel: 'Xóa', danger: true }))) return
     try {
       await strategicDecisionService.remove(d.id)
       toast.success(`Đã xóa quyết định "${d.title}".`)

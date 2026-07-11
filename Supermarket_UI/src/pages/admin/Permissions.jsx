@@ -4,6 +4,7 @@ import { Card, CardBody, Badge } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { StatCard } from '../../components/ui/StatCard.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { permissionService, withFallback, toList } from '../../services/index.js'
 import { Check, X, KeyRound, Crown, ShieldCheck, ShoppingCart } from 'lucide-react'
 
@@ -20,6 +21,7 @@ const catTone = (c) => ({ 'Bán hàng': 'brand', Kho: 'amber', 'Nhân sự': 'vi
 
 export default function Permissions() {
   const toast = useToast()
+  const confirm = useConfirm()
   const [rows, setRows] = useState([])
   const [source, setSource] = useState('backend')
   const [saving, setSaving] = useState(null) // `${id}:${key}` while a toggle is in flight
@@ -40,6 +42,14 @@ export default function Permissions() {
 
   const toggle = async (row, key) => {
     if (source !== 'backend' || !row.id) { toast.error('Không có kết nối backend để cập nhật phân quyền.'); return }
+    const granting = !row[key]
+    const roleLabelText = ROLE_COLS.find((c) => c.key === key)?.label || key
+    if (!(await confirm({
+      title: granting ? 'Cấp quyền?' : 'Thu hồi quyền?',
+      message: `${granting ? 'Cấp' : 'Thu hồi'} quyền "${row.featureName}" cho vai trò ${roleLabelText}.`,
+      confirmLabel: granting ? 'Cấp quyền' : 'Thu hồi',
+      danger: !granting,
+    }))) return
     const next = { ...row, [key]: !row[key] }
     setSaving(`${row.id}:${key}`)
     // optimistic update

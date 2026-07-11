@@ -5,6 +5,7 @@ import { Button, Badge, StatusBadge, Field, Input, Select, Spinner } from '../..
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { StatCard } from '../../components/ui/StatCard.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { formatCurrency, formatNumber, formatDate, roleLabel, initials, isoDate } from '../../lib/format.js'
 import { employeeService, staffShiftService, withFallback, toList, mockEmployees } from '../../services/index.js'
 import { Users, UserCheck, Building2, Plus, Search, Trash2, Pencil, Eye } from 'lucide-react'
@@ -15,6 +16,7 @@ const ROLES = ['ROLE_CASHIER', 'ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_STAFF',
 
 export default function Employees() {
   const toast = useToast()
+  const confirm = useConfirm()
   const navigate = useNavigate()
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
@@ -61,6 +63,7 @@ export default function Employees() {
   const active = rows.filter((e) => e.status === 'Đang làm').length
 
   const remove = async (row) => {
+    if (!(await confirm({ title: 'Xóa nhân viên?', message: `Hồ sơ của ${row.name} sẽ bị xóa vĩnh viễn.`, confirmLabel: 'Xóa', danger: true }))) return
     try {
       await employeeService.remove(row.id)
       toast.success('Đã xóa nhân viên.')

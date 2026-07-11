@@ -4,6 +4,7 @@ import { Card, CardHeader, CardBody, Button, Badge, Field, Input, Select, Divide
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { StatCard } from '../../components/ui/StatCard.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { formatCurrency, formatNumber, formatDate, isoDate } from '../../lib/format.js'
 import { customerService, withFallback, toList, mockCustomers } from '../../services/index.js'
 import { Star, Gift, Coins, Crown, ArrowRightLeft } from 'lucide-react'
@@ -19,6 +20,7 @@ const INITIAL_HISTORY = [
 
 export default function Loyalty() {
   const toast = useToast()
+  const confirm = useConfirm()
   const [customers, setCustomers] = useState([])
   const [source, setSource] = useState('backend')
   const [memberId, setMemberId] = useState('')
@@ -49,6 +51,11 @@ export default function Loyalty() {
     if (redeemNum % 100 !== 0) return toast.error('Chỉ đổi điểm theo bội số của 100.')
     if (redeemNum > balance) return toast.error(`Số điểm vượt quá số dư (${formatNumber(balance)} điểm).`)
     if (source !== 'backend') return toast.error('Không có kết nối backend.')
+    if (!(await confirm({
+      title: 'Đổi điểm thưởng?',
+      message: `Đổi ${formatNumber(redeemNum)} điểm của ${member?.name || 'thành viên'} lấy ${formatCurrency(redeemValue)}. Điểm đã đổi không thể hoàn lại.`,
+      confirmLabel: 'Đổi điểm',
+    }))) return
     try {
       // Persist: deduct points on the member's real balance.
       await customerService.adjustPoints(memberId, -redeemNum)

@@ -6,6 +6,7 @@ import { StatCard } from '../../components/ui/StatCard.jsx'
 import { Modal } from '../../components/ui/Modal.jsx'
 import { Tabs } from '../../components/ui/Tabs.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { formatDate, formatCurrency } from '../../lib/format.js'
 import { promotionService, withFallback, toList } from '../../services/index.js'
 import { CheckCircle2, XCircle, Clock, Inbox, BadgePercent, Tag, Eye } from 'lucide-react'
@@ -18,6 +19,7 @@ function discountLabel(p) {
 
 export default function PromotionApprovals() {
   const toast = useToast()
+  const confirm = useConfirm()
   const [tab, setTab] = useState('pending')
   const [promotions, setPromotions] = useState([])
   const [source, setSource] = useState('backend')
@@ -34,6 +36,10 @@ export default function PromotionApprovals() {
   const processed = useMemo(() => promotions.filter((p) => p.status !== PENDING), [promotions])
 
   const decide = async (promo, approve) => {
+    const ok = approve
+      ? await confirm({ title: 'Phê duyệt chiến dịch?', message: `Phê duyệt chiến dịch khuyến mãi "${promo.name}" (${promo.code})?`, confirmLabel: 'Phê duyệt' })
+      : await confirm({ title: 'Từ chối chiến dịch?', message: `Từ chối chiến dịch khuyến mãi "${promo.name}" (${promo.code})?`, confirmLabel: 'Từ chối', danger: true })
+    if (!ok) return
     setSelected(null)
     if (source !== 'backend' || !promo.id) {
       toast.error('Không có kết nối backend để cập nhật chiến dịch.')

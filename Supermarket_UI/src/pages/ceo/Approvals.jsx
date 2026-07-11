@@ -6,6 +6,7 @@ import { StatCard } from '../../components/ui/StatCard.jsx'
 import { Modal } from '../../components/ui/Modal.jsx'
 import { Tabs } from '../../components/ui/Tabs.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { formatDate } from '../../lib/format.js'
 import { approvalRequestService, withFallback, toList, mockApprovalRequests } from '../../services/index.js'
 import { CheckCircle2, XCircle, Clock, Inbox, FileCheck2, Eye } from 'lucide-react'
@@ -19,6 +20,7 @@ function typeTone(type) {
 
 export default function Approvals() {
   const toast = useToast()
+  const confirm = useConfirm()
   const [tab, setTab] = useState('pending')
   const [requests, setRequests] = useState([])
   const [source, setSource] = useState('backend')
@@ -35,6 +37,10 @@ export default function Approvals() {
   const processed = useMemo(() => requests.filter((r) => r.status !== 'Chờ duyệt'), [requests])
 
   const decide = async (req, approve) => {
+    const ok = approve
+      ? await confirm({ title: 'Phê duyệt yêu cầu?', message: `Phê duyệt yêu cầu ${req.code} (${req.type}) của ${req.requester}?`, confirmLabel: 'Phê duyệt' })
+      : await confirm({ title: 'Từ chối yêu cầu?', message: `Từ chối yêu cầu ${req.code} (${req.type}) của ${req.requester}?`, confirmLabel: 'Từ chối', danger: true })
+    if (!ok) return
     const status = approve ? 'Đã duyệt' : 'Từ chối'
     setSelected(null)
     if (source === 'backend' && req.id) {

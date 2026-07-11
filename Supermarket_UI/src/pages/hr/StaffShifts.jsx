@@ -4,6 +4,7 @@ import { PageHeader } from '../../components/ui/PageHeader.jsx'
 import { Card, CardBody, Button, Badge, StatusBadge } from '../../components/ui/primitives.jsx'
 import { Modal } from '../../components/ui/Modal.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { isoDate } from '../../lib/format.js'
 import { staffShiftService, withFallback, toList } from '../../services/index.js'
 import { ChevronLeft, ChevronRight, Plus, Trash2, Clock, CheckCircle2 } from 'lucide-react'
@@ -28,6 +29,7 @@ function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); retu
 
 export default function StaffShifts() {
   const toast = useToast()
+  const confirm = useConfirm()
   const navigate = useNavigate()
   const [anchor, setAnchor] = useState(() => weekStart(new Date()))
   const [shifts, setShifts] = useState([])
@@ -51,10 +53,12 @@ export default function StaffShifts() {
     navigate(`/app/hr/shifts/new?date=${encodeURIComponent(date)}&type=${encodeURIComponent(type)}`)
 
   const doComplete = async (s) => {
+    if (!(await confirm({ title: 'Hoàn thành ca?', message: `Đánh dấu ca ${s.shiftType} ngày ${s.shiftDate} của ${s.employeeName} là hoàn thành?`, confirmLabel: 'Hoàn thành' }))) return
     try { await staffShiftService.complete(s.id); toast.success('Đã đánh dấu hoàn thành.'); setSelected(null); await load() }
     catch (e) { toast.error(e.message) }
   }
   const doDelete = async (s) => {
+    if (!(await confirm({ title: 'Xóa ca làm việc?', message: `Ca ${s.shiftType} ngày ${s.shiftDate} của ${s.employeeName} sẽ bị xóa.`, confirmLabel: 'Xóa', danger: true }))) return
     try { await staffShiftService.remove(s.id); toast.success('Đã xóa ca.'); setSelected(null); await load() }
     catch (e) { toast.error(e.message) }
   }

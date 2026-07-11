@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { PageHeader } from '../../components/ui/PageHeader.jsx'
 import { Card, CardBody, Button, Badge, StatusBadge, Spinner } from '../../components/ui/primitives.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { formatCurrency, formatDate, roleLabel, initials } from '../../lib/format.js'
 import { employeeService, withFallback, toList, mockEmployees } from '../../services/index.js'
 import { ArrowLeft, Pencil, Trash2, UserCheck, UserX, Building2, Calendar, Phone, BadgeDollarSign } from 'lucide-react'
@@ -14,6 +15,7 @@ export default function EmployeeDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const toast = useToast()
+  const confirm = useConfirm()
   const [emp, setEmp] = useState(null)
   const [loading, setLoading] = useState(true)
 
@@ -32,6 +34,7 @@ export default function EmployeeDetail() {
   useEffect(() => { load() }, [id])
 
   const remove = async () => {
+    if (!(await confirm({ title: 'Xóa nhân viên?', message: `Hồ sơ của ${emp.name} sẽ bị xóa vĩnh viễn.`, confirmLabel: 'Xóa', danger: true }))) return
     try {
       await employeeService.remove(emp.id)
       toast.success('Đã xóa nhân viên.')
@@ -42,6 +45,11 @@ export default function EmployeeDetail() {
   }
 
   const toggleActive = async () => {
+    const inactive = isInactive(emp.status)
+    const ok = inactive
+      ? await confirm({ title: 'Kích hoạt nhân viên?', message: `${emp.name} sẽ được kích hoạt trở lại và tiếp tục làm việc.`, confirmLabel: 'Kích hoạt' })
+      : await confirm({ title: 'Vô hiệu hóa nhân viên?', message: `${emp.name} sẽ chuyển sang trạng thái nghỉ việc.`, confirmLabel: 'Vô hiệu hóa', danger: true })
+    if (!ok) return
     try {
       if (isInactive(emp.status)) await employeeService.activate(emp.id)
       else await employeeService.deactivate(emp.id)

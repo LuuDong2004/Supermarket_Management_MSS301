@@ -5,6 +5,7 @@ import { Button, Badge, StatusBadge, Field, Select, Spinner } from '../../compon
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { StatCard } from '../../components/ui/StatCard.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { formatNumber, formatDate } from '../../lib/format.js'
 import { stockCountService, withFallback, toList, mockStockCounts } from '../../services/index.js'
 import { ClipboardList, ListChecks, AlertTriangle, Equal, Plus, Pencil, Trash2 } from 'lucide-react'
@@ -13,6 +14,7 @@ const STATUSES = ['Đang kiểm', 'Hoàn tất']
 
 export default function StockCount() {
   const toast = useToast()
+  const confirm = useConfirm()
   const navigate = useNavigate()
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
@@ -37,6 +39,7 @@ export default function StockCount() {
   const done = rows.filter((c) => c.status === 'Hoàn tất').length
 
   const remove = async (row) => {
+    if (!(await confirm({ title: 'Xóa phiếu kiểm kê?', message: `Phiếu ${row.code || row.id} sẽ bị xóa vĩnh viễn.`, confirmLabel: 'Xóa', danger: true }))) return
     try {
       await stockCountService.remove(row.id)
       toast.success('Đã xóa phiếu kiểm kê.')

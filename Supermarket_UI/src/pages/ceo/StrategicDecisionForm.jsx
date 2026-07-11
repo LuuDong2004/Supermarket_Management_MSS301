@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { PageHeader } from '../../components/ui/PageHeader.jsx'
 import { Card, CardBody, Button, Field, Input, Select, Textarea, Spinner } from '../../components/ui/primitives.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { strategicDecisionService, withFallback, toList } from '../../services/index.js'
 import { ArrowLeft, Save } from 'lucide-react'
 
@@ -18,6 +19,7 @@ export default function StrategicDecisionForm() {
   const { id } = useParams()
   const navigate = useNavigate()
   const toast = useToast()
+  const confirm = useConfirm()
 
   const [form, setForm] = useState(emptyForm)
   const [loading, setLoading] = useState(!!id)
@@ -47,6 +49,12 @@ export default function StrategicDecisionForm() {
 
   const save = async () => {
     if (!form.title.trim()) { toast.error('Vui lòng nhập tiêu đề quyết định.'); return }
+    const ok = await confirm({
+      title: id ? 'Cập nhật quyết định?' : 'Ban hành quyết định?',
+      message: id ? `Lưu thay đổi cho quyết định "${form.title}"?` : `Ban hành quyết định chiến lược "${form.title}"?`,
+      confirmLabel: id ? 'Lưu' : 'Ban hành',
+    })
+    if (!ok) return
     const body = {
       code: id ? form.code : `SD-${Date.now().toString().slice(-5)}`,
       title: form.title,

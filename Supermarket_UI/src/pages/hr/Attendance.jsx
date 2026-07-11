@@ -5,12 +5,14 @@ import { Button, Badge, Field, Input, StatusBadge, Spinner } from '../../compone
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { StatCard } from '../../components/ui/StatCard.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { formatNumber, formatDate, isoDate } from '../../lib/format.js'
 import { attendanceService, withFallback, toList, mockAttendance } from '../../services/index.js'
 import { Clock, AlarmClock, UserX, Hourglass, Download, Plus, Trash2, Pencil } from 'lucide-react'
 
 export default function Attendance() {
   const toast = useToast()
+  const confirm = useConfirm()
   const navigate = useNavigate()
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
@@ -34,6 +36,7 @@ export default function Attendance() {
   const totalHours = filtered.reduce((s, r) => s + (r.hours || 0), 0)
 
   const remove = async (row) => {
+    if (!(await confirm({ title: 'Xóa bản ghi chấm công?', message: `Bản ghi chấm công của ${row.employee} ngày ${formatDate(row.date)} sẽ bị xóa vĩnh viễn.`, confirmLabel: 'Xóa', danger: true }))) return
     try {
       await attendanceService.remove(row.id)
       toast.success('Đã xóa bản ghi chấm công.')

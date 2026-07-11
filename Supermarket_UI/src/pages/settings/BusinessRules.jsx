@@ -6,6 +6,7 @@ import { DataTable } from '../../components/ui/DataTable.jsx'
 import { StatCard } from '../../components/ui/StatCard.jsx'
 import { Tabs } from '../../components/ui/Tabs.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { cn } from '../../lib/cn.js'
 import { formatDate, formatNumber } from '../../lib/format.js'
 import { policyService, monitoringService, withFallback, toList } from '../../services/index.js'
@@ -47,6 +48,7 @@ function Toggle({ checked, onChange }) {
 
 export default function BusinessRules() {
   const toast = useToast()
+  const confirm = useConfirm()
   const navigate = useNavigate()
   const [tab, setTab] = useState('rules')
 
@@ -85,6 +87,7 @@ export default function BusinessRules() {
   )
 
   const removeRule = async (rule) => {
+    if (!(await confirm({ title: 'Xóa quy tắc?', message: `Quy tắc "${rule.name}" sẽ bị xóa vĩnh viễn.`, confirmLabel: 'Xóa', danger: true }))) return
     try {
       await policyService.remove(rule.id)
       toast.success(`Đã xóa quy tắc "${rule.name}".`)

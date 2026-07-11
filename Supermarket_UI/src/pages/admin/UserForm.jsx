@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { PageHeader } from '../../components/ui/PageHeader.jsx'
 import { Card, CardBody, Button, Field, Input, Select, Spinner, Divider } from '../../components/ui/primitives.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { roleLabel } from '../../lib/format.js'
 import { userService, withFallback, toList, mockUsers } from '../../services/index.js'
 import { ArrowLeft, Save, Lock, Unlock, Ban, Trash2 } from 'lucide-react'
@@ -22,6 +23,7 @@ export default function UserForm() {
   const { id } = useParams()
   const navigate = useNavigate()
   const toast = useToast()
+  const confirm = useConfirm()
 
   const [form, setForm] = useState(emptyForm)
   const [errors, setErrors] = useState({})
@@ -65,6 +67,11 @@ export default function UserForm() {
 
   const save = async () => {
     if (!validate()) return
+    if (!(await confirm({
+      title: id ? 'Lưu thay đổi tài khoản?' : 'Tạo tài khoản mới?',
+      message: id ? `Cập nhật thông tin tài khoản ${form.username}.` : `Tạo tài khoản ${form.username} cho ${form.fullName}.`,
+      confirmLabel: id ? 'Lưu' : 'Tạo',
+    }))) return
     setSaving(true)
     try {
       if (id) {
@@ -89,6 +96,7 @@ export default function UserForm() {
   }
 
   const remove = async () => {
+    if (!(await confirm({ title: 'Xóa tài khoản?', message: `Tài khoản ${form.fullName || form.username} sẽ bị xóa vĩnh viễn.`, confirmLabel: 'Xóa', danger: true }))) return
     try {
       await userService.remove(id)
       toast.success(`Đã xóa tài khoản ${form.fullName}.`)
@@ -101,6 +109,13 @@ export default function UserForm() {
   const changeStatus = async (action) => {
     const verb = { lock: 'khóa', unlock: 'mở khóa', deactivate: 'vô hiệu hóa' }[action]
     const nextStatus = { lock: 'LOCKED', unlock: 'ACTIVE', deactivate: 'INACTIVE' }[action]
+    const title = { lock: 'Khóa tài khoản?', unlock: 'Mở khóa tài khoản?', deactivate: 'Vô hiệu hóa tài khoản?' }[action]
+    if (!(await confirm({
+      title,
+      message: `Tài khoản ${form.fullName || form.username} sẽ được ${verb}.`,
+      confirmLabel: { lock: 'Khóa', unlock: 'Mở khóa', deactivate: 'Vô hiệu hóa' }[action],
+      danger: action !== 'unlock',
+    }))) return
     try {
       await userService[action](id)
       toast.success(`Đã ${verb} tài khoản ${form.fullName}.`)

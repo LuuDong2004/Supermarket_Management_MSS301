@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '../../components/ui/PageHeader.jsx'
 import { Card, CardBody, Button, Field, Input, Select, Textarea } from '../../components/ui/primitives.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { formatCurrency, isoDate } from '../../lib/format.js'
 import { returnService } from '../../services/index.js'
@@ -13,6 +14,7 @@ import { REASONS, printReturn } from './Returns.jsx'
 export default function ReturnForm() {
   const navigate = useNavigate()
   const toast = useToast()
+  const confirm = useConfirm()
   const { user } = useAuth()
 
   const [saleCode, setSaleCode] = useState('')
@@ -67,6 +69,12 @@ export default function ReturnForm() {
   const submit = async () => {
     if (!sale) return toast.error('Chưa chọn hóa đơn gốc.')
     if (refundItems.length === 0) return toast.error('Chọn ít nhất một mặt hàng để trả.')
+    if (!(await confirm({
+      title: 'Tạo phiếu trả hàng?',
+      message: `Hoàn ${formatCurrency(refundTotal)} cho ${refundItems.length} mặt hàng của hóa đơn ${sale.code}. Thao tác này không thể hoàn tác.`,
+      confirmLabel: 'Hoàn tiền',
+      danger: true,
+    }))) return
     const body = {
       saleCode: sale.code,
       cashier: user?.fullName || user?.username || 'Thu ngân',

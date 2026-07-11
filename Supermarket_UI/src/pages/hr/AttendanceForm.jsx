@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { PageHeader } from '../../components/ui/PageHeader.jsx'
 import { Card, CardBody, Button, Field, Input, Select, Spinner } from '../../components/ui/primitives.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { isoDate } from '../../lib/format.js'
 import { attendanceService, withFallback, toList, mockAttendance } from '../../services/index.js'
 import { ArrowLeft, Save } from 'lucide-react'
@@ -16,6 +17,7 @@ export default function AttendanceForm() {
   const { id } = useParams()
   const navigate = useNavigate()
   const toast = useToast()
+  const confirm = useConfirm()
 
   const [form, setForm] = useState(emptyForm)
   const [loading, setLoading] = useState(!!id)
@@ -41,6 +43,14 @@ export default function AttendanceForm() {
   }, [id])
 
   const save = async () => {
+    const ok = await confirm({
+      title: id ? 'Cập nhật chấm công?' : 'Thêm chấm công?',
+      message: id
+        ? `Lưu thay đổi bản ghi chấm công của ${form.employee || 'nhân viên'}?`
+        : `Ghi nhận chấm công mới cho ${form.employee || 'nhân viên'}?`,
+      confirmLabel: 'Lưu',
+    })
+    if (!ok) return
     const payload = {
       code: form.code || id || `AT-${Date.now()}`,
       employee: form.employee,

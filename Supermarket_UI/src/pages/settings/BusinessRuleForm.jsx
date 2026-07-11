@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { PageHeader } from '../../components/ui/PageHeader.jsx'
 import { Card, CardBody, Button, Field, Input, Select, Spinner } from '../../components/ui/primitives.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { policyService, withFallback, toList } from '../../services/index.js'
 import { ArrowLeft, Save } from 'lucide-react'
 
@@ -13,6 +14,7 @@ export default function BusinessRuleForm() {
   const { id } = useParams()
   const navigate = useNavigate()
   const toast = useToast()
+  const confirm = useConfirm()
 
   const [form, setForm] = useState(emptyForm)
   const [loading, setLoading] = useState(!!id)
@@ -41,6 +43,11 @@ export default function BusinessRuleForm() {
   }, [id])
 
   const save = async () => {
+    if (!(await confirm({
+      title: id ? 'Lưu thay đổi quy tắc?' : 'Thêm quy tắc mới?',
+      message: id ? `Cập nhật quy tắc "${form.name || form.code}".` : `Tạo quy tắc "${form.name || form.code}".`,
+      confirmLabel: id ? 'Lưu' : 'Thêm',
+    }))) return
     const payload = {
       code: form.code,
       name: form.name,

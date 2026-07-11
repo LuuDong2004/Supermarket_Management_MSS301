@@ -4,6 +4,7 @@ import { Button, Badge, Field, Input, Select } from '../../components/ui/primiti
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { Modal } from '../../components/ui/Modal.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { formatDate } from '../../lib/format.js'
 import { policyService, withFallback, toList, mockPolicies } from '../../services/index.js'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
@@ -18,6 +19,7 @@ const emptyForm = { code: '', name: '', value: '', category: 'Bán hàng' }
 
 export default function Policies() {
   const toast = useToast()
+  const confirm = useConfirm()
   const [policies, setPolicies] = useState([])
   const [source, setSource] = useState('backend')
   const [category, setCategory] = useState('')
@@ -48,6 +50,12 @@ export default function Policies() {
   }
   const submit = async () => {
     const isNew = editing === 'new'
+    const ok = await confirm({
+      title: isNew ? 'Thêm chính sách?' : 'Cập nhật chính sách?',
+      message: isNew ? `Thêm chính sách "${form.name}" vào hệ thống?` : `Lưu thay đổi cho chính sách "${form.name}"?`,
+      confirmLabel: isNew ? 'Thêm' : 'Lưu',
+    })
+    if (!ok) return
     const body = {
       code: form.code || `BP-${Date.now().toString().slice(-5)}`,
       name: form.name,
@@ -77,6 +85,7 @@ export default function Policies() {
     setEditing(null)
   }
   const remove = async (p) => {
+    if (!(await confirm({ title: 'Xóa chính sách?', message: `Chính sách "${p.name}" sẽ bị xóa vĩnh viễn.`, confirmLabel: 'Xóa', danger: true }))) return
     if (source === 'backend' && p.id) {
       try {
         await policyService.remove(p.id)

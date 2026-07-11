@@ -6,6 +6,7 @@ import { DataTable } from '../../components/ui/DataTable.jsx'
 import { Modal } from '../../components/ui/Modal.jsx'
 import { Tabs } from '../../components/ui/Tabs.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { formatCurrency, formatNumber, formatDate } from '../../lib/format.js'
 import { productService, categoryService, withFallback, toList } from '../../services/index.js'
 import { Plus, Pencil, Trash2, Search } from 'lucide-react'
@@ -14,6 +15,7 @@ const emptyCategory = { id: null, name: '', description: '', active: true }
 
 export default function Products() {
   const toast = useToast()
+  const confirm = useConfirm()
   const navigate = useNavigate()
   const [tab, setTab] = useState('products')
   const [products, setProducts] = useState([])
@@ -46,6 +48,7 @@ export default function Products() {
   }
   const removeProduct = async (p) => {
     if (source !== 'backend' || !p.id) { toast.error('Không có kết nối backend.'); return }
+    if (!(await confirm({ title: 'Xóa sản phẩm?', message: `Sản phẩm ${p.name} (${p.code}) sẽ bị xóa vĩnh viễn.`, confirmLabel: 'Xóa', danger: true }))) return
     try { await productService.remove(p.id); toast.success(`Đã xóa ${p.name}.`); await load() }
     catch (e) { toast.error(e.message) }
   }
@@ -56,6 +59,11 @@ export default function Products() {
   const saveCategory = async () => {
     if (!cForm.name.trim()) { toast.error('Nhập tên danh mục.'); return }
     if (source !== 'backend') { toast.error('Không có kết nối backend.'); return }
+    if (!(await confirm({
+      title: cForm.id ? 'Lưu thay đổi?' : 'Thêm danh mục?',
+      message: cForm.id ? `Cập nhật danh mục ${cForm.name}.` : `Thêm danh mục mới ${cForm.name}.`,
+      confirmLabel: cForm.id ? 'Lưu' : 'Thêm',
+    }))) return
     const body = { name: cForm.name, description: cForm.description || null, active: !!cForm.active }
     try {
       if (cForm.id) await categoryService.update(cForm.id, body)
@@ -67,6 +75,7 @@ export default function Products() {
   }
   const removeCategory = async (c) => {
     if (source !== 'backend' || !c.id) { toast.error('Không có kết nối backend.'); return }
+    if (!(await confirm({ title: 'Xóa danh mục?', message: `Danh mục ${c.name} sẽ bị xóa vĩnh viễn.`, confirmLabel: 'Xóa', danger: true }))) return
     try { await categoryService.remove(c.id); toast.success(`Đã xóa danh mục ${c.name}.`); await load() }
     catch (e) { toast.error(e.message) }
   }

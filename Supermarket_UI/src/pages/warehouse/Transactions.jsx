@@ -4,6 +4,7 @@ import { Button, Badge, StatusBadge, Spinner } from '../../components/ui/primiti
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { Tabs } from '../../components/ui/Tabs.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { formatDate } from '../../lib/format.js'
 import { warehouseTxnService, withFallback, toList, mockWarehouseTxns } from '../../services/index.js'
@@ -14,6 +15,7 @@ const MANAGER = ['ROLE_WAREHOUSE_MANAGER', 'ROLE_ADMIN']
 
 export default function Transactions() {
   const toast = useToast()
+  const confirm = useConfirm()
   const { user } = useAuth()
   const isManager = MANAGER.includes(user?.role)
   const [txns, setTxns] = useState([])
@@ -42,6 +44,10 @@ export default function Transactions() {
   }, [txns, tab])
 
   const decide = async (row, approved) => {
+    const ok = approved
+      ? await confirm({ title: 'Duyệt giao dịch?', message: `Duyệt giao dịch ${row.code} — tồn kho sẽ được cập nhật ngay.`, confirmLabel: 'Duyệt' })
+      : await confirm({ title: 'Từ chối giao dịch?', message: `Từ chối giao dịch ${row.code}. Giao dịch sẽ không được ghi nhận vào tồn kho.`, confirmLabel: 'Từ chối', danger: true })
+    if (!ok) return
     try {
       // Real approve/reject: approval posts the movement to inventory on-hand.
       if (approved) await warehouseTxnService.approve(row.id)

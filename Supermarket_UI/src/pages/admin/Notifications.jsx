@@ -3,6 +3,7 @@ import { PageHeader } from '../../components/ui/PageHeader.jsx'
 import { Card, CardBody, Button, Badge, EmptyState } from '../../components/ui/primitives.jsx'
 import { StatCard } from '../../components/ui/StatCard.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { formatDate } from '../../lib/format.js'
 import { notificationService, withFallback, toList } from '../../services/index.js'
 import { Bell, BellRing, AlertOctagon, AlertTriangle, Check, Trash2, Inbox } from 'lucide-react'
@@ -22,6 +23,7 @@ const levelMeta = (lvl) => ({
 
 export default function Notifications() {
   const toast = useToast()
+  const confirm = useConfirm()
   const [items, setItems] = useState([])
   const [source, setSource] = useState('backend')
   const [level, setLevel] = useState('')
@@ -51,6 +53,7 @@ export default function Notifications() {
 
   const remove = async (n) => {
     if (source !== 'backend' || !n.id) { toast.error('Không có kết nối backend.'); return }
+    if (!(await confirm({ title: 'Xóa thông báo?', message: `Thông báo "${n.title}" sẽ bị xóa vĩnh viễn.`, confirmLabel: 'Xóa', danger: true }))) return
     try {
       await notificationService.remove(n.id)
       toast.success('Đã xóa thông báo.')

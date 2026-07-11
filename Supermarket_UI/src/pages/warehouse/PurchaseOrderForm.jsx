@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '../../components/ui/PageHeader.jsx'
 import { Card, CardBody, Button, Field, Input, Select, Divider, Spinner } from '../../components/ui/primitives.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { formatCurrency } from '../../lib/format.js'
 import {
   purchaseOrderService, supplierService, productService,
@@ -14,6 +15,7 @@ import { ArrowLeft, Save, Plus, Trash2 } from 'lucide-react'
 export default function PurchaseOrderForm() {
   const navigate = useNavigate()
   const toast = useToast()
+  const confirm = useConfirm()
 
   const [orders, setOrders] = useState([])
   const [suppliers, setSuppliers] = useState([])
@@ -49,6 +51,11 @@ export default function PurchaseOrderForm() {
   const draftTotal = lines.reduce((s, x) => s + Number(x.qty) * Number(x.price), 0)
 
   const createOrder = async () => {
+    if (!(await confirm({
+      title: 'Tạo đơn mua hàng?',
+      message: `Tạo đơn mua từ ${form.supplier} với ${lines.length} mặt hàng, tổng ${formatCurrency(draftTotal)}.`,
+      confirmLabel: 'Tạo',
+    }))) return
     const code = `PO-2026-0${42 + orders.length}`
     setSaving(true)
     try {

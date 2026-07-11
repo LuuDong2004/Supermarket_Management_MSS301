@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { PageHeader } from '../../components/ui/PageHeader.jsx'
 import { Card, CardBody, Button, StatusBadge, Spinner } from '../../components/ui/primitives.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { formatCurrency, formatDate } from '../../lib/format.js'
 import { goodsReceiptService, withFallback, toList } from '../../services/index.js'
@@ -16,6 +17,7 @@ export default function GoodsReceiptDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const toast = useToast()
+  const confirm = useConfirm()
   const { user } = useAuth()
   const isManager = MANAGER.includes(user?.role)
   const [receipt, setReceipt] = useState(null)
@@ -39,6 +41,10 @@ export default function GoodsReceiptDetail() {
 
   const decide = async (approve) => {
     if (source !== 'backend' || !receipt.id) { toast.error('Không có kết nối backend.'); return }
+    const ok = approve
+      ? await confirm({ title: 'Duyệt phiếu nhập?', message: `Duyệt phiếu nhập kho ${receipt.code} của ${receipt.supplier}.`, confirmLabel: 'Duyệt' })
+      : await confirm({ title: 'Từ chối phiếu nhập?', message: `Từ chối phiếu nhập kho ${receipt.code} của ${receipt.supplier}.`, confirmLabel: 'Từ chối', danger: true })
+    if (!ok) return
     try {
       if (approve) await goodsReceiptService.approve(receipt.id)
       else await goodsReceiptService.reject(receipt.id)

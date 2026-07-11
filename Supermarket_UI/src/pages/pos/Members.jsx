@@ -6,6 +6,7 @@ import { DataTable } from '../../components/ui/DataTable.jsx'
 import { StatCard } from '../../components/ui/StatCard.jsx'
 import { Modal } from '../../components/ui/Modal.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { formatCurrency, formatNumber, formatDate } from '../../lib/format.js'
 import { customerService, withFallback, toList, mockCustomers } from '../../services/index.js'
 import { Search, UserPlus, Users, Crown, Star, Eye } from 'lucide-react'
@@ -14,6 +15,7 @@ const TIER_TONE = { Platinum: 'violet', Gold: 'amber', Silver: 'slate', Member: 
 
 export default function Members() {
   const toast = useToast()
+  const confirm = useConfirm()
   const navigate = useNavigate()
   const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(true)
@@ -44,6 +46,11 @@ export default function Members() {
 
   const submitRegister = async () => {
     if (!form.name.trim() || !form.phone.trim()) return toast.error('Vui lòng nhập họ tên và số điện thoại.')
+    if (!(await confirm({
+      title: 'Đăng ký thành viên?',
+      message: `Tạo hồ sơ thành viên mới cho ${form.name.trim()} (${form.phone.trim()}).`,
+      confirmLabel: 'Đăng ký',
+    }))) return
     const payload = {
       code: `C${String(members.length + 1).padStart(3, '0')}`,
       name: form.name.trim(),

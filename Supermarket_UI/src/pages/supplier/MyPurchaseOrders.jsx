@@ -5,6 +5,7 @@ import { DataTable } from '../../components/ui/DataTable.jsx'
 import { StatCard } from '../../components/ui/StatCard.jsx'
 import { Modal } from '../../components/ui/Modal.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { formatCurrency, formatDate } from '../../lib/format.js'
 import { purchaseOrderService, withFallback, toList } from '../../services/index.js'
 import { ClipboardList, Clock, CheckCircle2, Truck, PackageCheck, XCircle } from 'lucide-react'
@@ -19,6 +20,7 @@ const SUP_TONE = {
 
 export default function MyPurchaseOrders() {
   const toast = useToast()
+  const confirm = useConfirm()
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
   const [source, setSource] = useState('backend')
@@ -43,6 +45,34 @@ export default function MyPurchaseOrders() {
   const act = async (fn, okMsg) => {
     try { await fn(); toast.success(okMsg); await load() }
     catch (e) { toast.error(e.message || 'Thao tác thất bại.') }
+  }
+
+  const confirmPo = async (r) => {
+    if (!(await confirm({
+      title: 'Xác nhận đơn mua?',
+      message: `Xác nhận nhận đơn ${r.code} (${formatCurrency(r.total)}) từ siêu thị.`,
+      confirmLabel: 'Xác nhận',
+    }))) return
+    await act(() => purchaseOrderService.confirm(r.id), `Đã xác nhận đơn ${r.code}.`)
+  }
+
+  const rejectPo = async (r) => {
+    if (!(await confirm({
+      title: 'Từ chối đơn mua?',
+      message: `Đơn ${r.code} sẽ bị từ chối và không thể xác nhận lại.`,
+      confirmLabel: 'Từ chối',
+      danger: true,
+    }))) return
+    await act(() => purchaseOrderService.rejectBySupplier(r.id), `Đã từ chối đơn ${r.code}.`)
+  }
+
+  const deliverPo = async (r) => {
+    if (!(await confirm({
+      title: 'Xác nhận đã giao hàng?',
+      message: `Đánh dấu đơn ${r.code} là đã giao. Thao tác này không thể hoàn tác.`,
+      confirmLabel: 'Đã giao',
+    }))) return
+    await act(() => purchaseOrderService.deliver(r.id), `Đơn ${r.code} đã giao.`)
   }
 
   const confirmShip = async () => {
@@ -91,15 +121,15 @@ export default function MyPurchaseOrders() {
                 <>
                   {r.supplierStatus === 'Chờ xác nhận' && (
                     <>
-                      <Button size="sm" variant="success" icon={CheckCircle2} onClick={() => act(() => purchaseOrderService.confirm(r.id), `Đã xác nhận đơn ${r.code}.`)}>Xác nhận</Button>
-                      <Button size="sm" variant="danger" icon={XCircle} onClick={() => act(() => purchaseOrderService.rejectBySupplier(r.id), `Đã từ chối đơn ${r.code}.`)}>Từ chối</Button>
+                      <Button size="sm" variant="success" icon={CheckCircle2} onClick={() => confirmPo(r)}>Xác nhận</Button>
+                      <Button size="sm" variant="danger" icon={XCircle} onClick={() => rejectPo(r)}>Từ chối</Button>
                     </>
                   )}
                   {r.supplierStatus === 'Đã xác nhận' && (
                     <Button size="sm" variant="secondary" icon={Truck} onClick={() => setShip({ po: r, expectedDelivery: '', note: '' })}>Giao hàng</Button>
                   )}
                   {r.supplierStatus === 'Đang giao' && (
-                    <Button size="sm" variant="success" icon={PackageCheck} onClick={() => act(() => purchaseOrderService.deliver(r.id), `Đơn ${r.code} đã giao.`)}>Đã giao</Button>
+                    <Button size="sm" variant="success" icon={PackageCheck} onClick={() => deliverPo(r)}>Đã giao</Button>
                   )}
                   {(r.supplierStatus === 'Đã giao' || r.supplierStatus === 'NCC từ chối') && (
                     <span className="text-xs text-slate-400">—</span>

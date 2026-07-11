@@ -4,6 +4,7 @@ import { PageHeader, FilterBar } from '../../components/ui/PageHeader.jsx'
 import { Card, CardBody, Button, Badge, StatusBadge, Field, Input, Select, Spinner } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { roleLabel } from '../../lib/format.js'
 import { userService, withFallback, toList, mockUsers } from '../../services/index.js'
 import { Search, UserPlus, Info, RotateCcw, Trash2, Pencil } from 'lucide-react'
@@ -12,6 +13,7 @@ const ROLES = ['ROLE_CASHIER', 'ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_STAFF',
 
 export default function Users() {
   const toast = useToast()
+  const confirm = useConfirm()
   const navigate = useNavigate()
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
@@ -57,6 +59,7 @@ export default function Users() {
   const openNewUser = () => navigate('/app/admin/users/new')
 
   const remove = async (u) => {
+    if (!(await confirm({ title: 'Xóa tài khoản?', message: `Tài khoản ${u.fullName || u.username} sẽ bị xóa vĩnh viễn.`, confirmLabel: 'Xóa', danger: true }))) return
     try {
       await userService.remove(u.id)
       toast.success(`Đã xóa tài khoản ${u.fullName || u.username}.`)

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '../../components/ui/PageHeader.jsx'
 import { Card, CardBody, Button, Badge, Field, Input, Select, Textarea, Divider, Spinner } from '../../components/ui/primitives.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import {
   stockAdjustmentService, productService,
   withFallback, toList, mockStockAdjustments, mockProducts,
@@ -13,6 +14,7 @@ import { ArrowLeft, Save } from 'lucide-react'
 export default function AdjustmentForm() {
   const navigate = useNavigate()
   const toast = useToast()
+  const confirm = useConfirm()
   const [list, setList] = useState([])
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
@@ -41,6 +43,11 @@ export default function AdjustmentForm() {
 
   const submit = async () => {
     const diff = Number(form.counted) - Number(form.system)
+    if (!(await confirm({
+      title: 'Gửi yêu cầu điều chỉnh?',
+      message: `Tạo yêu cầu điều chỉnh cho ${form.product} với chênh lệch ${diff > 0 ? '+' : ''}${diff} (lý do: ${form.reason}).`,
+      confirmLabel: 'Tạo',
+    }))) return
     const code = `ADJ-${222 + list.length}`
     setSaving(true)
     try {

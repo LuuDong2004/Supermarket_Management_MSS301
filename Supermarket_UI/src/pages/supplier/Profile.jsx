@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react'
 import { PageHeader } from '../../components/ui/PageHeader.jsx'
 import { Card, CardHeader, CardBody, Button, Badge, Field, Input, Spinner } from '../../components/ui/primitives.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { supplierService, withFallback } from '../../services/index.js'
 import { Building2, Save, Star } from 'lucide-react'
 
 export default function SupplierProfile() {
   const toast = useToast()
+  const confirm = useConfirm()
   const [supplier, setSupplier] = useState(null)
   const [loading, setLoading] = useState(true)
   const [source, setSource] = useState('backend')
@@ -25,6 +27,11 @@ export default function SupplierProfile() {
 
   const save = async () => {
     if (source !== 'backend') return toast.error('Không có kết nối backend.')
+    if (!(await confirm({
+      title: 'Lưu thay đổi?',
+      message: `Cập nhật thông tin liên hệ của ${supplier?.name || 'nhà cung cấp'}.`,
+      confirmLabel: 'Lưu',
+    }))) return
     try {
       await supplierService.updateMine(form)
       toast.success('Đã cập nhật hồ sơ nhà cung cấp.')

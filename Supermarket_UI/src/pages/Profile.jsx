@@ -4,6 +4,7 @@ import { PageHeader } from '../components/ui/PageHeader.jsx'
 import { Card, CardHeader, CardBody, Button, Field, Input } from '../components/ui/primitives.jsx'
 import { StatusBadge } from '../components/ui/primitives.jsx'
 import { useToast } from '../components/ui/Toast.jsx'
+import { useConfirm } from '../components/ui/Confirm.jsx'
 import { roleLabel, initials, formatDate } from '../lib/format.js'
 import { api } from '../lib/api.js'
 import { UserCircle, KeyRound } from 'lucide-react'
@@ -11,6 +12,7 @@ import { UserCircle, KeyRound } from 'lucide-react'
 export default function Profile() {
   const { user, mockMode } = useAuth()
   const toast = useToast()
+  const confirm = useConfirm()
   const [form, setForm] = useState({ fullName: user?.fullName || '', email: user?.email || '', phone: user?.phone || '' })
   const [pwd, setPwd] = useState({ oldPassword: '', newPassword: '' })
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
@@ -18,6 +20,7 @@ export default function Profile() {
   const saveProfile = async (e) => {
     e.preventDefault()
     if (mockMode) return toast.info('Chế độ demo: thay đổi không lưu lên backend.')
+    if (!(await confirm({ title: 'Cập nhật hồ sơ?', message: 'Thông tin cá nhân của bạn sẽ được cập nhật.', confirmLabel: 'Lưu' }))) return
     try {
       await api.put('/users/me', form)
       toast.success('Đã cập nhật hồ sơ.')
@@ -29,6 +32,7 @@ export default function Profile() {
   const changePassword = async (e) => {
     e.preventDefault()
     if (mockMode) return toast.info('Chế độ demo: không đổi mật khẩu thật.')
+    if (!(await confirm({ title: 'Đổi mật khẩu?', message: 'Mật khẩu đăng nhập của bạn sẽ được thay đổi.', confirmLabel: 'Đổi mật khẩu' }))) return
     try {
       await api.put('/users/me/password', pwd)
       toast.success('Đã đổi mật khẩu.')

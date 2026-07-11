@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { PageHeader } from '../../components/ui/PageHeader.jsx'
 import { Card, CardBody, Button, Field, Input, Select, Spinner } from '../../components/ui/primitives.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { productService, categoryService, withFallback, toList } from '../../services/index.js'
 import { ArrowLeft, Save } from 'lucide-react'
 
@@ -13,6 +14,7 @@ export default function ProductForm() {
   const { id } = useParams()
   const navigate = useNavigate()
   const toast = useToast()
+  const confirm = useConfirm()
 
   const [form, setForm] = useState(emptyProduct)
   const [categories, setCategories] = useState([])
@@ -50,6 +52,11 @@ export default function ProductForm() {
   const save = async () => {
     if (!form.name.trim() || !form.code.trim()) { toast.error('Nhập mã và tên sản phẩm.'); return }
     if (source !== 'backend') { toast.error('Không có kết nối backend.'); return }
+    if (!(await confirm({
+      title: id ? 'Lưu thay đổi?' : 'Thêm sản phẩm?',
+      message: id ? `Cập nhật sản phẩm ${form.name} (${form.code}).` : `Thêm sản phẩm mới ${form.name} (${form.code}).`,
+      confirmLabel: id ? 'Lưu' : 'Thêm',
+    }))) return
     const body = {
       code: form.code, barcode: form.barcode || null, name: form.name, category: form.category,
       price: Number(form.price) || 0, cost: Number(form.cost) || 0, stock: Number(form.stock) || 0,

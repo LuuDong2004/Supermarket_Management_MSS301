@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { PageHeader } from '../../components/ui/PageHeader.jsx'
 import { Card, CardBody, Button, Field, Input, Select, Textarea, Spinner } from '../../components/ui/primitives.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { stockCountService, withFallback, toList, mockStockCounts } from '../../services/index.js'
 import { ArrowLeft, Save } from 'lucide-react'
 
@@ -14,6 +15,7 @@ export default function StockCountForm() {
   const { id } = useParams()
   const navigate = useNavigate()
   const toast = useToast()
+  const confirm = useConfirm()
 
   const [form, setForm] = useState(emptyForm)
   const [loading, setLoading] = useState(!!id)
@@ -39,6 +41,11 @@ export default function StockCountForm() {
   }, [id])
 
   const save = async () => {
+    if (!(await confirm({
+      title: id ? 'Lưu thay đổi?' : 'Tạo phiếu kiểm kê?',
+      message: id ? `Cập nhật phiếu kiểm kê ${form.code || id}.` : `Tạo phiếu kiểm kê ${form.code || 'mới'} tại ${form.location}.`,
+      confirmLabel: id ? 'Lưu' : 'Tạo',
+    }))) return
     const payload = {
       code: form.code,
       location: form.location,

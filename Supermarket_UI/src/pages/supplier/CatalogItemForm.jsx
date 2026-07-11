@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { PageHeader } from '../../components/ui/PageHeader.jsx'
 import { Card, CardBody, Button, Field, Input, Select, Textarea, Spinner } from '../../components/ui/primitives.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { priceListService, withFallback, toList } from '../../services/index.js'
 import { ArrowLeft, Save } from 'lucide-react'
 
@@ -13,6 +14,7 @@ export default function CatalogItemForm() {
   const { id } = useParams()
   const navigate = useNavigate()
   const toast = useToast()
+  const confirm = useConfirm()
 
   const [form, setForm] = useState(emptyForm)
   const [source, setSource] = useState('backend')
@@ -42,6 +44,13 @@ export default function CatalogItemForm() {
   const save = async () => {
     if (!form.productName.trim()) return toast.error('Nhập tên sản phẩm.')
     if (source !== 'backend') return toast.error('Không có kết nối backend.')
+    if (!(await confirm({
+      title: id ? 'Lưu thay đổi?' : 'Thêm mặt hàng?',
+      message: id
+        ? `Cập nhật báo giá cho "${form.productName}".`
+        : `Thêm "${form.productName}" vào danh mục cung cấp.`,
+      confirmLabel: id ? 'Lưu' : 'Thêm',
+    }))) return
     const body = {
       productName: form.productName,
       unit: form.unit || null,

@@ -5,6 +5,7 @@ import { DataTable } from '../../components/ui/DataTable.jsx'
 import { Modal } from '../../components/ui/Modal.jsx'
 import { Tabs } from '../../components/ui/Tabs.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { settingService, withFallback, toList, mockSettings } from '../../services/index.js'
 import {
   Settings, Store, Plus, Pencil, Trash2, Save,
@@ -32,6 +33,7 @@ const emptyForm = { id: null, settingKey: '', settingValue: '', label: '', categ
 
 export default function SystemSettings() {
   const toast = useToast()
+  const confirm = useConfirm()
   const [tab, setTab] = useState('all')
 
   const [rows, setRows] = useState([])
@@ -74,6 +76,11 @@ export default function SystemSettings() {
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
 
   const save = async () => {
+    if (!(await confirm({
+      title: form.id ? 'Lưu thay đổi cấu hình?' : 'Thêm cấu hình mới?',
+      message: form.id ? `Cập nhật cấu hình "${form.label || form.settingKey}".` : `Tạo cấu hình "${form.label || form.settingKey}".`,
+      confirmLabel: form.id ? 'Lưu' : 'Thêm',
+    }))) return
     try {
       const payload = {
         settingKey: form.settingKey,
@@ -93,6 +100,7 @@ export default function SystemSettings() {
   }
 
   const removeSetting = async (s) => {
+    if (!(await confirm({ title: 'Xóa cấu hình?', message: `Cấu hình "${s.label || s.settingKey}" sẽ bị xóa vĩnh viễn.`, confirmLabel: 'Xóa', danger: true }))) return
     try {
       await settingService.remove(s.id)
       toast.success('Đã xóa cấu hình.')

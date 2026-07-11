@@ -5,6 +5,7 @@ import { DataTable } from '../../components/ui/DataTable.jsx'
 import { StatCard } from '../../components/ui/StatCard.jsx'
 import { Modal } from '../../components/ui/Modal.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { formatCurrency, formatNumber, formatDate } from '../../lib/format.js'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { shiftService, saleService, withFallback, toList, mockShifts } from '../../services/index.js'
@@ -14,6 +15,7 @@ const EMPTY_SHIFT = { code: '', cashier: '', open: '', close: '', opening: 0, sa
 
 export default function Shift() {
   const toast = useToast()
+  const confirmDialog = useConfirm()
   const { user } = useAuth()
 
   const [shifts, setShifts] = useState([])
@@ -83,6 +85,11 @@ export default function Shift() {
 
   const doOpen = async () => {
     const cashier = user?.fullName || user?.username || 'Thu ngân'
+    if (!(await confirmDialog({
+      title: 'Mở ca mới?',
+      message: `Mở ca thu ngân cho ${cashier} với tiền đầu ca ${formatCurrency(Number(openForm.opening) || 0)}.`,
+      confirmLabel: 'Mở ca',
+    }))) return
     try {
       await shiftService.create({
         code: `SH-${Date.now()}`,

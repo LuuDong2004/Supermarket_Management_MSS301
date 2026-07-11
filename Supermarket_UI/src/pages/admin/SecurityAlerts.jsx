@@ -5,6 +5,7 @@ import { DataTable } from '../../components/ui/DataTable.jsx'
 import { StatCard } from '../../components/ui/StatCard.jsx'
 import { Tabs } from '../../components/ui/Tabs.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { securityAlertService, withFallback, toList } from '../../services/index.js'
 import { ShieldAlert, ShieldCheck, AlertTriangle, CheckCircle2 } from 'lucide-react'
 
@@ -12,6 +13,7 @@ const sevTone = (s) => ({ Cao: 'red', 'Trung bình': 'amber', Thấp: 'slate' }[
 
 export default function SecurityAlerts() {
   const toast = useToast()
+  const confirm = useConfirm()
   const [tab, setTab] = useState('open')
   const [alerts, setAlerts] = useState([])
   const [source, setSource] = useState('backend')
@@ -29,6 +31,11 @@ export default function SecurityAlerts() {
 
   const resolve = async (a) => {
     if (source !== 'backend' || !a.id) { toast.error('Không có kết nối backend để cập nhật.'); return }
+    if (!(await confirm({
+      title: 'Xử lý cảnh báo?',
+      message: `Cảnh báo ${a.code} (${a.type}) sẽ được đánh dấu đã xử lý.`,
+      confirmLabel: 'Xử lý',
+    }))) return
     try {
       await securityAlertService.resolve(a.id)
       toast.success(`Đã xử lý cảnh báo ${a.code}.`)

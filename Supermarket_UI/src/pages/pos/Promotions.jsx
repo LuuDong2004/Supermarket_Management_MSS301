@@ -5,6 +5,7 @@ import { DataTable } from '../../components/ui/DataTable.jsx'
 import { StatCard } from '../../components/ui/StatCard.jsx'
 import { Tabs } from '../../components/ui/Tabs.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { formatCurrency, formatNumber, formatDate } from '../../lib/format.js'
 import {
   promotionService, voucherService, withFallback, toList, mockPromotions, mockVouchers,
@@ -16,6 +17,7 @@ const emptyVoucher = { code: '', type: 'percent', value: 10, minSpend: 0, label:
 
 export default function Promotions() {
   const toast = useToast()
+  const confirm = useConfirm()
   const [tab, setTab] = useState('promos')
   const [code, setCode] = useState('')
   const [checked, setChecked] = useState(null)
@@ -46,6 +48,13 @@ export default function Promotions() {
 
   const savePromo = async () => {
     if (!promoForm.code.trim() || !promoForm.name.trim()) return toast.error('Vui lòng nhập mã và tên chương trình.')
+    if (!(await confirm({
+      title: promoForm.id ? 'Lưu thay đổi?' : 'Tạo chương trình khuyến mãi?',
+      message: promoForm.id
+        ? `Cập nhật chương trình "${promoForm.name}" (${promoForm.code}).`
+        : `Tạo chương trình khuyến mãi mới "${promoForm.name}" (${promoForm.code}).`,
+      confirmLabel: promoForm.id ? 'Lưu' : 'Tạo',
+    }))) return
     const payload = { ...promoForm, discount: Number(promoForm.discount) || 0 }
     try {
       if (promoForm.id) await promotionService.update(promoForm.id, payload)
@@ -61,12 +70,25 @@ export default function Promotions() {
     fromDate: p.fromDate || p.from || '', toDate: p.toDate || p.to || '', status: p.status || 'Đang chạy',
   })
   const removePromo = async (p) => {
+    if (!(await confirm({
+      title: 'Xóa chương trình khuyến mãi?',
+      message: `Chương trình "${p.name || p.code}" sẽ bị xóa vĩnh viễn.`,
+      confirmLabel: 'Xóa',
+      danger: true,
+    }))) return
     try { await promotionService.remove(p.id); toast.success('Đã xóa chương trình.'); await load() }
     catch (e) { toast.error(e.message) }
   }
 
   const saveVoucher = async () => {
     if (!voucherForm.code.trim()) return toast.error('Vui lòng nhập mã voucher.')
+    if (!(await confirm({
+      title: voucherForm.id ? 'Lưu thay đổi?' : 'Tạo voucher?',
+      message: voucherForm.id
+        ? `Cập nhật voucher ${voucherForm.code}.`
+        : `Tạo voucher mới ${voucherForm.code}.`,
+      confirmLabel: voucherForm.id ? 'Lưu' : 'Tạo',
+    }))) return
     const payload = { ...voucherForm, value: Number(voucherForm.value) || 0, minSpend: Number(voucherForm.minSpend) || 0 }
     try {
       if (voucherForm.id) await voucherService.update(voucherForm.id, payload)
@@ -81,6 +103,12 @@ export default function Promotions() {
     value: v.value ?? 0, minSpend: v.minSpend ?? v.min ?? 0, label: v.label || '',
   })
   const removeVoucher = async (v) => {
+    if (!(await confirm({
+      title: 'Xóa voucher?',
+      message: `Voucher ${v.code} sẽ bị xóa vĩnh viễn.`,
+      confirmLabel: 'Xóa',
+      danger: true,
+    }))) return
     try { await voucherService.remove(v.id); toast.success('Đã xóa voucher.'); await load() }
     catch (e) { toast.error(e.message) }
   }

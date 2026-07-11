@@ -6,6 +6,7 @@ import { DataTable } from '../../components/ui/DataTable.jsx'
 import { Modal } from '../../components/ui/Modal.jsx'
 import { Tabs } from '../../components/ui/Tabs.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { formatDate } from '../../lib/format.js'
 import { approvalRequestService, withFallback, toList, mockApprovalRequests } from '../../services/index.js'
 import { Plus, Check, X, Eye } from 'lucide-react'
@@ -23,6 +24,7 @@ const todayIso = () => new Date().toISOString().slice(0, 10)
 
 export default function ApprovalRequests() {
   const toast = useToast()
+  const confirm = useConfirm()
   const navigate = useNavigate()
   const [all, setAll] = useState([])
   const [loading, setLoading] = useState(true)
@@ -51,6 +53,11 @@ export default function ApprovalRequests() {
   }, [tab, all, pending, approved])
 
   const submit = async () => {
+    if (!(await confirm({
+      title: 'Gửi yêu cầu phê duyệt?',
+      message: `Yêu cầu "${form.type}"${form.target ? ` cho ${form.target}` : ''} sẽ được gửi tới CEO.`,
+      confirmLabel: 'Gửi',
+    }))) return
     const payload = {
       code: `AR-${Date.now()}`,
       type: form.type,
@@ -72,6 +79,13 @@ export default function ApprovalRequests() {
   }
 
   const decide = async (row, status) => {
+    const approving = status === 'Đã duyệt'
+    if (!(await confirm({
+      title: approving ? 'Duyệt yêu cầu?' : 'Từ chối yêu cầu?',
+      message: `Yêu cầu ${row.code || row.id} (${row.type}) sẽ được ${approving ? 'phê duyệt' : 'từ chối'}.`,
+      confirmLabel: approving ? 'Duyệt' : 'Từ chối',
+      danger: !approving,
+    }))) return
     const payload = {
       code: row.code || row.id,
       type: row.type,

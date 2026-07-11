@@ -4,12 +4,14 @@ import { PageHeader, FilterBar } from '../../components/ui/PageHeader.jsx'
 import { Card, CardBody, Button, Badge, Field, Input, Spinner } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { formatCurrency, formatNumber } from '../../lib/format.js'
 import { priceListService, withFallback, toList } from '../../services/index.js'
 import { Plus, Pencil, Trash2, Search } from 'lucide-react'
 
 export default function Catalog() {
   const toast = useToast()
+  const confirm = useConfirm()
   const navigate = useNavigate()
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
@@ -35,6 +37,12 @@ export default function Catalog() {
 
   const remove = async (r) => {
     if (source !== 'backend' || !r.id) return toast.error('Không có kết nối backend.')
+    if (!(await confirm({
+      title: 'Xóa mặt hàng?',
+      message: `Mặt hàng "${r.productName}" sẽ bị xóa khỏi danh mục cung cấp.`,
+      confirmLabel: 'Xóa',
+      danger: true,
+    }))) return
     try { await priceListService.remove(r.id); toast.success(`Đã xóa ${r.productName}.`); await load() }
     catch (e) { toast.error(e.message) }
   }

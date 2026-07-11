@@ -5,6 +5,7 @@ import { Card, CardBody, Button, Badge, StatusBadge } from '../../components/ui/
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { StatCard } from '../../components/ui/StatCard.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { formatCurrency, formatDate } from '../../lib/format.js'
 import { goodsReceiptService, withFallback, toList } from '../../services/index.js'
@@ -41,6 +42,7 @@ export function printReceipt(r) {
 
 export default function GoodsReceipts() {
   const toast = useToast()
+  const confirm = useConfirm()
   const navigate = useNavigate()
   const { user } = useAuth()
   const isManager = MANAGER.includes(user?.role)
@@ -63,6 +65,10 @@ export default function GoodsReceipts() {
 
   const decide = async (r, approve) => {
     if (source !== 'backend' || !r.id) { toast.error('Không có kết nối backend.'); return }
+    const ok = approve
+      ? await confirm({ title: 'Duyệt phiếu nhập?', message: `Duyệt phiếu nhập kho ${r.code} của ${r.supplier}.`, confirmLabel: 'Duyệt' })
+      : await confirm({ title: 'Từ chối phiếu nhập?', message: `Từ chối phiếu nhập kho ${r.code} của ${r.supplier}.`, confirmLabel: 'Từ chối', danger: true })
+    if (!ok) return
     try {
       if (approve) await goodsReceiptService.approve(r.id)
       else await goodsReceiptService.reject(r.id)

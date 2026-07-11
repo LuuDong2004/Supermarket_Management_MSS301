@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { PageHeader } from '../../components/ui/PageHeader.jsx'
 import { Card, CardBody, Button, Field, Input, Select, Textarea, Spinner } from '../../components/ui/primitives.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { isoDate } from '../../lib/format.js'
 import { staffShiftService, employeeService, withFallback, toList } from '../../services/index.js'
 import { ArrowLeft, Save } from 'lucide-react'
@@ -18,6 +19,7 @@ const SHIFT_TYPES = [
 export default function ShiftAssignForm() {
   const navigate = useNavigate()
   const toast = useToast()
+  const confirm = useConfirm()
   const [params] = useSearchParams()
 
   const [employees, setEmployees] = useState([])
@@ -62,6 +64,7 @@ export default function ShiftAssignForm() {
   const save = async () => {
     if (source !== 'backend') return toast.error('Không có kết nối backend.')
     if (!form.employeeName) return toast.error('Chọn nhân viên.')
+    if (!(await confirm({ title: 'Phân ca làm việc?', message: `Phân ca ${form.shiftType} ngày ${form.shiftDate} cho ${form.employeeName}?`, confirmLabel: 'Phân ca' }))) return
     setSaving(true)
     try {
       await staffShiftService.create({

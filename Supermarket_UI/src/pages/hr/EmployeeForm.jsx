@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { PageHeader } from '../../components/ui/PageHeader.jsx'
 import { Card, CardBody, Button, Field, Input, Select, Spinner } from '../../components/ui/primitives.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { roleLabel } from '../../lib/format.js'
 import { employeeService, withFallback, toList, mockEmployees } from '../../services/index.js'
 import { ArrowLeft, Save } from 'lucide-react'
@@ -16,6 +17,7 @@ export default function EmployeeForm() {
   const { id } = useParams()
   const navigate = useNavigate()
   const toast = useToast()
+  const confirm = useConfirm()
 
   const [form, setForm] = useState(emptyForm)
   const [loading, setLoading] = useState(!!id)
@@ -42,6 +44,11 @@ export default function EmployeeForm() {
   }, [id])
 
   const save = async () => {
+    if (!(await confirm({
+      title: id ? 'Lưu thay đổi?' : 'Thêm nhân viên?',
+      message: id ? `Cập nhật hồ sơ nhân viên ${form.name}.` : `Tạo hồ sơ nhân viên mới${form.name ? ` cho ${form.name}` : ''}.`,
+      confirmLabel: id ? 'Lưu' : 'Thêm',
+    }))) return
     const payload = {
       // Blank on create → backend auto-generates EMP-####.
       code: (form.code || '').trim() || null,

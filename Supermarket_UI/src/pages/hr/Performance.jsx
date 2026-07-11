@@ -6,6 +6,7 @@ import { StatCard } from '../../components/ui/StatCard.jsx'
 import { Modal } from '../../components/ui/Modal.jsx'
 import { Bars } from '../../components/ui/Charts.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { formatNumber } from '../../lib/format.js'
 import { reportService, withFallback, toList, mockEmployeePerformance } from '../../services/index.js'
 import { Award, Gauge, TrendingUp, Star } from 'lucide-react'
@@ -19,6 +20,7 @@ function scoreTone(score) {
 
 export default function Performance() {
   const toast = useToast()
+  const confirm = useConfirm()
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
   const [source, setSource] = useState('backend')
@@ -46,7 +48,8 @@ export default function Performance() {
     setNote('')
   }
 
-  const submitReview = () => {
+  const submitReview = async () => {
+    if (!(await confirm({ title: 'Lưu đánh giá?', message: `Lưu đánh giá cho ${selected.name} với đề xuất "${recommendation}"?`, confirmLabel: 'Lưu' }))) return
     toast.success(`Đã lưu đánh giá cho ${selected.name}: ${recommendation}.`)
     setSelected(null)
   }

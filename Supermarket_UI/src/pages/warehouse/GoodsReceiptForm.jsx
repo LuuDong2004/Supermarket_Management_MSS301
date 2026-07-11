@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '../../components/ui/PageHeader.jsx'
 import { Card, CardBody, Button, Field, Input, Textarea } from '../../components/ui/primitives.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { goodsReceiptService } from '../../services/index.js'
 import { ArrowLeft, Save } from 'lucide-react'
 
@@ -12,6 +13,7 @@ const today = () => new Date().toISOString().slice(0, 10)
 export default function GoodsReceiptForm() {
   const navigate = useNavigate()
   const toast = useToast()
+  const confirm = useConfirm()
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({
     code: `GRN-${Date.now().toString().slice(-4)}`,
@@ -20,6 +22,7 @@ export default function GoodsReceiptForm() {
 
   const create = async () => {
     if (!form.code.trim() || !form.supplier.trim()) { toast.error('Nhập mã phiếu và nhà cung cấp.'); return }
+    if (!(await confirm({ title: 'Tạo phiếu nhập kho?', message: `Tạo phiếu nhập ${form.code} từ nhà cung cấp ${form.supplier}.`, confirmLabel: 'Tạo' }))) return
     const body = {
       code: form.code, poCode: form.poCode || null, supplier: form.supplier,
       receiveDate: form.receiveDate || today(), receivedBy: form.receivedBy || null,

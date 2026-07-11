@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { PageHeader } from '../../components/ui/PageHeader.jsx'
 import { Card, CardBody, Button, Badge, StatusBadge, Spinner } from '../../components/ui/primitives.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { formatDate } from '../../lib/format.js'
 import { approvalRequestService, withFallback, toList, mockApprovalRequests } from '../../services/index.js'
 import { ArrowLeft, Check, X } from 'lucide-react'
@@ -21,6 +22,7 @@ export default function ApprovalRequestDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const toast = useToast()
+  const confirm = useConfirm()
   const [req, setReq] = useState(null)
   const [loading, setLoading] = useState(true)
 
@@ -39,6 +41,13 @@ export default function ApprovalRequestDetail() {
   useEffect(() => { load() }, [id])
 
   const decide = async (status) => {
+    const approving = status === 'Đã duyệt'
+    if (!(await confirm({
+      title: approving ? 'Duyệt yêu cầu?' : 'Từ chối yêu cầu?',
+      message: `Yêu cầu ${req.code || req.id} (${req.type}) sẽ được ${approving ? 'phê duyệt' : 'từ chối'}.`,
+      confirmLabel: approving ? 'Duyệt' : 'Từ chối',
+      danger: !approving,
+    }))) return
     const payload = {
       code: req.code || req.id,
       type: req.type,

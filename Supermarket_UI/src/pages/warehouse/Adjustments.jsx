@@ -5,6 +5,7 @@ import { Button, Badge, StatusBadge, Spinner } from '../../components/ui/primiti
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { Tabs } from '../../components/ui/Tabs.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { formatDate } from '../../lib/format.js'
 import { stockAdjustmentService, withFallback, toList, mockStockAdjustments } from '../../services/index.js'
@@ -15,6 +16,7 @@ const MANAGER = ['ROLE_WAREHOUSE_MANAGER', 'ROLE_ADMIN']
 
 export default function Adjustments() {
   const toast = useToast()
+  const confirm = useConfirm()
   const navigate = useNavigate()
   const { user } = useAuth()
   const isManager = MANAGER.includes(user?.role)
@@ -42,6 +44,10 @@ export default function Adjustments() {
   const rows = useMemo(() => (tab === 'all' ? list : list.filter((a) => a.status === tab)), [list, tab])
 
   const decide = async (row, approved) => {
+    const ok = approved
+      ? await confirm({ title: 'Duyệt điều chỉnh?', message: `Duyệt yêu cầu điều chỉnh ${row.code} — tồn kho của ${row.product} sẽ được cập nhật.`, confirmLabel: 'Duyệt' })
+      : await confirm({ title: 'Từ chối điều chỉnh?', message: `Từ chối yêu cầu điều chỉnh ${row.code}.`, confirmLabel: 'Từ chối', danger: true })
+    if (!ok) return
     try {
       if (approved) await stockAdjustmentService.approve(row.id)
       else await stockAdjustmentService.reject(row.id)
