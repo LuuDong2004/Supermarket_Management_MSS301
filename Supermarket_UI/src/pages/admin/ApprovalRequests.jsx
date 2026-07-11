@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '../../components/ui/PageHeader.jsx'
 import { Button, Badge, StatusBadge, Field, Input, Select, Textarea, Spinner } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
@@ -7,7 +8,7 @@ import { Tabs } from '../../components/ui/Tabs.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { formatDate } from '../../lib/format.js'
 import { approvalRequestService, withFallback, toList, mockApprovalRequests } from '../../services/index.js'
-import { Plus, Check, X } from 'lucide-react'
+import { Plus, Check, X, Eye } from 'lucide-react'
 
 const TYPES = ['Tạo tài khoản', 'Thay đổi quyền', 'Điều chỉnh kho', 'Chính sách giá']
 
@@ -22,12 +23,12 @@ const todayIso = () => new Date().toISOString().slice(0, 10)
 
 export default function ApprovalRequests() {
   const toast = useToast()
+  const navigate = useNavigate()
   const [all, setAll] = useState([])
   const [loading, setLoading] = useState(true)
   const [source, setSource] = useState('backend')
   const [tab, setTab] = useState('all')
   const [creating, setCreating] = useState(false)
-  const [selected, setSelected] = useState(null)
   const [form, setForm] = useState({ type: 'Tạo tài khoản', target: '', note: '' })
 
   const load = async () => {
@@ -83,7 +84,6 @@ export default function ApprovalRequests() {
     try {
       await approvalRequestService.update(row.id, payload)
       toast.success(status === 'Đã duyệt' ? 'Đã duyệt yêu cầu.' : 'Đã từ chối yêu cầu.')
-      setSelected(null)
       await load()
     } catch (e) {
       toast.error(e.message)
@@ -124,7 +124,7 @@ export default function ApprovalRequests() {
       ) : (
         <DataTable
           rows={rows}
-          onRowClick={(r) => setSelected(r)}
+          onRowClick={(r) => navigate(`/app/admin/approval-requests/${r.id}`)}
           empty={{ title: 'Không có yêu cầu', subtitle: 'Chưa có yêu cầu nào ở trạng thái này.' }}
           columns={[
             { key: 'code', header: 'Mã', render: (r) => <span className="font-mono text-xs">{r.code || r.id}</span> },
@@ -135,10 +135,21 @@ export default function ApprovalRequests() {
             { key: 'status', header: 'Trạng thái', render: (r) => <StatusBadge status={r.status} /> },
             { key: 'note', header: 'Ghi chú', render: (r) => <span className="text-xs text-slate-500">{r.note || '—'}</span> },
           ]}
+          actions={(r) => (
+            <>
+              <Button size="sm" variant="secondary" icon={Eye} onClick={() => navigate(`/app/admin/approval-requests/${r.id}`)}>Xem</Button>
+              {r.status === 'Chờ duyệt' && (
+                <>
+                  <Button size="sm" variant="success" icon={Check} onClick={() => decide(r, 'Đã duyệt')}>Duyệt</Button>
+                  <Button size="sm" variant="danger" icon={X} onClick={() => decide(r, 'Từ chối')}>Từ chối</Button>
+                </>
+              )}
+            </>
+          )}
         />
       )}
 
-      {/* New request modal */}
+      {/* New request modal (small form — stays a modal) */}
       <Modal
         open={creating}
         onClose={() => setCreating(false)}
@@ -165,48 +176,6 @@ export default function ApprovalRequests() {
           </Field>
         </div>
       </Modal>
-
-      {/* Detail modal */}
-      <Modal
-        open={!!selected}
-        onClose={() => setSelected(null)}
-        title={selected ? `Yêu cầu ${selected.code || selected.id}` : ''}
-        subtitle={selected?.type}
-        footer={
-          <>
-            {selected?.status === 'Chờ duyệt' && (
-              <>
-                <Button variant="danger" icon={X} onClick={() => decide(selected, 'Từ chối')}>Từ chối</Button>
-                <Button variant="success" icon={Check} onClick={() => decide(selected, 'Đã duyệt')}>Duyệt</Button>
-              </>
-            )}
-            <Button variant="secondary" onClick={() => setSelected(null)}>Đóng</Button>
-          </>
-        }
-      >
-        {selected && (
-          <div className="space-y-3 text-sm">
-            <DetailRow label="Loại" value={<Badge tone={typeTone(selected.type)}>{selected.type}</Badge>} />
-            <DetailRow label="Người yêu cầu" value={selected.requester} />
-            <DetailRow label="Đối tượng" value={selected.target} />
-            <DetailRow label="Ngày tạo" value={formatDate(selected.reqDate || selected.date)} />
-            <DetailRow label="Trạng thái" value={<StatusBadge status={selected.status} />} />
-            <div>
-              <p className="text-slate-500">Ghi chú</p>
-              <p className="mt-1 rounded-lg bg-slate-50 px-3 py-2 text-slate-700">{selected.note || 'Không có ghi chú.'}</p>
-            </div>
-          </div>
-        )}
-      </Modal>
-    </div>
-  )
-}
-
-function DetailRow({ label, value }) {
-  return (
-    <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-      <span className="text-slate-500">{label}</span>
-      <span className="font-medium text-slate-700">{value}</span>
     </div>
   )
 }

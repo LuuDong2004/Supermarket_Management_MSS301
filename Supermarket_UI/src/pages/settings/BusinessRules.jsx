@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '../../components/ui/PageHeader.jsx'
-import { Card, CardHeader, CardBody, Button, Badge, Field, Input, Select, Spinner } from '../../components/ui/primitives.jsx'
+import { Card, CardHeader, CardBody, Button, Badge, Field, Select, Spinner } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { StatCard } from '../../components/ui/StatCard.jsx'
-import { Modal } from '../../components/ui/Modal.jsx'
 import { Tabs } from '../../components/ui/Tabs.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { cn } from '../../lib/cn.js'
@@ -27,8 +27,6 @@ const CATEGORY_TONE = {
 
 const LEVEL_TONE = { INFO: 'blue', WARN: 'amber', ERROR: 'red' }
 
-const emptyForm = { id: null, code: '', name: '', value: '', category: 'Bán hàng', updatedDate: '' }
-
 // Inline toggle switch for enabling/disabling a rule.
 function Toggle({ checked, onChange }) {
   return (
@@ -49,6 +47,7 @@ function Toggle({ checked, onChange }) {
 
 export default function BusinessRules() {
   const toast = useToast()
+  const navigate = useNavigate()
   const [tab, setTab] = useState('rules')
 
   const [policies, setPolicies] = useState([])
@@ -57,8 +56,6 @@ export default function BusinessRules() {
   const [source, setSource] = useState('backend')
 
   const [enabled, setEnabled] = useState({})
-  const [editing, setEditing] = useState(null)
-  const [form, setForm] = useState(emptyForm)
   const [levelFilter, setLevelFilter] = useState('all')
 
   const load = async () => {
@@ -86,42 +83,6 @@ export default function BusinessRules() {
     () => allLogs.filter((l) => levelFilter === 'all' || l.level === levelFilter),
     [allLogs, levelFilter],
   )
-
-  const openNew = () => {
-    setForm(emptyForm)
-    setEditing({})
-  }
-  const openEdit = (rule) => {
-    setForm({
-      id: rule.id,
-      code: rule.code || '',
-      name: rule.name || '',
-      value: rule.value || '',
-      category: rule.category || 'Bán hàng',
-      updatedDate: rule.updatedDate ? String(rule.updatedDate).slice(0, 10) : '',
-    })
-    setEditing(rule)
-  }
-
-  const save = async () => {
-    try {
-      const payload = {
-        code: form.code,
-        name: form.name,
-        value: form.value,
-        category: form.category,
-        updatedDate: form.updatedDate || new Date().toISOString().slice(0, 10),
-      }
-      if (form.id) await policyService.update(form.id, payload)
-      else await policyService.create(payload)
-      toast.success(`Đã lưu quy tắc "${form.name}".`)
-      setEditing(null)
-      setForm(emptyForm)
-      await load()
-    } catch (e) {
-      toast.error(e.message || 'Lưu quy tắc thất bại.')
-    }
-  }
 
   const removeRule = async (rule) => {
     try {
@@ -152,7 +113,7 @@ export default function BusinessRules() {
             <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
               {source === 'backend' ? 'Dữ liệu backend' : 'Lỗi tải dữ liệu'}
             </Badge>
-            <Button icon={Plus} onClick={openNew}>Thêm quy tắc</Button>
+            <Button icon={Plus} onClick={() => navigate('/app/settings/rules/new')}>Thêm quy tắc</Button>
           </div>
         }
       />
@@ -190,18 +151,13 @@ export default function BusinessRules() {
                     align: 'center',
                     render: (r) => <Toggle checked={!!enabled[r.id]} onChange={() => toggleRule(r.id)} />,
                   },
-                  {
-                    key: 'action',
-                    header: '',
-                    align: 'right',
-                    render: (r) => (
-                      <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="sm" icon={Pencil} onClick={() => openEdit(r)}>Sửa</Button>
-                        <Button variant="ghost" size="sm" icon={Trash2} onClick={() => removeRule(r)}>Xóa</Button>
-                      </div>
-                    ),
-                  },
                 ]}
+                actions={(r) => (
+                  <>
+                    <Button size="sm" variant="secondary" icon={Pencil} onClick={() => navigate(`/app/settings/rules/${r.id}/edit`)}>Sửa</Button>
+                    <Button size="sm" variant="danger" icon={Trash2} onClick={() => removeRule(r)}>Xóa</Button>
+                  </>
+                )}
               />
             )}
           </CardBody>
@@ -243,43 +199,6 @@ export default function BusinessRules() {
         </Card>
       )}
 
-      <Modal
-        open={!!editing}
-        onClose={() => { setEditing(null); setForm(emptyForm) }}
-        title={form.id ? 'Sửa quy tắc nghiệp vụ' : 'Thêm quy tắc nghiệp vụ'}
-        subtitle={form.name || undefined}
-        footer={
-          <>
-            <Button variant="secondary" onClick={() => { setEditing(null); setForm(emptyForm) }}>Hủy</Button>
-            <Button onClick={save}>Lưu thay đổi</Button>
-          </>
-        }
-      >
-        {editing && (
-          <div className="space-y-4">
-            <Field label="Mã quy tắc" hint="Định danh duy nhất, ví dụ: BP01">
-              <Input value={form.code} onChange={(e) => setForm((f) => ({ ...f, code: e.target.value }))} placeholder="BP01" />
-            </Field>
-            <Field label="Tên quy tắc">
-              <Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="Hạn mức giảm giá thu ngân" />
-            </Field>
-            <Field label="Nhóm">
-              <Select value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}>
-                <option value="Bán hàng">Bán hàng</option>
-                <option value="Kho">Kho</option>
-                <option value="Thành viên">Thành viên</option>
-                <option value="Mua hàng">Mua hàng</option>
-              </Select>
-            </Field>
-            <Field label="Giá trị" hint="Cập nhật hạn mức hoặc ngưỡng áp dụng">
-              <Input value={form.value} onChange={(e) => setForm((f) => ({ ...f, value: e.target.value }))} placeholder="≤ 10%" />
-            </Field>
-            <Field label="Ngày áp dụng">
-              <Input type="date" value={form.updatedDate} onChange={(e) => setForm((f) => ({ ...f, updatedDate: e.target.value }))} />
-            </Field>
-          </div>
-        )}
-      </Modal>
     </div>
   )
 }

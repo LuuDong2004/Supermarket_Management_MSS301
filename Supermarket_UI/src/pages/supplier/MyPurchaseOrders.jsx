@@ -91,26 +91,26 @@ export default function MyPurchaseOrders() {
                 { key: 'approval', header: 'Duyệt (bên mua)', render: (r) => <StatusBadge status={r.approval || r.status} /> },
                 { key: 'supplierStatus', header: 'Trạng thái NCC', render: (r) => <Badge tone={SUP_TONE[r.supplierStatus] || 'slate'}>{r.supplierStatus || '—'}</Badge> },
                 { key: 'expectedDelivery', header: 'Giao dự kiến', render: (r) => r.expectedDelivery ? formatDate(r.expectedDelivery) : '—' },
-                { key: 'actions', header: 'Thao tác', align: 'right', render: (r) => (
-                  <div className="flex justify-end gap-2">
-                    {r.supplierStatus === 'Chờ xác nhận' && (
-                      <>
-                        <Button size="sm" variant="success" icon={CheckCircle2} onClick={() => act(() => purchaseOrderService.confirm(r.id), `Đã xác nhận đơn ${r.code}.`)}>Xác nhận</Button>
-                        <Button size="sm" variant="danger" icon={XCircle} onClick={() => act(() => purchaseOrderService.rejectBySupplier(r.id), `Đã từ chối đơn ${r.code}.`)}>Từ chối</Button>
-                      </>
-                    )}
-                    {r.supplierStatus === 'Đã xác nhận' && (
-                      <Button size="sm" variant="secondary" icon={Truck} onClick={() => setShip({ po: r, expectedDelivery: '', note: '' })}>Giao hàng</Button>
-                    )}
-                    {r.supplierStatus === 'Đang giao' && (
-                      <Button size="sm" variant="success" icon={PackageCheck} onClick={() => act(() => purchaseOrderService.deliver(r.id), `Đơn ${r.code} đã giao.`)}>Đã giao</Button>
-                    )}
-                    {(r.supplierStatus === 'Đã giao' || r.supplierStatus === 'NCC từ chối') && (
-                      <span className="text-xs text-slate-400">—</span>
-                    )}
-                  </div>
-                ) },
               ]}
+              actions={(r) => (
+                <>
+                  {r.supplierStatus === 'Chờ xác nhận' && (
+                    <>
+                      <Button size="sm" variant="success" icon={CheckCircle2} onClick={() => act(() => purchaseOrderService.confirm(r.id), `Đã xác nhận đơn ${r.code}.`)}>Xác nhận</Button>
+                      <Button size="sm" variant="danger" icon={XCircle} onClick={() => act(() => purchaseOrderService.rejectBySupplier(r.id), `Đã từ chối đơn ${r.code}.`)}>Từ chối</Button>
+                    </>
+                  )}
+                  {r.supplierStatus === 'Đã xác nhận' && (
+                    <Button size="sm" variant="secondary" icon={Truck} onClick={() => setShip({ po: r, expectedDelivery: '', note: '' })}>Giao hàng</Button>
+                  )}
+                  {r.supplierStatus === 'Đang giao' && (
+                    <Button size="sm" variant="success" icon={PackageCheck} onClick={() => act(() => purchaseOrderService.deliver(r.id), `Đơn ${r.code} đã giao.`)}>Đã giao</Button>
+                  )}
+                  {(r.supplierStatus === 'Đã giao' || r.supplierStatus === 'NCC từ chối') && (
+                    <span className="text-xs text-slate-400">—</span>
+                  )}
+                </>
+              )}
             />
           )}
         </CardBody>

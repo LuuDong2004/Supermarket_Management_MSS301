@@ -6,7 +6,7 @@ import { StatCard } from '../../components/ui/StatCard.jsx'
 import { Modal } from '../../components/ui/Modal.jsx'
 import { formatCurrency, formatNumber } from '../../lib/format.js'
 import { inventoryService, withFallback, toList, mockInventory } from '../../services/index.js'
-import { Boxes, AlertTriangle, DollarSign, Layers, Search } from 'lucide-react'
+import { Boxes, AlertTriangle, DollarSign, Layers, Search, Eye } from 'lucide-react'
 
 export default function Inventory() {
   const [rows, setRows] = useState([])
@@ -110,6 +110,9 @@ export default function Inventory() {
               ) },
               { key: 'unit', header: 'Đơn vị', align: 'center' },
             ]}
+            actions={(r) => (
+              <Button size="sm" variant="secondary" icon={Eye} onClick={() => setDetail(r)}>Xem</Button>
+            )}
           />
         )}
       </div>

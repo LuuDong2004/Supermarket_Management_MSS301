@@ -126,13 +126,13 @@ export default function Policies() {
           { key: 'value', header: 'Giá trị', render: (p) => <span className="font-semibold text-brand-700">{p.value}</span> },
           { key: 'category', header: 'Nhóm', render: (p) => <Badge tone={catTone(p.category)}>{p.category}</Badge> },
           { key: 'updatedDate', header: 'Cập nhật', render: (p) => formatDate(p.updatedDate) },
-          { key: 'actions', header: '', align: 'right', render: (p) => (
-            <div className="flex justify-end gap-2">
-              <Button size="sm" variant="secondary" icon={Pencil} onClick={(e) => { e.stopPropagation(); openEdit(p) }}>Sửa</Button>
-              <Button size="sm" variant="danger" icon={Trash2} onClick={(e) => { e.stopPropagation(); remove(p) }}>Xóa</Button>
-            </div>
-          ) },
         ]}
+        actions={(p) => (
+          <>
+            <Button size="sm" variant="secondary" icon={Pencil} onClick={() => openEdit(p)}>Sửa</Button>
+            <Button size="sm" variant="danger" icon={Trash2} onClick={() => remove(p)}>Xóa</Button>
+          </>
+        )}
       />
 
       <Modal

@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '../../components/ui/PageHeader.jsx'
-import { Card, CardBody, Button, Badge, StatusBadge, Field, Input, Select, Textarea } from '../../components/ui/primitives.jsx'
+import { Card, CardBody, Button, Badge, StatusBadge } from '../../components/ui/primitives.jsx'
 import { Modal } from '../../components/ui/Modal.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { isoDate } from '../../lib/format.js'
-import { staffShiftService, employeeService, withFallback, toList } from '../../services/index.js'
+import { staffShiftService, withFallback, toList } from '../../services/index.js'
 import { ChevronLeft, ChevronRight, Plus, Trash2, Clock, CheckCircle2 } from 'lucide-react'
 
 const SHIFT_TYPES = [
@@ -27,11 +28,10 @@ function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); retu
 
 export default function StaffShifts() {
   const toast = useToast()
+  const navigate = useNavigate()
   const [anchor, setAnchor] = useState(() => weekStart(new Date()))
   const [shifts, setShifts] = useState([])
-  const [employees, setEmployees] = useState([])
   const [source, setSource] = useState('backend')
-  const [form, setForm] = useState(null)     // assignment form or null
   const [selected, setSelected] = useState(null) // existing shift detail
 
   const days = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(anchor, i)), [anchor])
@@ -39,59 +39,16 @@ export default function StaffShifts() {
   const to = iso(days[6])
 
   const load = async () => {
-    const [rs, re] = await Promise.all([
-      withFallback(() => staffShiftService.list({ from, to })),
-      withFallback(() => employeeService.list({ size: 200 })),
-    ])
+    const rs = await withFallback(() => staffShiftService.list({ from, to }))
     setShifts(toList(rs.data))
-    setEmployees(toList(re.data))
     setSource(rs.source)
   }
   useEffect(() => { load() }, [from, to])
 
-  const activeEmployees = useMemo(
-    () => employees.filter((e) => !(e.status || '').toLowerCase().includes('nghỉ')),
-    [employees])
-
   const cell = (date, type) => shifts.filter((s) => s.shiftDate === date && s.shiftType === type)
 
-  const openAssign = (date, type) => {
-    const first = activeEmployees[0]
-    setForm({
-      employeeId: first?.id || '',
-      employeeCode: first?.code || '',
-      employeeName: first?.name || '',
-      shiftDate: date,
-      shiftType: type,
-      area: '',
-      note: '',
-    })
-  }
-
-  const pickEmployee = (id) => {
-    const e = employees.find((x) => x.id === id)
-    setForm((f) => ({ ...f, employeeId: id, employeeCode: e?.code || '', employeeName: e?.name || '' }))
-  }
-
-  const save = async () => {
-    if (source !== 'backend') return toast.error('Không có kết nối backend.')
-    if (!form.employeeName) return toast.error('Chọn nhân viên.')
-    try {
-      await staffShiftService.create({
-        employeeCode: form.employeeCode || null,
-        employeeName: form.employeeName,
-        shiftDate: form.shiftDate,
-        shiftType: form.shiftType,
-        area: form.area || null,
-        note: form.note || null,
-      })
-      toast.success(`Đã phân ca ${form.shiftType} cho ${form.employeeName}.`)
-      setForm(null)
-      await load()
-    } catch (e) {
-      toast.error(e.message || 'Không phân ca được.')
-    }
-  }
+  const openAssign = (date, type) =>
+    navigate(`/app/hr/shifts/new?date=${encodeURIComponent(date)}&type=${encodeURIComponent(type)}`)
 
   const doComplete = async (s) => {
     try { await staffShiftService.complete(s.id); toast.success('Đã đánh dấu hoàn thành.'); setSelected(null); await load() }
@@ -183,42 +140,6 @@ export default function StaffShifts() {
           </div>
         </CardBody>
       </Card>
-
-      {/* Assign modal */}
-      <Modal
-        open={!!form}
-        onClose={() => setForm(null)}
-        title="Phân ca làm việc"
-        subtitle={form ? `${form.shiftType} · ${form.shiftDate}` : ''}
-        footer={<><Button variant="secondary" onClick={() => setForm(null)}>Hủy</Button><Button onClick={save}>Lưu ca</Button></>}
-      >
-        {form && (
-          <div className="space-y-4">
-            <Field label="Nhân viên" required>
-              <Select value={form.employeeId} onChange={(e) => pickEmployee(e.target.value)}>
-                {activeEmployees.length === 0 && <option value="">— Không có nhân viên —</option>}
-                {activeEmployees.map((e) => <option key={e.id} value={e.id}>{e.name} · {e.code}</option>)}
-              </Select>
-            </Field>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Loại ca" required>
-                <Select value={form.shiftType} onChange={(e) => setForm({ ...form, shiftType: e.target.value })}>
-                  {SHIFT_TYPES.map((s) => <option key={s.key} value={s.key}>{s.key} ({s.time})</option>)}
-                </Select>
-              </Field>
-              <Field label="Ngày" required>
-                <Input type="date" value={form.shiftDate} onChange={(e) => setForm({ ...form, shiftDate: e.target.value })} />
-              </Field>
-            </div>
-            <Field label="Khu vực làm việc">
-              <Input value={form.area} onChange={(e) => setForm({ ...form, area: e.target.value })} placeholder="VD: Quầy thu ngân, Kho hàng..." />
-            </Field>
-            <Field label="Ghi chú">
-              <Textarea rows={2} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} />
-            </Field>
-          </div>
-        )}
-      </Modal>
 
       {/* Shift detail modal */}
       <Modal

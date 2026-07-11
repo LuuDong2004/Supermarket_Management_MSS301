@@ -8,7 +8,7 @@ import { Tabs } from '../../components/ui/Tabs.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { formatDate } from '../../lib/format.js'
 import { approvalRequestService, withFallback, toList, mockApprovalRequests } from '../../services/index.js'
-import { CheckCircle2, XCircle, Clock, Inbox, FileCheck2 } from 'lucide-react'
+import { CheckCircle2, XCircle, Clock, Inbox, FileCheck2, Eye } from 'lucide-react'
 
 function typeTone(type) {
   if (type === 'Tạo tài khoản') return 'blue'
@@ -138,6 +138,9 @@ export default function Approvals() {
             { key: 'reqDate', header: 'Ngày', render: (r) => formatDate(r.reqDate) },
             { key: 'status', header: 'Kết quả', render: (r) => <StatusBadge status={r.status} /> },
           ]}
+          actions={(r) => (
+            <Button size="sm" variant="secondary" icon={Eye} onClick={() => setSelected(r)}>Xem</Button>
+          )}
         />
       )}
 

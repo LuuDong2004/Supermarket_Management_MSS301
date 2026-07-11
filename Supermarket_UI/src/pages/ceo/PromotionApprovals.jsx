@@ -8,7 +8,7 @@ import { Tabs } from '../../components/ui/Tabs.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { formatDate, formatCurrency } from '../../lib/format.js'
 import { promotionService, withFallback, toList } from '../../services/index.js'
-import { CheckCircle2, XCircle, Clock, Inbox, BadgePercent, Tag } from 'lucide-react'
+import { CheckCircle2, XCircle, Clock, Inbox, BadgePercent, Tag, Eye } from 'lucide-react'
 
 const PENDING = 'Chờ duyệt'
 
@@ -128,6 +128,9 @@ export default function PromotionApprovals() {
             { key: 'period', header: 'Thời gian', render: (r) => `${formatDate(r.fromDate)} → ${formatDate(r.toDate)}` },
             { key: 'status', header: 'Trạng thái', render: (r) => <StatusBadge status={r.status} /> },
           ]}
+          actions={(r) => (
+            <Button size="sm" variant="secondary" icon={Eye} onClick={() => setSelected(r)}>Xem</Button>
+          )}
         />
       )}
 

@@ -1,25 +1,26 @@
 import { useState, useEffect, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { PageHeader, FilterBar } from '../../components/ui/PageHeader.jsx'
-import { Card, CardHeader, CardBody, Button, Badge, Field, Input, Select, Divider, Spinner } from '../../components/ui/primitives.jsx'
+import { Button, Badge, Field, Input, Select, Spinner } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { StatCard } from '../../components/ui/StatCard.jsx'
 import { Modal } from '../../components/ui/Modal.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { formatCurrency, formatNumber, formatDate } from '../../lib/format.js'
 import { customerService, withFallback, toList, mockCustomers } from '../../services/index.js'
-import { Search, UserPlus, Users, Crown, Star, Phone, Mail, Gift } from 'lucide-react'
+import { Search, UserPlus, Users, Crown, Star, Eye } from 'lucide-react'
 
 const TIER_TONE = { Platinum: 'violet', Gold: 'amber', Silver: 'slate', Member: 'blue' }
 
 export default function Members() {
   const toast = useToast()
+  const navigate = useNavigate()
   const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(true)
   const [source, setSource] = useState('backend')
   const [search, setSearch] = useState('')
   const [tier, setTier] = useState('all')
   const [register, setRegister] = useState(false)
-  const [detail, setDetail] = useState(null)
   const [form, setForm] = useState({ name: '', phone: '', email: '', tier: 'Member' })
 
   const load = async () => {
@@ -110,7 +111,7 @@ export default function Members() {
       ) : (
       <DataTable
         rows={filtered}
-        onRowClick={(r) => setDetail(r)}
+        onRowClick={(r) => navigate(`/app/pos/members/${r.id}`)}
         empty={{ title: 'Không tìm thấy thành viên', subtitle: 'Thử thay đổi từ khóa hoặc bộ lọc hạng.' }}
         columns={[
           { key: 'name', header: 'Họ tên', render: (r) => (
@@ -125,6 +126,9 @@ export default function Members() {
           { key: 'joined', header: 'Ngày tham gia', render: (r) => formatDate(r.joined) },
           { key: 'spent', header: 'Chi tiêu', align: 'right', render: (r) => <span className="font-semibold text-slate-800">{formatCurrency(r.spent)}</span> },
         ]}
+        actions={(r) => (
+          <Button size="sm" variant="secondary" icon={Eye} onClick={() => navigate(`/app/pos/members/${r.id}`)}>Xem</Button>
+        )}
       />
       )}
 
@@ -161,57 +165,6 @@ export default function Members() {
           </Field>
         </div>
       </Modal>
-
-      {/* Detail modal */}
-      <Modal
-        open={!!detail}
-        onClose={() => setDetail(null)}
-        title={detail?.name}
-        subtitle={detail ? `${detail.id} · Thành viên ${detail.tier}` : ''}
-        footer={<Button variant="secondary" onClick={() => setDetail(null)}>Đóng</Button>}
-      >
-        {detail && (
-          <div className="space-y-4">
-            <div className="flex flex-wrap gap-3">
-              <DetailChip icon={Phone} label="Điện thoại" value={detail.phone} />
-              <DetailChip icon={Crown} label="Hạng" value={detail.tier} />
-            </div>
-            <Divider className="my-2" />
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Stat icon={Star} label="Điểm thưởng" value={formatNumber(detail.points)} />
-              <Stat icon={Gift} label="Tổng chi tiêu" value={formatCurrency(detail.spent)} />
-            </div>
-            <div className="rounded-lg border border-slate-100 bg-slate-50/60 px-4 py-3 text-sm">
-              <span className="text-slate-500">Ngày tham gia: </span>
-              <span className="font-medium text-slate-700">{formatDate(detail.joined)}</span>
-            </div>
-            <Button className="w-full" variant="secondary" icon={Mail} onClick={() => toast.info(`Đã gửi ưu đãi tới ${detail.name}.`)}>
-              Gửi ưu đãi cá nhân
-            </Button>
-          </div>
-        )}
-      </Modal>
-    </div>
-  )
-}
-
-function DetailChip({ icon: Icon, label, value }) {
-  return (
-    <div className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm">
-      <Icon size={15} className="text-brand-600" />
-      <span className="text-slate-400">{label}:</span>
-      <span className="font-medium text-slate-700">{value}</span>
-    </div>
-  )
-}
-
-function Stat({ icon: Icon, label, value }) {
-  return (
-    <div className="rounded-lg border border-slate-100 bg-slate-50/60 px-4 py-3">
-      <div className="flex items-center gap-1.5 text-xs text-slate-400">
-        <Icon size={13} /> {label}
-      </div>
-      <p className="mt-1 text-lg font-bold text-slate-800">{value}</p>
     </div>
   )
 }

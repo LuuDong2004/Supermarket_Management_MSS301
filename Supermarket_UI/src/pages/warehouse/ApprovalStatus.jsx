@@ -10,7 +10,7 @@ import {
   stockAdjustmentService, warehouseTxnService,
   withFallback, toList, mockStockAdjustments, mockWarehouseTxns,
 } from '../../services/index.js'
-import { Clock, CheckCircle2, XCircle, Check } from 'lucide-react'
+import { Clock, CheckCircle2, XCircle, Check, Eye } from 'lucide-react'
 
 const STEPS = ['Đã gửi', 'Đang duyệt', 'Hoàn tất']
 
@@ -121,6 +121,9 @@ export default function ApprovalStatus() {
               { key: 'date', header: 'Ngày', render: (r) => formatDate(r.date) },
               { key: 'status', header: 'Trạng thái', render: (r) => <StatusBadge status={r.status} /> },
             ]}
+            actions={(r) => (
+              <Button size="sm" variant="secondary" icon={Eye} onClick={() => setSelected(r)}>Xem</Button>
+            )}
           />
         )}
       </div>

@@ -1,20 +1,18 @@
 import { useState, useEffect, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '../../components/ui/PageHeader.jsx'
-import { Card, CardBody, Button, Badge, StatusBadge, Field, Input, Textarea } from '../../components/ui/primitives.jsx'
+import { Card, CardBody, Button, Badge, StatusBadge } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { StatCard } from '../../components/ui/StatCard.jsx'
-import { Modal } from '../../components/ui/Modal.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { formatCurrency, formatDate } from '../../lib/format.js'
 import { goodsReceiptService, withFallback, toList } from '../../services/index.js'
-import { Plus, CheckCircle2, XCircle, Printer, FileInput, Clock, PackageCheck } from 'lucide-react'
+import { Plus, CheckCircle2, XCircle, Printer, FileInput, Clock, PackageCheck, Eye } from 'lucide-react'
 
 const MANAGER = ['ROLE_WAREHOUSE_MANAGER', 'ROLE_ADMIN']
-const today = () => new Date().toISOString().slice(0, 10)
-const emptyForm = { code: '', poCode: '', supplier: '', receiveDate: today(), receivedBy: '', items: '', total: '', note: '' }
 
-function printReceipt(r) {
+export function printReceipt(r) {
   const rows = `
     <tr><td>Nhà cung cấp</td><td>${r.supplier || ''}</td></tr>
     <tr><td>Đơn mua (PO)</td><td>${r.poCode || '—'}</td></tr>
@@ -43,12 +41,11 @@ function printReceipt(r) {
 
 export default function GoodsReceipts() {
   const toast = useToast()
+  const navigate = useNavigate()
   const { user } = useAuth()
   const isManager = MANAGER.includes(user?.role)
   const [rows, setRows] = useState([])
   const [source, setSource] = useState('backend')
-  const [form, setForm] = useState(null)
-  const [selected, setSelected] = useState(null)
 
   const load = async () => {
     const res = await withFallback(() => goodsReceiptService.list())
@@ -64,24 +61,7 @@ export default function GoodsReceipts() {
     value: rows.reduce((s, r) => s + (Number(r.total) || 0), 0),
   }), [rows])
 
-  const create = async () => {
-    if (!form.code.trim() || !form.supplier.trim()) { toast.error('Nhập mã phiếu và nhà cung cấp.'); return }
-    if (source !== 'backend') { toast.error('Không có kết nối backend.'); return }
-    const body = {
-      code: form.code, poCode: form.poCode || null, supplier: form.supplier,
-      receiveDate: form.receiveDate || today(), receivedBy: form.receivedBy || null,
-      items: Number(form.items) || 0, total: Number(form.total) || 0, note: form.note || null,
-    }
-    try {
-      await goodsReceiptService.create(body)
-      toast.success(`Đã tạo phiếu nhập ${form.code}.`)
-      setForm(null)
-      await load()
-    } catch (e) { toast.error(e.message) }
-  }
-
   const decide = async (r, approve) => {
-    setSelected(null)
     if (source !== 'backend' || !r.id) { toast.error('Không có kết nối backend.'); return }
     try {
       if (approve) await goodsReceiptService.approve(r.id)
@@ -102,7 +82,7 @@ export default function GoodsReceipts() {
             <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
               {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
             </Badge>
-            <Button icon={Plus} onClick={() => setForm({ ...emptyForm, code: `GRN-${Date.now().toString().slice(-4)}` })}>Lập phiếu</Button>
+            <Button icon={Plus} onClick={() => navigate('/app/warehouse/goods-receipts/new')}>Lập phiếu</Button>
           </div>
         }
       />
@@ -119,7 +99,7 @@ export default function GoodsReceipts() {
           <DataTable
             rows={rows}
             rowKey="code"
-            onRowClick={(r) => setSelected(r)}
+            onRowClick={(r) => navigate(`/app/warehouse/goods-receipts/${r.id || r.code}`)}
             empty={{ title: 'Chưa có phiếu nhập kho' }}
             columns={[
               { key: 'code', header: 'Mã phiếu', render: (r) => <span className="font-mono text-xs">{r.code}</span> },
@@ -129,80 +109,22 @@ export default function GoodsReceipts() {
               { key: 'items', header: 'Mặt hàng', align: 'right' },
               { key: 'total', header: 'Giá trị', align: 'right', render: (r) => formatCurrency(r.total) },
               { key: 'status', header: 'Trạng thái', render: (r) => <StatusBadge status={r.status} /> },
-              { key: 'actions', header: '', align: 'right', render: (r) => (
-                <div className="flex justify-end gap-2">
-                  <Button size="sm" variant="ghost" icon={Printer} onClick={(e) => { e.stopPropagation(); printReceipt(r) }} />
-                  {isManager && r.status === 'Chờ duyệt' && (
-                    <>
-                      <Button size="sm" variant="success" icon={CheckCircle2} onClick={(e) => { e.stopPropagation(); decide(r, true) }}>Duyệt</Button>
-                      <Button size="sm" variant="danger" icon={XCircle} onClick={(e) => { e.stopPropagation(); decide(r, false) }}>Từ chối</Button>
-                    </>
-                  )}
-                </div>
-              ) },
             ]}
+            actions={(r) => (
+              <>
+                <Button size="sm" variant="secondary" icon={Eye} onClick={() => navigate(`/app/warehouse/goods-receipts/${r.id || r.code}`)}>Xem</Button>
+                <Button size="sm" variant="ghost" icon={Printer} onClick={() => printReceipt(r)} />
+                {isManager && r.status === 'Chờ duyệt' && (
+                  <>
+                    <Button size="sm" variant="success" icon={CheckCircle2} onClick={() => decide(r, true)}>Duyệt</Button>
+                    <Button size="sm" variant="danger" icon={XCircle} onClick={() => decide(r, false)}>Từ chối</Button>
+                  </>
+                )}
+              </>
+            )}
           />
         </CardBody>
       </Card>
-
-      {/* Create modal */}
-      <Modal
-        open={!!form}
-        onClose={() => setForm(null)}
-        title="Lập phiếu nhập kho"
-        subtitle="Ghi nhận lô hàng nhận từ nhà cung cấp"
-        size="lg"
-        footer={<><Button variant="secondary" onClick={() => setForm(null)}>Hủy</Button><Button onClick={create}>Tạo phiếu</Button></>}
-      >
-        {form && (
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Mã phiếu" required><Input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} /></Field>
-            <Field label="Mã PO"><Input value={form.poCode} onChange={(e) => setForm({ ...form, poCode: e.target.value })} placeholder="PO-..." /></Field>
-            <Field label="Nhà cung cấp" required className="sm:col-span-2"><Input value={form.supplier} onChange={(e) => setForm({ ...form, supplier: e.target.value })} /></Field>
-            <Field label="Ngày nhận"><Input type="date" value={form.receiveDate} onChange={(e) => setForm({ ...form, receiveDate: e.target.value })} /></Field>
-            <Field label="Người nhận"><Input value={form.receivedBy} onChange={(e) => setForm({ ...form, receivedBy: e.target.value })} /></Field>
-            <Field label="Số mặt hàng"><Input type="number" value={form.items} onChange={(e) => setForm({ ...form, items: e.target.value })} /></Field>
-            <Field label="Tổng giá trị"><Input type="number" value={form.total} onChange={(e) => setForm({ ...form, total: e.target.value })} /></Field>
-            <Field label="Ghi chú" className="sm:col-span-2"><Textarea rows={2} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} /></Field>
-          </div>
-        )}
-      </Modal>
-
-      {/* Detail modal */}
-      <Modal
-        open={!!selected}
-        onClose={() => setSelected(null)}
-        title={selected ? `Phiếu ${selected.code}` : ''}
-        subtitle={selected?.supplier}
-        footer={
-          <>
-            <Button variant="secondary" icon={Printer} onClick={() => printReceipt(selected)}>In phiếu</Button>
-            {isManager && selected?.status === 'Chờ duyệt' ? (
-              <>
-                <Button variant="danger" icon={XCircle} onClick={() => decide(selected, false)}>Từ chối</Button>
-                <Button variant="success" icon={CheckCircle2} onClick={() => decide(selected, true)}>Duyệt</Button>
-              </>
-            ) : (
-              <Button onClick={() => setSelected(null)}>Đóng</Button>
-            )}
-          </>
-        }
-      >
-        {selected && (
-          <div className="space-y-2 text-sm">
-            {[['PO', selected.poCode || '—'], ['Ngày nhận', formatDate(selected.receiveDate)], ['Người nhận', selected.receivedBy || '—'],
-              ['Số mặt hàng', selected.items], ['Tổng giá trị', formatCurrency(selected.total)]].map(([k, v]) => (
-              <div key={k} className="flex items-center justify-between border-b border-slate-100 pb-2">
-                <span className="text-slate-500">{k}</span><span className="font-medium text-slate-700">{v}</span>
-              </div>
-            ))}
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-              <span className="text-slate-500">Trạng thái</span><StatusBadge status={selected.status} />
-            </div>
-            <div><p className="text-slate-500">Ghi chú</p><p className="mt-1 rounded-lg bg-slate-50 px-3 py-2 text-slate-700">{selected.note || 'Không có.'}</p></div>
-          </div>
-        )}
-      </Modal>
     </div>
   )
 }

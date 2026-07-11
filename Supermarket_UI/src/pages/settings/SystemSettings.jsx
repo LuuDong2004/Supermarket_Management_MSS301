@@ -142,18 +142,13 @@ export default function SystemSettings() {
                 { key: 'settingKey', header: 'Khóa', render: (r) => <span className="font-mono text-xs text-slate-500">{r.settingKey}</span> },
                 { key: 'settingValue', header: 'Giá trị', render: (r) => <span className="font-mono text-sm text-slate-700">{r.settingValue}</span> },
                 { key: 'category', header: 'Nhóm', render: (r) => <Badge tone={CATEGORY_TONE[r.category] || 'slate'}>{r.category}</Badge> },
-                {
-                  key: 'action',
-                  header: '',
-                  align: 'right',
-                  render: (r) => (
-                    <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="sm" icon={Pencil} onClick={() => openEdit(r)}>Sửa</Button>
-                      <Button variant="ghost" size="sm" icon={Trash2} onClick={() => removeSetting(r)}>Xóa</Button>
-                    </div>
-                  ),
-                },
               ]}
+              actions={(r) => (
+                <>
+                  <Button size="sm" variant="secondary" icon={Pencil} onClick={() => openEdit(r)}>Sửa</Button>
+                  <Button size="sm" variant="danger" icon={Trash2} onClick={() => removeSetting(r)}>Xóa</Button>
+                </>
+              )}
             />
           )}
         </CardBody>

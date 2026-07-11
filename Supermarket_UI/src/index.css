@@ -6,6 +6,8 @@
   html {
     -webkit-font-smoothing: antialiased;
     scroll-behavior: smooth;
+    /* Global 10% scale-down: everything sized in rem shrinks with this. */
+    font-size: 90%;
   }
   body {
     @apply bg-slate-50/50 text-slate-800 font-sans;
