@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { PageHeader } from '../../components/ui/PageHeader.jsx'
+import { PageHeader, FilterBar } from '../../components/ui/PageHeader.jsx'
 import { Card, CardHeader, CardBody, Button, Badge, Field, Select, Spinner } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { StatCard } from '../../components/ui/StatCard.jsx'
@@ -165,21 +165,22 @@ export default function BusinessRules() {
       )}
 
       {tab === 'audit' && (
+        <>
+        <FilterBar>
+          <Field label="Mức độ">
+            <Select value={levelFilter} onChange={(e) => setLevelFilter(e.target.value)}>
+              <option value="all">Tất cả mức độ</option>
+              <option value="INFO">INFO</option>
+              <option value="WARN">WARN</option>
+              <option value="ERROR">ERROR</option>
+            </Select>
+          </Field>
+        </FilterBar>
         <Card>
           <CardHeader
             title="Nhật ký kiểm toán"
             subtitle="Truy vết hệ thống — ai thực hiện, khi nào, việc gì"
             icon={History}
-            action={
-              <Field className="w-44">
-                <Select value={levelFilter} onChange={(e) => setLevelFilter(e.target.value)}>
-                  <option value="all">Tất cả mức độ</option>
-                  <option value="INFO">INFO</option>
-                  <option value="WARN">WARN</option>
-                  <option value="ERROR">ERROR</option>
-                </Select>
-              </Field>
-            }
           />
           <CardBody className="p-0">
             <DataTable
@@ -197,6 +198,7 @@ export default function BusinessRules() {
             />
           </CardBody>
         </Card>
+        </>
       )}
 
     </div>

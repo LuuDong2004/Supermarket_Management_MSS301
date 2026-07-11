@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { PageHeader } from '../../components/ui/PageHeader.jsx'
+import { PageHeader, FilterBar } from '../../components/ui/PageHeader.jsx'
 import { Card, CardHeader, CardBody, Field, Select, Badge } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { StatCard } from '../../components/ui/StatCard.jsx'
@@ -61,19 +61,20 @@ export default function Reports() {
         title="Báo cáo quản trị"
         subtitle="Tổng quan kết quả kinh doanh cho ban điều hành."
         actions={
-          <div className="flex items-center gap-3">
-            <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-              {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-            </Badge>
-            <Field>
-              <Select value={period} onChange={(e) => setPeriod(e.target.value)}>
-                <option value="3m">3 tháng gần nhất</option>
-                <option value="6m">6 tháng gần nhất</option>
-              </Select>
-            </Field>
-          </div>
+          <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
+            {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
+          </Badge>
         }
       />
+
+      <FilterBar>
+        <Field label="Khoảng thời gian">
+          <Select value={period} onChange={(e) => setPeriod(e.target.value)}>
+            <option value="3m">3 tháng gần nhất</option>
+            <option value="6m">6 tháng gần nhất</option>
+          </Select>
+        </Field>
+      </FilterBar>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Doanh thu tháng" value={formatCurrency(revenueVnd, { compact: true })} icon={DollarSign} tone="green" delta={growth} hint="so với tháng trước" />

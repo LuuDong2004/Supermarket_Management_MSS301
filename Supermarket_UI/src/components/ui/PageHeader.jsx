@@ -22,7 +22,9 @@ export function FilterBar({ children, className }) {
     <div
       className={cn(
         'mb-5 flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-card',
-        '[&>*]:grow [&>*]:shrink [&>*]:basis-52 [&>*]:min-w-[160px]',
+        // Controls share one row and grow, but never balloon: a lone search or
+        // dropdown caps at max-w-md instead of stretching across the screen.
+        '[&>*]:grow [&>*]:shrink [&>*]:basis-52 [&>*]:min-w-[160px] [&>*]:max-w-md',
         className,
       )}
     >
