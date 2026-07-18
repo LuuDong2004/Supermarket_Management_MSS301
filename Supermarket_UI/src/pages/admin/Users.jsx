@@ -9,7 +9,7 @@ import { roleLabel } from '../../lib/format.js'
 import { userService, withFallback, toList, mockUsers } from '../../services/index.js'
 import { Search, UserPlus, Info, RotateCcw, Trash2, Pencil } from 'lucide-react'
 
-const ROLES = ['ROLE_CASHIER', 'ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_STAFF', 'ROLE_ADMIN', 'ROLE_CEO', 'ROLE_SUPPLIER']
+const ROLES = ['ROLE_CASHIER', 'ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_STAFF', 'ROLE_STAFF_MANAGER', 'ROLE_ADMIN', 'ROLE_CEO']
 
 export default function Users() {
   const toast = useToast()

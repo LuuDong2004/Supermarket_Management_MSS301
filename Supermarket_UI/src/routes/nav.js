@@ -1,13 +1,18 @@
 import {
-  LayoutDashboard, ShoppingCart, CreditCard, Users, BadgePercent,
+  LayoutDashboard, ShoppingCart, Users, BadgePercent,
   Gift, Package, PackagePlus, ClipboardList, ClipboardCheck, AlertTriangle, Boxes,
   ScanLine, Warehouse, FileBarChart, BarChart3, UserCog, ShieldCheck, ScrollText,
   Activity, Settings, BookCheck, Building2, CalendarCheck, Award, FileCheck2, Receipt,
   Wallet, Gauge, Lightbulb, KeyRound, ShieldAlert, Bell,
-  PackageSearch, FileInput, Barcode, Undo2, CalendarClock, Truck, BookOpen,
+  PackageSearch, FileInput, Barcode, Undo2, CalendarClock, Truck,
 } from 'lucide-react'
 
-const ALL = ['ROLE_CEO', 'ROLE_ADMIN', 'ROLE_CASHIER', 'ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_STAFF', 'ROLE_SUPPLIER']
+const ALL = ['ROLE_CEO', 'ROLE_ADMIN', 'ROLE_CASHIER', 'ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_STAFF', 'ROLE_STAFF_MANAGER']
+
+// Warehouse split: the Manager governs (orders, approvals, oversight, products,
+// suppliers); the Staff operates (receiving, counting, adjustments, labels).
+const WH_MANAGER = ['ROLE_WAREHOUSE_MANAGER']
+const WH_STAFF = ['ROLE_WAREHOUSE_STAFF']
 
 // Navigation model. Each group is shown if the current role matches any item.
 // `roles` controls both menu visibility and route guarding.
@@ -21,47 +26,45 @@ export const NAV = [
   {
     section: 'Bán hàng (POS)',
     items: [
-      { to: '/app/pos/sale', label: 'Bán hàng / Thanh toán', icon: ShoppingCart, roles: ['ROLE_CASHIER', 'ROLE_ADMIN'], code: '3.8.1' },
-      { to: '/app/pos/returns', label: 'Trả hàng / Hoàn tiền', icon: Undo2, roles: ['ROLE_CASHIER', 'ROLE_ADMIN'], code: '3.8.4' },
-      { to: '/app/pos/shift', label: 'Ca thu ngân', icon: Receipt, roles: ['ROLE_CASHIER', 'ROLE_ADMIN'], code: '3.8.3' },
-      { to: '/app/pos/members', label: 'Khách hàng thành viên', icon: Users, roles: ['ROLE_CASHIER', 'ROLE_ADMIN'], code: '3.9.1' },
-      { to: '/app/pos/loyalty', label: 'Điểm thưởng', icon: Gift, roles: ['ROLE_CASHIER', 'ROLE_ADMIN'], code: '3.9.2' },
-      { to: '/app/pos/promotions', label: 'Khuyến mãi & Voucher', icon: BadgePercent, roles: ['ROLE_CASHIER', 'ROLE_ADMIN'], code: '3.9.3' },
+      { to: '/app/pos/sale', label: 'Bán hàng / Thanh toán', icon: ShoppingCart, roles: ['ROLE_CASHIER'], code: '3.8.1' },
+      { to: '/app/pos/returns', label: 'Trả hàng / Hoàn tiền', icon: Undo2, roles: ['ROLE_CASHIER'], code: '3.8.4' },
+      { to: '/app/pos/shift', label: 'Ca thu ngân', icon: Receipt, roles: ['ROLE_CASHIER'], code: '3.8.3' },
+      { to: '/app/pos/members', label: 'Khách hàng thành viên', icon: Users, roles: ['ROLE_CASHIER'], code: '3.9.1' },
+      { to: '/app/pos/loyalty', label: 'Điểm thưởng', icon: Gift, roles: ['ROLE_CASHIER'], code: '3.9.2' },
+      { to: '/app/pos/promotions', label: 'Khuyến mãi & Voucher', icon: BadgePercent, roles: ['ROLE_CASHIER'], code: '3.9.3' },
     ],
   },
   {
-    section: 'Kho hàng',
+    section: 'Kho hàng — Quản lý',
     items: [
-      { to: '/app/warehouse/purchase-orders', label: 'Đơn mua hàng', icon: ClipboardList, roles: ['ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_STAFF', 'ROLE_ADMIN'], code: '3.6.1' },
-      { to: '/app/warehouse/transactions', label: 'Duyệt giao dịch kho', icon: ClipboardCheck, roles: ['ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_STAFF', 'ROLE_ADMIN'], code: '3.6.2' },
-      { to: '/app/warehouse/monitor', label: 'Giám sát tồn kho', icon: AlertTriangle, roles: ['ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_STAFF', 'ROLE_ADMIN'], code: '3.6.3' },
-      { to: '/app/warehouse/reports', label: 'Báo cáo kho', icon: Warehouse, roles: ['ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_STAFF', 'ROLE_ADMIN'], code: '3.6.4' },
-      { to: '/app/warehouse/receive', label: 'Nhận hàng', icon: PackagePlus, roles: ['ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_STAFF', 'ROLE_ADMIN'], code: '3.7.1' },
-      { to: '/app/warehouse/inventory', label: 'Thông tin tồn kho', icon: Boxes, roles: ['ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_STAFF', 'ROLE_ADMIN'], code: '3.7.2' },
-      { to: '/app/warehouse/stock-count', label: 'Kiểm kê', icon: ScanLine, roles: ['ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_STAFF', 'ROLE_ADMIN'], code: '3.7.3' },
-      { to: '/app/warehouse/adjustments', label: 'Điều chỉnh tồn kho', icon: Package, roles: ['ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_STAFF', 'ROLE_ADMIN'], code: '3.7.4' },
-      { to: '/app/warehouse/approval-status', label: 'Trạng thái duyệt', icon: FileCheck2, roles: ['ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_STAFF', 'ROLE_ADMIN'], code: '3.7.5' },
-      { to: '/app/warehouse/products', label: 'Quản lý sản phẩm', icon: PackageSearch, roles: ['ROLE_WAREHOUSE_MANAGER', 'ROLE_ADMIN'], code: '3.6.5' },
-      { to: '/app/warehouse/goods-receipts', label: 'Phiếu nhập kho', icon: FileInput, roles: ['ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_STAFF', 'ROLE_ADMIN'], code: '3.7.6' },
-      { to: '/app/warehouse/barcode', label: 'In tem mã vạch', icon: Barcode, roles: ['ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_STAFF', 'ROLE_ADMIN'], code: '3.7.7' },
+      { to: '/app/warehouse/purchase-orders', label: 'Đơn mua hàng', icon: ClipboardList, roles: WH_MANAGER, code: '3.6.1' },
+      { to: '/app/warehouse/transactions', label: 'Duyệt giao dịch kho', icon: ClipboardCheck, roles: WH_MANAGER, code: '3.6.2' },
+      { to: '/app/warehouse/monitor', label: 'Giám sát tồn kho', icon: AlertTriangle, roles: WH_MANAGER, code: '3.6.3' },
+      { to: '/app/warehouse/reports', label: 'Báo cáo kho', icon: Warehouse, roles: WH_MANAGER, code: '3.6.4' },
+      { to: '/app/warehouse/products', label: 'Quản lý sản phẩm', icon: PackageSearch, roles: WH_MANAGER, code: '3.6.5' },
+      { to: '/app/warehouse/suppliers', label: 'Nhà cung cấp', icon: Truck, roles: WH_MANAGER, code: '3.6.6' },
+    ],
+  },
+  {
+    section: 'Kho hàng — Vận hành',
+    items: [
+      { to: '/app/warehouse/receive', label: 'Nhận hàng', icon: PackagePlus, roles: WH_STAFF, code: '3.7.1' },
+      { to: '/app/warehouse/inventory', label: 'Thông tin tồn kho', icon: Boxes, roles: WH_STAFF, code: '3.7.2' },
+      { to: '/app/warehouse/stock-count', label: 'Kiểm kê', icon: ScanLine, roles: WH_STAFF, code: '3.7.3' },
+      { to: '/app/warehouse/adjustments', label: 'Điều chỉnh tồn kho', icon: Package, roles: WH_STAFF, code: '3.7.4' },
+      { to: '/app/warehouse/approval-status', label: 'Trạng thái duyệt', icon: FileCheck2, roles: WH_STAFF, code: '3.7.5' },
+      { to: '/app/warehouse/goods-receipts', label: 'Phiếu nhập kho', icon: FileInput, roles: WH_STAFF, code: '3.7.6' },
+      { to: '/app/warehouse/barcode', label: 'In tem mã vạch', icon: Barcode, roles: WH_STAFF, code: '3.7.7' },
     ],
   },
   {
     section: 'Nhân sự',
     items: [
-      { to: '/app/hr/employees', label: 'Hồ sơ nhân viên', icon: Building2, roles: ['ROLE_ADMIN', 'ROLE_CEO', 'ROLE_WAREHOUSE_MANAGER'], code: '3.5.1' },
-      { to: '/app/hr/shifts', label: 'Phân ca nhân viên', icon: CalendarClock, roles: ['ROLE_ADMIN', 'ROLE_CEO', 'ROLE_WAREHOUSE_MANAGER'], code: '3.5.4' },
-      { to: '/app/hr/attendance', label: 'Chấm công', icon: CalendarCheck, roles: ['ROLE_ADMIN', 'ROLE_CEO'], code: '3.5.2' },
-      { to: '/app/hr/timesheet', label: 'Báo cáo chấm công', icon: ClipboardList, roles: ['ROLE_ADMIN', 'ROLE_CEO', 'ROLE_WAREHOUSE_MANAGER'], code: '3.5.5' },
-      { to: '/app/hr/performance', label: 'Đánh giá hiệu suất', icon: Award, roles: ['ROLE_ADMIN', 'ROLE_CEO'], code: '3.5.3' },
-    ],
-  },
-  {
-    section: 'Nhà cung cấp',
-    items: [
-      { to: '/app/supplier/orders', label: 'Đơn mua của tôi', icon: Truck, roles: ['ROLE_SUPPLIER', 'ROLE_ADMIN'], code: '3.12.1' },
-      { to: '/app/supplier/catalog', label: 'Bảng giá & danh mục', icon: BookOpen, roles: ['ROLE_SUPPLIER', 'ROLE_ADMIN'], code: '3.12.2' },
-      { to: '/app/supplier/profile', label: 'Hồ sơ nhà cung cấp', icon: Building2, roles: ['ROLE_SUPPLIER', 'ROLE_ADMIN'], code: '3.12.3' },
+      { to: '/app/hr/employees', label: 'Hồ sơ nhân viên', icon: Building2, roles: ['ROLE_STAFF_MANAGER'], code: '3.5.1' },
+      { to: '/app/hr/shifts', label: 'Phân ca nhân viên', icon: CalendarClock, roles: ['ROLE_STAFF_MANAGER'], code: '3.5.4' },
+      { to: '/app/hr/attendance', label: 'Chấm công', icon: CalendarCheck, roles: ['ROLE_STAFF_MANAGER'], code: '3.5.2' },
+      { to: '/app/hr/timesheet', label: 'Báo cáo chấm công', icon: ClipboardList, roles: ['ROLE_STAFF_MANAGER'], code: '3.5.5' },
+      { to: '/app/hr/performance', label: 'Đánh giá hiệu suất', icon: Award, roles: ['ROLE_STAFF_MANAGER'], code: '3.5.3' },
     ],
   },
   {
@@ -90,16 +93,15 @@ export const NAV = [
   {
     section: 'Báo cáo',
     items: [
-      { to: '/app/reports/sales', label: 'Doanh thu & Kinh doanh', icon: FileBarChart, roles: ['ROLE_CEO', 'ROLE_ADMIN'], code: '3.10.1' },
-      { to: '/app/reports/inventory', label: 'Kho & Tồn kho', icon: FileBarChart, roles: ['ROLE_CEO', 'ROLE_ADMIN', 'ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_STAFF'], code: '3.10.2' },
-      { to: '/app/reports/employees', label: 'Hiệu suất nhân viên', icon: FileBarChart, roles: ['ROLE_CEO', 'ROLE_ADMIN'], code: '3.10.3' },
+      { to: '/app/reports/inventory', label: 'Kho & Tồn kho', icon: FileBarChart, roles: ['ROLE_CEO', 'ROLE_WAREHOUSE_MANAGER'], code: '3.10.2' },
+      { to: '/app/reports/employees', label: 'Hiệu suất nhân viên', icon: FileBarChart, roles: ['ROLE_CEO', 'ROLE_STAFF_MANAGER'], code: '3.10.3' },
     ],
   },
   {
     section: 'Hệ thống',
     items: [
-      { to: '/app/settings/system', label: 'Cấu hình hệ thống', icon: Settings, roles: ['ROLE_ADMIN', 'ROLE_CEO'], code: '3.11.1' },
-      { to: '/app/settings/rules', label: 'Quy tắc & Nhật ký kiểm toán', icon: ScrollText, roles: ['ROLE_ADMIN', 'ROLE_CEO'], code: '3.11.2' },
+      { to: '/app/settings/system', label: 'Cấu hình hệ thống', icon: Settings, roles: ['ROLE_ADMIN'], code: '3.11.1' },
+      { to: '/app/settings/rules', label: 'Quy tắc & Nhật ký kiểm toán', icon: ScrollText, roles: ['ROLE_ADMIN'], code: '3.11.2' },
     ],
   },
 ]

@@ -4,12 +4,10 @@ import com.mss301.common.exception.ConflictException;
 import com.mss301.common.exception.ErrorCode;
 import com.mss301.common.exception.ResourceNotFoundException;
 import com.mss301.supplier.dto.request.SupplierRequest;
-import com.mss301.supplier.dto.request.SupplierSelfRequest;
 import com.mss301.supplier.dto.response.SupplierResponse;
 import com.mss301.supplier.entity.Supplier;
 import com.mss301.supplier.mapper.SupplierMapper;
 import com.mss301.supplier.repository.SupplierRepository;
-import com.mss301.supplier.service.SupplierContext;
 import com.mss301.supplier.service.interfaces.SupplierService;
 import com.mss301.response.PageResponse;
 import com.mss301.storage.StorageService;
@@ -31,7 +29,6 @@ public class SupplierServiceImpl implements SupplierService {
     private final SupplierRepository supplierRepository;
     private final SupplierMapper supplierMapper;
     private final StorageService storageService;
-    private final SupplierContext supplierContext;
 
     @Override
     public SupplierResponse create(SupplierRequest request) {
@@ -83,23 +80,6 @@ public class SupplierServiceImpl implements SupplierService {
     @Override
     public void delete(UUID id) {
         supplierRepository.delete(find(id));
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public SupplierResponse getMine() {
-        return supplierMapper.toResponse(supplierContext.current());
-    }
-
-    @Override
-    public SupplierResponse updateMine(SupplierSelfRequest request) {
-        Supplier supplier = supplierContext.current();
-        if (request.contact() != null) supplier.setContact(request.contact());
-        if (request.phone() != null) supplier.setPhone(request.phone());
-        if (request.email() != null) supplier.setEmail(request.email());
-        if (request.address() != null) supplier.setAddress(request.address());
-        if (request.terms() != null) supplier.setTerms(request.terms());
-        return supplierMapper.toResponse(supplier);
     }
 
     private Supplier find(UUID id) {

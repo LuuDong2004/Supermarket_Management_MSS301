@@ -55,7 +55,7 @@ public class CustomerController {
     }
 
     @Operation(summary = "Create a customer")
-    @PreAuthorize("hasAnyRole('CASHIER','ADMIN')")
+    @PreAuthorize("hasRole('CASHIER')")
     @PostMapping
     public ResponseEntity<ApiResponse<CustomerResponse>> create(@Valid @RequestBody CustomerRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -63,21 +63,21 @@ public class CustomerController {
     }
 
     @Operation(summary = "Update a customer")
-    @PreAuthorize("hasAnyRole('CASHIER','ADMIN')")
+    @PreAuthorize("hasRole('CASHIER')")
     @PutMapping("/{id}")
     public ApiResponse<CustomerResponse> update(@PathVariable UUID id, @Valid @RequestBody CustomerRequest request) {
         return ApiResponse.success("Customer updated", customerService.update(id, request));
     }
 
     @Operation(summary = "Add or redeem loyalty points")
-    @PreAuthorize("hasAnyRole('CASHIER','ADMIN')")
+    @PreAuthorize("hasRole('CASHIER')")
     @PostMapping("/{id}/points")
     public ApiResponse<CustomerResponse> adjustPoints(@PathVariable UUID id, @Valid @RequestBody PointsRequest request) {
         return ApiResponse.success("Points updated", customerService.adjustPoints(id, request));
     }
 
     @Operation(summary = "Delete a customer")
-    @PreAuthorize("hasAnyRole('CASHIER','ADMIN')")
+    @PreAuthorize("hasRole('CASHIER')")
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable UUID id) {
         customerService.delete(id);

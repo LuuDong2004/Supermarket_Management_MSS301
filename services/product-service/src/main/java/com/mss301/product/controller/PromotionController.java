@@ -44,7 +44,7 @@ public class PromotionController {
     }
 
     @Operation(summary = "Create a promotion")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO')")
+    @PreAuthorize("hasRole('CEO')")
     @PostMapping
     public ResponseEntity<ApiResponse<PromotionResponse>> create(@Valid @RequestBody PromotionRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -52,28 +52,28 @@ public class PromotionController {
     }
 
     @Operation(summary = "Update a promotion")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO')")
+    @PreAuthorize("hasRole('CEO')")
     @PutMapping("/{id}")
     public ApiResponse<PromotionResponse> update(@PathVariable UUID id, @Valid @RequestBody PromotionRequest request) {
         return ApiResponse.success("Promotion updated", promotionService.update(id, request));
     }
 
     @Operation(summary = "Approve a promotion campaign (UC-CEO05)")
-    @PreAuthorize("hasAnyRole('CEO','ADMIN')")
+    @PreAuthorize("hasRole('CEO')")
     @PostMapping("/{id}/approve")
     public ApiResponse<PromotionResponse> approve(@PathVariable UUID id) {
         return ApiResponse.success("Promotion approved", promotionService.approve(id));
     }
 
     @Operation(summary = "Reject a promotion campaign (UC-CEO05)")
-    @PreAuthorize("hasAnyRole('CEO','ADMIN')")
+    @PreAuthorize("hasRole('CEO')")
     @PostMapping("/{id}/reject")
     public ApiResponse<PromotionResponse> reject(@PathVariable UUID id) {
         return ApiResponse.success("Promotion rejected", promotionService.reject(id));
     }
 
     @Operation(summary = "Delete a promotion")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO')")
+    @PreAuthorize("hasRole('CEO')")
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable UUID id) {
         promotionService.delete(id);

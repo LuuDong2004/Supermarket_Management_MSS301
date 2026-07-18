@@ -43,7 +43,7 @@ public class SystemSettingController {
     }
 
     @Operation(summary = "Create a system setting")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<ApiResponse<SettingResponse>> create(@Valid @RequestBody SettingRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -51,7 +51,7 @@ public class SystemSettingController {
     }
 
     @Operation(summary = "Update a system setting value")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{key}")
     public ApiResponse<SettingResponse> updateValue(@PathVariable String key, @Valid @RequestBody SettingValueRequest request) {
         return ApiResponse.success("Setting updated", systemSettingService.updateValue(key, request.value()));

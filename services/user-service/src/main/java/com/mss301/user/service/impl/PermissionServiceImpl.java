@@ -37,6 +37,7 @@ public class PermissionServiceImpl implements PermissionService {
         fp.setAdmin(request.admin());
         fp.setWarehouseManager(request.warehouseManager());
         fp.setWarehouseStaff(request.warehouseStaff());
+        fp.setStaffManager(request.staffManager());
         fp.setCashier(request.cashier());
         return toResponse(fp);
     }
@@ -51,6 +52,7 @@ public class PermissionServiceImpl implements PermissionService {
                 fp.isAdmin(),
                 fp.isWarehouseManager(),
                 fp.isWarehouseStaff(),
+                fp.isStaffManager(),
                 fp.isCashier()
         );
     }

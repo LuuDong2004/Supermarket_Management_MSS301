@@ -64,7 +64,7 @@ public class ProductController {
     }
 
     @Operation(summary = "Create a product")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO','WAREHOUSE_MANAGER')")
+    @PreAuthorize("hasAnyRole('CEO','WAREHOUSE_MANAGER')")
     @PostMapping
     public ResponseEntity<ApiResponse<ProductResponse>> create(@Valid @RequestBody ProductRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -72,14 +72,14 @@ public class ProductController {
     }
 
     @Operation(summary = "Update a product")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO','WAREHOUSE_MANAGER')")
+    @PreAuthorize("hasAnyRole('CEO','WAREHOUSE_MANAGER')")
     @PutMapping("/{id}")
     public ApiResponse<ProductResponse> update(@PathVariable UUID id, @Valid @RequestBody ProductRequest request) {
         return ApiResponse.success("Product updated", productService.update(id, request));
     }
 
     @Operation(summary = "Upload a product image")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO','WAREHOUSE_MANAGER')")
+    @PreAuthorize("hasAnyRole('CEO','WAREHOUSE_MANAGER')")
     @PostMapping(value = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<ProductResponse> uploadImage(@PathVariable UUID id,
             @RequestParam("file") MultipartFile file) {
@@ -87,7 +87,7 @@ public class ProductController {
     }
 
     @Operation(summary = "Delete a product")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO')")
+    @PreAuthorize("hasRole('CEO')")
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable UUID id) {
         productService.delete(id);

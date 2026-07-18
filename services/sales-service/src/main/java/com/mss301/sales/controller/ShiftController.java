@@ -44,7 +44,7 @@ public class ShiftController {
     }
 
     @Operation(summary = "Open a shift")
-    @PreAuthorize("hasAnyRole('CASHIER','ADMIN')")
+    @PreAuthorize("hasRole('CASHIER')")
     @PostMapping
     public ResponseEntity<ApiResponse<ShiftResponse>> create(@Valid @RequestBody ShiftRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -52,14 +52,14 @@ public class ShiftController {
     }
 
     @Operation(summary = "Update a shift (e.g. close it)")
-    @PreAuthorize("hasAnyRole('CASHIER','ADMIN')")
+    @PreAuthorize("hasRole('CASHIER')")
     @PutMapping("/{id}")
     public ApiResponse<ShiftResponse> update(@PathVariable UUID id, @Valid @RequestBody ShiftRequest request) {
         return ApiResponse.success("Shift updated", shiftService.update(id, request));
     }
 
     @Operation(summary = "Delete a shift")
-    @PreAuthorize("hasAnyRole('CASHIER','ADMIN')")
+    @PreAuthorize("hasRole('CASHIER')")
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable UUID id) {
         shiftService.delete(id);

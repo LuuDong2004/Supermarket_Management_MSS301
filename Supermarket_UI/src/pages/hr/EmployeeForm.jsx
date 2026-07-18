@@ -8,7 +8,7 @@ import { roleLabel } from '../../lib/format.js'
 import { employeeService, withFallback, toList, mockEmployees } from '../../services/index.js'
 import { ArrowLeft, Save } from 'lucide-react'
 
-const ROLES = ['ROLE_CASHIER', 'ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_STAFF', 'ROLE_ADMIN', 'ROLE_CEO', 'ROLE_SUPPLIER']
+const ROLES = ['ROLE_CASHIER', 'ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_STAFF', 'ROLE_STAFF_MANAGER', 'ROLE_ADMIN', 'ROLE_CEO']
 
 const emptyForm = { code: '', name: '', role: 'ROLE_CASHIER', dept: 'Thu ngân', joined: '', phone: '', status: 'Đang làm', salary: '' }
 

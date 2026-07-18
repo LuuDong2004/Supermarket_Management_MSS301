@@ -50,7 +50,7 @@ public class ReturnController {
     }
 
     @Operation(summary = "Create a return / refund")
-    @PreAuthorize("hasAnyRole('CASHIER','ADMIN')")
+    @PreAuthorize("hasRole('CASHIER')")
     @PostMapping
     public ResponseEntity<ApiResponse<ReturnResponse>> create(@Valid @RequestBody ReturnRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)

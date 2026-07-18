@@ -44,7 +44,7 @@ public class StockAdjustmentController {
     }
 
     @Operation(summary = "Create a stock adjustment")
-    @PreAuthorize("hasAnyRole('ADMIN','WAREHOUSE_MANAGER','WAREHOUSE_STAFF')")
+    @PreAuthorize("hasAnyRole('WAREHOUSE_MANAGER','WAREHOUSE_STAFF')")
     @PostMapping
     public ResponseEntity<ApiResponse<StockAdjustmentResponse>> create(@Valid @RequestBody StockAdjustmentRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -52,28 +52,28 @@ public class StockAdjustmentController {
     }
 
     @Operation(summary = "Update a stock adjustment")
-    @PreAuthorize("hasAnyRole('ADMIN','WAREHOUSE_MANAGER','WAREHOUSE_STAFF')")
+    @PreAuthorize("hasAnyRole('WAREHOUSE_MANAGER','WAREHOUSE_STAFF')")
     @PutMapping("/{id}")
     public ApiResponse<StockAdjustmentResponse> update(@PathVariable UUID id, @Valid @RequestBody StockAdjustmentRequest request) {
         return ApiResponse.success("Stock adjustment updated", stockAdjustmentService.update(id, request));
     }
 
     @Operation(summary = "Approve a stock adjustment")
-    @PreAuthorize("hasAnyRole('ADMIN','WAREHOUSE_MANAGER')")
+    @PreAuthorize("hasRole('WAREHOUSE_MANAGER')")
     @PostMapping("/{id}/approve")
     public ApiResponse<StockAdjustmentResponse> approve(@PathVariable UUID id) {
         return ApiResponse.success("Stock adjustment approved", stockAdjustmentService.approve(id));
     }
 
     @Operation(summary = "Reject a stock adjustment")
-    @PreAuthorize("hasAnyRole('ADMIN','WAREHOUSE_MANAGER')")
+    @PreAuthorize("hasRole('WAREHOUSE_MANAGER')")
     @PostMapping("/{id}/reject")
     public ApiResponse<StockAdjustmentResponse> reject(@PathVariable UUID id) {
         return ApiResponse.success("Stock adjustment rejected", stockAdjustmentService.reject(id));
     }
 
     @Operation(summary = "Delete a stock adjustment")
-    @PreAuthorize("hasAnyRole('ADMIN','WAREHOUSE_MANAGER','WAREHOUSE_STAFF')")
+    @PreAuthorize("hasAnyRole('WAREHOUSE_MANAGER','WAREHOUSE_STAFF')")
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable UUID id) {
         stockAdjustmentService.delete(id);

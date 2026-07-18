@@ -11,6 +11,7 @@ public record FeaturePermissionResponse(
         boolean admin,
         boolean warehouseManager,
         boolean warehouseStaff,
+        boolean staffManager,
         boolean cashier
 ) {
 }

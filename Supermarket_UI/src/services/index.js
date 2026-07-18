@@ -152,8 +152,6 @@ export const returnService = {
 export const supplierService = {
   list: (params) => api.get(`/suppliers${qs(params)}`),
   get: (id) => api.get(`/suppliers/${id}`),
-  mine: () => api.get('/suppliers/me'),
-  updateMine: (body) => api.put('/suppliers/me', body),
   create: (body) => api.post('/suppliers', body),
   update: (id, body) => api.put(`/suppliers/${id}`, body),
   remove: (id) => api.delete(`/suppliers/${id}`),
@@ -161,23 +159,13 @@ export const supplierService = {
 
 export const purchaseOrderService = {
   list: () => api.get('/purchase-orders'),
-  mine: () => api.get('/purchase-orders/mine'),
   get: (id) => api.get(`/purchase-orders/${id}`),
   create: (body) => api.post('/purchase-orders', body),
   update: (id, body) => api.put(`/purchase-orders/${id}`, body),
-  confirm: (id) => api.post(`/purchase-orders/${id}/confirm`),
-  rejectBySupplier: (id) => api.post(`/purchase-orders/${id}/reject-by-supplier`),
-  ship: (id, body) => api.post(`/purchase-orders/${id}/ship`, body),
-  deliver: (id) => api.post(`/purchase-orders/${id}/deliver`),
+  approve: (id) => api.post(`/purchase-orders/${id}/approve`),
+  reject: (id) => api.post(`/purchase-orders/${id}/reject`),
+  receive: (id) => api.post(`/purchase-orders/${id}/receive`),
   remove: (id) => api.delete(`/purchase-orders/${id}`),
-}
-
-// Supplier catalog / price list (portal), served at /api/price-lists.
-export const priceListService = {
-  mine: () => api.get('/price-lists/mine'),
-  create: (body) => api.post('/price-lists', body),
-  update: (id, body) => api.put(`/price-lists/${id}`, body),
-  remove: (id) => api.delete(`/price-lists/${id}`),
 }
 
 // Goods receipt notes (UC-W01/W06/M05), served at /api/goods-receipts.

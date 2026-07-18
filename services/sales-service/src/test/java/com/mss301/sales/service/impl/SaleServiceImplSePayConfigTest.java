@@ -1,9 +1,11 @@
 package com.mss301.sales.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mss301.sales.client.ProductClient;
 import com.mss301.sales.dto.request.SePayWebhookRequest;
 import com.mss301.sales.entity.Sale;
 import com.mss301.sales.mapper.SalesMapper;
+import com.mss301.sales.repository.CustomerRepository;
 import com.mss301.sales.repository.SaleRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
@@ -21,7 +23,9 @@ class SaleServiceImplSePayConfigTest {
 
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
             .withBean(SaleRepository.class, () -> mock(SaleRepository.class))
+            .withBean(CustomerRepository.class, () -> mock(CustomerRepository.class))
             .withBean(SalesMapper.class, () -> mock(SalesMapper.class))
+            .withBean(ProductClient.class, () -> mock(ProductClient.class))
             .withBean(SaleServiceImpl.class);
 
     @Test
@@ -62,7 +66,8 @@ class SaleServiceImplSePayConfigTest {
                 .build();
         when(saleRepository.findByCode("INV-1783436275851")).thenReturn(Optional.of(pendingSale));
 
-        new SaleServiceImpl(saleRepository, mock(SalesMapper.class)).processSePayWebhook(request);
+        new SaleServiceImpl(saleRepository, mock(CustomerRepository.class), mock(SalesMapper.class), mock(ProductClient.class))
+                .processSePayWebhook(request);
 
         assertThat(pendingSale.getStatus()).isEqualTo("COMPLETED");
         verify(saleRepository).save(pendingSale);

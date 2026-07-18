@@ -1,7 +1,6 @@
 package com.mss301.supplier.controller;
 
 import com.mss301.supplier.dto.request.SupplierRequest;
-import com.mss301.supplier.dto.request.SupplierSelfRequest;
 import com.mss301.supplier.dto.response.SupplierResponse;
 import com.mss301.supplier.service.interfaces.SupplierService;
 import com.mss301.response.ApiResponse;
@@ -44,20 +43,6 @@ public class SupplierController {
         return ApiResponse.success(supplierService.search(query, pageable));
     }
 
-    @Operation(summary = "Get the logged-in supplier's own profile")
-    @PreAuthorize("hasRole('SUPPLIER')")
-    @GetMapping("/me")
-    public ApiResponse<SupplierResponse> getMine() {
-        return ApiResponse.success(supplierService.getMine());
-    }
-
-    @Operation(summary = "Update the logged-in supplier's own profile")
-    @PreAuthorize("hasRole('SUPPLIER')")
-    @PutMapping("/me")
-    public ApiResponse<SupplierResponse> updateMine(@Valid @RequestBody SupplierSelfRequest request) {
-        return ApiResponse.success("Đã cập nhật hồ sơ", supplierService.updateMine(request));
-    }
-
     @Operation(summary = "Get a supplier by id")
     @GetMapping("/{id}")
     public ApiResponse<SupplierResponse> getById(@PathVariable UUID id) {
@@ -65,7 +50,7 @@ public class SupplierController {
     }
 
     @Operation(summary = "Create a supplier")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO')")
+    @PreAuthorize("hasAnyRole('WAREHOUSE_MANAGER','CEO')")
     @PostMapping
     public ResponseEntity<ApiResponse<SupplierResponse>> create(@Valid @RequestBody SupplierRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -73,14 +58,14 @@ public class SupplierController {
     }
 
     @Operation(summary = "Update a supplier")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO')")
+    @PreAuthorize("hasAnyRole('WAREHOUSE_MANAGER','CEO')")
     @PutMapping("/{id}")
     public ApiResponse<SupplierResponse> update(@PathVariable UUID id, @Valid @RequestBody SupplierRequest request) {
         return ApiResponse.success("Supplier updated", supplierService.update(id, request));
     }
 
     @Operation(summary = "Upload a supplier logo image")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO')")
+    @PreAuthorize("hasAnyRole('WAREHOUSE_MANAGER','CEO')")
     @PostMapping(value = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<SupplierResponse> uploadImage(@PathVariable UUID id,
             @RequestParam("file") MultipartFile file) {
@@ -88,7 +73,7 @@ public class SupplierController {
     }
 
     @Operation(summary = "Delete a supplier")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO')")
+    @PreAuthorize("hasAnyRole('WAREHOUSE_MANAGER','CEO')")
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable UUID id) {
         supplierService.delete(id);

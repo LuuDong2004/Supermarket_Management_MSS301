@@ -44,7 +44,7 @@ public class GoodsReceiptController {
     }
 
     @Operation(summary = "Create a goods receipt (warehouse staff)")
-    @PreAuthorize("hasAnyRole('ADMIN','WAREHOUSE_MANAGER','WAREHOUSE_STAFF')")
+    @PreAuthorize("hasAnyRole('WAREHOUSE_MANAGER','WAREHOUSE_STAFF')")
     @PostMapping
     public ResponseEntity<ApiResponse<GoodsReceiptResponse>> create(@Valid @RequestBody GoodsReceiptRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -52,28 +52,28 @@ public class GoodsReceiptController {
     }
 
     @Operation(summary = "Update a goods receipt")
-    @PreAuthorize("hasAnyRole('ADMIN','WAREHOUSE_MANAGER','WAREHOUSE_STAFF')")
+    @PreAuthorize("hasAnyRole('WAREHOUSE_MANAGER','WAREHOUSE_STAFF')")
     @PutMapping("/{id}")
     public ApiResponse<GoodsReceiptResponse> update(@PathVariable UUID id, @Valid @RequestBody GoodsReceiptRequest request) {
         return ApiResponse.success("Goods receipt updated", goodsReceiptService.update(id, request));
     }
 
     @Operation(summary = "Approve a goods receipt (warehouse manager)")
-    @PreAuthorize("hasAnyRole('ADMIN','WAREHOUSE_MANAGER')")
+    @PreAuthorize("hasRole('WAREHOUSE_MANAGER')")
     @PostMapping("/{id}/approve")
     public ApiResponse<GoodsReceiptResponse> approve(@PathVariable UUID id) {
         return ApiResponse.success("Goods receipt approved", goodsReceiptService.approve(id));
     }
 
     @Operation(summary = "Reject a goods receipt (warehouse manager)")
-    @PreAuthorize("hasAnyRole('ADMIN','WAREHOUSE_MANAGER')")
+    @PreAuthorize("hasRole('WAREHOUSE_MANAGER')")
     @PostMapping("/{id}/reject")
     public ApiResponse<GoodsReceiptResponse> reject(@PathVariable UUID id) {
         return ApiResponse.success("Goods receipt rejected", goodsReceiptService.reject(id));
     }
 
     @Operation(summary = "Delete a goods receipt")
-    @PreAuthorize("hasAnyRole('ADMIN','WAREHOUSE_MANAGER')")
+    @PreAuthorize("hasRole('WAREHOUSE_MANAGER')")
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable UUID id) {
         goodsReceiptService.delete(id);

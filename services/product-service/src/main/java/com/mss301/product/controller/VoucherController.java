@@ -43,7 +43,7 @@ public class VoucherController {
     }
 
     @Operation(summary = "Create a voucher")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO')")
+    @PreAuthorize("hasRole('CEO')")
     @PostMapping
     public ResponseEntity<ApiResponse<VoucherResponse>> create(@Valid @RequestBody VoucherRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -51,7 +51,7 @@ public class VoucherController {
     }
 
     @Operation(summary = "Delete a voucher")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO')")
+    @PreAuthorize("hasRole('CEO')")
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable UUID id) {
         voucherService.delete(id);

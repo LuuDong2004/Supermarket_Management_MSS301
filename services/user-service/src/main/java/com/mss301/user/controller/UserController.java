@@ -38,7 +38,7 @@ public class UserController {
     private final UserService userService;
 
     @Operation(summary = "Create a user (admin)")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<ApiResponse<UserResponse>> create(@Valid @RequestBody CreateUserRequest request) {
         UserResponse created = userService.createUser(request);
@@ -69,21 +69,21 @@ public class UserController {
     }
 
     @Operation(summary = "List all users (admin)")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO')")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ApiResponse<PageResponse<UserResponse>> getAll(Pageable pageable) {
         return ApiResponse.success(userService.getAllUsers(pageable));
     }
 
     @Operation(summary = "Get a user by id (admin)")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO')")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")
     public ApiResponse<UserResponse> getById(@PathVariable UUID id) {
         return ApiResponse.success(userService.getById(id));
     }
 
     @Operation(summary = "Update a user (admin)")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ApiResponse<UserResponse> update(@PathVariable UUID id,
                                             @Valid @RequestBody AdminUpdateUserRequest request) {
@@ -119,7 +119,7 @@ public class UserController {
     }
 
     @Operation(summary = "Soft delete a user (admin)")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO')")
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable UUID id) {
         userService.softDelete(id);

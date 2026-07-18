@@ -12,7 +12,7 @@ import { Users, UserCheck, Building2, Plus, Search, Trash2, Pencil, Eye } from '
 
 const todayIso = () => isoDate()
 
-const ROLES = ['ROLE_CASHIER', 'ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_STAFF', 'ROLE_ADMIN', 'ROLE_CEO', 'ROLE_SUPPLIER']
+const ROLES = ['ROLE_CASHIER', 'ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_STAFF', 'ROLE_STAFF_MANAGER', 'ROLE_ADMIN', 'ROLE_CEO']
 
 export default function Employees() {
   const toast = useToast()

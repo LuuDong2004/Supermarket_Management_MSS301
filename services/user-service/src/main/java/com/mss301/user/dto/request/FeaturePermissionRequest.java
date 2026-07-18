@@ -10,6 +10,7 @@ public record FeaturePermissionRequest(
         @NotNull Boolean admin,
         @NotNull Boolean warehouseManager,
         @NotNull Boolean warehouseStaff,
+        @NotNull Boolean staffManager,
         @NotNull Boolean cashier
 ) {
 }

@@ -47,10 +47,9 @@ export function roleLabel(role) {
     ROLE_CEO: 'CEO',
     ROLE_ADMIN: 'Administrator',
     ROLE_CASHIER: 'Cashier',
-    ROLE_WAREHOUSE: 'Warehouse',
+    ROLE_STAFF_MANAGER: 'Staff Manager',
     ROLE_WAREHOUSE_MANAGER: 'Warehouse Manager',
     ROLE_WAREHOUSE_STAFF: 'Warehouse Staff',
-    ROLE_SUPPLIER: 'Supplier',
   }
   return map[role] || role || '—'
 }

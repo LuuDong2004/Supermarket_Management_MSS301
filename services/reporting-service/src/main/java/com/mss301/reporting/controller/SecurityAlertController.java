@@ -20,7 +20,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/monitoring/security-alerts")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN','CEO')")
+@PreAuthorize("hasRole('ADMIN')")
 public class SecurityAlertController {
 
     private final SecurityAlertService securityAlertService;

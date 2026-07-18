@@ -65,6 +65,9 @@ public class FeaturePermission {
     @Column(name = "warehouse_staff", nullable = false)
     private boolean warehouseStaff;
 
+    @Column(name = "staff_manager", nullable = false)
+    private boolean staffManager;
+
     @Column(nullable = false)
     private boolean cashier;
 

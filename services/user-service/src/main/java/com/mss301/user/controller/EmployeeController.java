@@ -36,7 +36,7 @@ public class EmployeeController {
     private final EmployeeService employeeService;
 
     @Operation(summary = "List employees (search by name)")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO')")
+    @PreAuthorize("hasAnyRole('STAFF_MANAGER','CEO')")
     @GetMapping
     public ApiResponse<PageResponse<EmployeeResponse>> getAll(
             @RequestParam(name = "query", required = false) String query,
@@ -45,14 +45,14 @@ public class EmployeeController {
     }
 
     @Operation(summary = "Get an employee by id")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO')")
+    @PreAuthorize("hasAnyRole('STAFF_MANAGER','CEO')")
     @GetMapping("/{id}")
     public ApiResponse<EmployeeResponse> getById(@PathVariable UUID id) {
         return ApiResponse.success(employeeService.getById(id));
     }
 
     @Operation(summary = "Create an employee")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO')")
+    @PreAuthorize("hasRole('STAFF_MANAGER')")
     @PostMapping
     public ResponseEntity<ApiResponse<EmployeeResponse>> create(@Valid @RequestBody EmployeeRequest request) {
         EmployeeResponse created = employeeService.create(request);
@@ -61,7 +61,7 @@ public class EmployeeController {
     }
 
     @Operation(summary = "Update an employee")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO')")
+    @PreAuthorize("hasRole('STAFF_MANAGER')")
     @PutMapping("/{id}")
     public ApiResponse<EmployeeResponse> update(@PathVariable UUID id,
                                                 @Valid @RequestBody EmployeeRequest request) {
@@ -69,7 +69,7 @@ public class EmployeeController {
     }
 
     @Operation(summary = "Upload an employee avatar image")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO')")
+    @PreAuthorize("hasRole('STAFF_MANAGER')")
     @PostMapping(value = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<EmployeeResponse> uploadImage(@PathVariable UUID id,
                                                      @RequestParam("file") MultipartFile file) {
@@ -77,21 +77,21 @@ public class EmployeeController {
     }
 
     @Operation(summary = "Deactivate an employee (Nghỉ việc)")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO','WAREHOUSE_MANAGER')")
+    @PreAuthorize("hasRole('STAFF_MANAGER')")
     @PostMapping("/{id}/deactivate")
     public ApiResponse<EmployeeResponse> deactivate(@PathVariable UUID id) {
         return ApiResponse.success("Employee deactivated", employeeService.deactivate(id));
     }
 
     @Operation(summary = "Reactivate an employee (Đang làm)")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO','WAREHOUSE_MANAGER')")
+    @PreAuthorize("hasRole('STAFF_MANAGER')")
     @PostMapping("/{id}/activate")
     public ApiResponse<EmployeeResponse> activate(@PathVariable UUID id) {
         return ApiResponse.success("Employee activated", employeeService.activate(id));
     }
 
     @Operation(summary = "Soft delete an employee")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO')")
+    @PreAuthorize("hasRole('STAFF_MANAGER')")
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable UUID id) {
         employeeService.softDelete(id);

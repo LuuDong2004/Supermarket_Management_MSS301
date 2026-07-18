@@ -27,7 +27,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/reports/strategic-decisions")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('CEO','ADMIN')")
+@PreAuthorize("hasRole('CEO')")
 public class StrategicDecisionController {
 
     private final StrategicDecisionService strategicDecisionService;

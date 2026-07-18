@@ -1,7 +1,6 @@
 package com.mss301.supplier.service.interfaces;
 
 import com.mss301.supplier.dto.request.PurchaseOrderRequest;
-import com.mss301.supplier.dto.request.ShipRequest;
 import com.mss301.supplier.dto.response.PurchaseOrderResponse;
 
 import java.util.List;
@@ -24,15 +23,4 @@ public interface PurchaseOrderService {
     PurchaseOrderResponse receive(UUID id);
 
     void delete(UUID id);
-
-    // ----- Supplier portal (scoped to the logged-in supplier) -----
-    List<PurchaseOrderResponse> listMine();
-
-    PurchaseOrderResponse confirmBySupplier(UUID id);
-
-    PurchaseOrderResponse rejectBySupplier(UUID id);
-
-    PurchaseOrderResponse ship(UUID id, ShipRequest request);
-
-    PurchaseOrderResponse deliver(UUID id);
 }

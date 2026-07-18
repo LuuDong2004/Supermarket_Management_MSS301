@@ -35,7 +35,7 @@ public class StaffShiftController {
     private final StaffShiftService staffShiftService;
 
     @Operation(summary = "List staff shifts (optionally within a date range)")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO','WAREHOUSE_MANAGER')")
+    @PreAuthorize("hasRole('STAFF_MANAGER')")
     @GetMapping
     public ApiResponse<List<StaffShiftResponse>> list(
             @RequestParam(name = "from", required = false)
@@ -46,14 +46,14 @@ public class StaffShiftController {
     }
 
     @Operation(summary = "Get a staff shift by id")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO','WAREHOUSE_MANAGER')")
+    @PreAuthorize("hasRole('STAFF_MANAGER')")
     @GetMapping("/{id}")
     public ApiResponse<StaffShiftResponse> getById(@PathVariable UUID id) {
         return ApiResponse.success(staffShiftService.getById(id));
     }
 
     @Operation(summary = "Assign a staff shift")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO','WAREHOUSE_MANAGER')")
+    @PreAuthorize("hasRole('STAFF_MANAGER')")
     @PostMapping
     public ResponseEntity<ApiResponse<StaffShiftResponse>> create(@Valid @RequestBody StaffShiftRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -61,7 +61,7 @@ public class StaffShiftController {
     }
 
     @Operation(summary = "Update a staff shift")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO','WAREHOUSE_MANAGER')")
+    @PreAuthorize("hasRole('STAFF_MANAGER')")
     @PutMapping("/{id}")
     public ApiResponse<StaffShiftResponse> update(@PathVariable UUID id,
                                                   @Valid @RequestBody StaffShiftRequest request) {
@@ -69,14 +69,14 @@ public class StaffShiftController {
     }
 
     @Operation(summary = "Mark a staff shift as completed")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO','WAREHOUSE_MANAGER')")
+    @PreAuthorize("hasRole('STAFF_MANAGER')")
     @PostMapping("/{id}/complete")
     public ApiResponse<StaffShiftResponse> complete(@PathVariable UUID id) {
         return ApiResponse.success("Shift completed", staffShiftService.complete(id));
     }
 
     @Operation(summary = "Delete a staff shift")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO','WAREHOUSE_MANAGER')")
+    @PreAuthorize("hasRole('STAFF_MANAGER')")
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable UUID id) {
         staffShiftService.delete(id);

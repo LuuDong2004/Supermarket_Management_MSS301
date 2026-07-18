@@ -44,7 +44,7 @@ public class StockCountController {
     }
 
     @Operation(summary = "Create a stock count")
-    @PreAuthorize("hasAnyRole('ADMIN','WAREHOUSE_MANAGER','WAREHOUSE_STAFF')")
+    @PreAuthorize("hasAnyRole('WAREHOUSE_MANAGER','WAREHOUSE_STAFF')")
     @PostMapping
     public ResponseEntity<ApiResponse<StockCountResponse>> create(@Valid @RequestBody StockCountRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -52,14 +52,14 @@ public class StockCountController {
     }
 
     @Operation(summary = "Update a stock count")
-    @PreAuthorize("hasAnyRole('ADMIN','WAREHOUSE_MANAGER','WAREHOUSE_STAFF')")
+    @PreAuthorize("hasAnyRole('WAREHOUSE_MANAGER','WAREHOUSE_STAFF')")
     @PutMapping("/{id}")
     public ApiResponse<StockCountResponse> update(@PathVariable UUID id, @Valid @RequestBody StockCountRequest request) {
         return ApiResponse.success("Stock count updated", stockCountService.update(id, request));
     }
 
     @Operation(summary = "Delete a stock count")
-    @PreAuthorize("hasAnyRole('ADMIN','WAREHOUSE_MANAGER','WAREHOUSE_STAFF')")
+    @PreAuthorize("hasAnyRole('WAREHOUSE_MANAGER','WAREHOUSE_STAFF')")
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable UUID id) {
         stockCountService.delete(id);

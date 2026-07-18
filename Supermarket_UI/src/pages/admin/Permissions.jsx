@@ -14,6 +14,7 @@ const ROLE_COLS = [
   { key: 'admin', label: 'Admin' },
   { key: 'warehouseManager', label: 'QL Kho' },
   { key: 'warehouseStaff', label: 'NV Kho' },
+  { key: 'staffManager', label: 'QL Nhân sự' },
   { key: 'cashier', label: 'Thu ngân' },
 ]
 
@@ -57,7 +58,7 @@ export default function Permissions() {
     try {
       await permissionService.update(row.id, {
         ceo: next.ceo, admin: next.admin, warehouseManager: next.warehouseManager,
-        warehouseStaff: next.warehouseStaff, cashier: next.cashier,
+        warehouseStaff: next.warehouseStaff, staffManager: next.staffManager, cashier: next.cashier,
       })
     } catch {
       toast.error('Không thể lưu phân quyền.')

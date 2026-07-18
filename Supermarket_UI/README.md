@@ -21,7 +21,7 @@ môi trường `VITE_API_TARGET` nếu cần.
   `password`). App gọi `POST /api/auth/login` rồi `GET /api/users/me`.
 - **Backend chưa chạy:** bật `VITE_USE_MOCK=true` (mặc định). Khi gateway không
   phản hồi, app tự chuyển **chế độ demo** với các tài khoản:
-  `ceo · admin · cashier · warehouse · supplier` (mật khẩu `password`). Có nút
+  `ceo · admin · cashier · warehouse · staffmanager` (mật khẩu `123456`). Có nút
   đăng nhập nhanh ở màn hình Login.
 
 ## 2. Phân quyền & điều hướng
@@ -32,10 +32,11 @@ vệ bằng `ProtectedRoute` (`ROUTE_ROLES`).
 | Vai trò | Khu vực truy cập |
 |---------|------------------|
 | `ROLE_CASHIER` | POS (3.8), Thành viên/Khuyến mãi (3.9) |
-| `ROLE_WAREHOUSE` | Kho (3.6, 3.7), Báo cáo kho |
-| `ROLE_ADMIN` | Quản trị (3.4), Nhân sự (3.5), Báo cáo, Hệ thống (3.11) + tất cả module |
-| `ROLE_CEO` | Điều hành (3.3), Báo cáo (3.10), Hệ thống |
-| `ROLE_SUPPLIER` | Đơn mua hàng (xem) |
+| `ROLE_WAREHOUSE_MANAGER` | Kho — Quản lý (3.6): đơn mua, duyệt giao dịch, giám sát, báo cáo kho, nhà cung cấp (3.6.5) + Báo cáo tồn kho (3.10.2) |
+| `ROLE_WAREHOUSE_STAFF` | Kho — Vận hành (3.7): nhận hàng, tồn kho, kiểm kê, điều chỉnh, trạng thái duyệt, in tem (3.7.6) |
+| `ROLE_STAFF_MANAGER` | Nhân sự (3.5): hồ sơ, chấm công, đánh giá hiệu suất + Báo cáo hiệu suất (3.10.3) |
+| `ROLE_ADMIN` | Quản trị hệ thống (3.4) + Hệ thống (3.11) — không tham gia bán hàng/kho/nhân sự |
+| `ROLE_CEO` | Điều hành (3.3), xem Báo cáo hiệu suất nhân viên (3.10.3, chỉ xem) |
 
 ## 3. Bản đồ màn hình → tài liệu
 
@@ -54,18 +55,19 @@ vệ bằng `ProtectedRoute` (`ROUTE_ROLES`).
 | 3.6.2 | Duyệt giao dịch kho | `pages/warehouse/Transactions.jsx` |
 | 3.6.3 | Giám sát tồn kho | `pages/warehouse/Monitor.jsx` |
 | 3.6.4 | Báo cáo kho | `pages/warehouse/Reports.jsx` |
+| 3.6.5 | Nhà cung cấp | `pages/warehouse/Suppliers.jsx` |
 | 3.7.1 | Nhận hàng | `pages/warehouse/Receive.jsx` |
 | 3.7.2 | Thông tin tồn kho | `pages/warehouse/Inventory.jsx` |
 | 3.7.3 | Kiểm kê | `pages/warehouse/StockCount.jsx` |
 | 3.7.4 | Điều chỉnh tồn kho | `pages/warehouse/Adjustments.jsx` |
 | 3.7.5 | Trạng thái duyệt | `pages/warehouse/ApprovalStatus.jsx` |
+| 3.7.6 | In tem nhãn | `pages/warehouse/Labels.jsx` |
 | 3.8.1 | Bán hàng | `pages/pos/ProcessSale.jsx` |
 | 3.8.2 | Xử lý thanh toán | `pages/pos/Payment.jsx` |
 | 3.8.3 | Ca thu ngân | `pages/pos/Shift.jsx` |
 | 3.9.1 | Khách hàng thành viên | `pages/pos/Members.jsx` |
 | 3.9.2 | Điểm thưởng | `pages/pos/Loyalty.jsx` |
 | 3.9.3 | Khuyến mãi & Voucher | `pages/pos/Promotions.jsx` |
-| 3.10.1 | Doanh thu & Kinh doanh | `pages/reports/SalesReport.jsx` |
 | 3.10.2 | Kho & Tồn kho | `pages/reports/InventoryReport.jsx` |
 | 3.10.3 | Hiệu suất nhân viên | `pages/reports/EmployeeReport.jsx` |
 | 3.11.1 | Cấu hình hệ thống | `pages/settings/SystemSettings.jsx` |

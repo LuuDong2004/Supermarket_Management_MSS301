@@ -1,7 +1,6 @@
 package com.mss301.supplier.controller;
 
 import com.mss301.supplier.dto.request.PurchaseOrderRequest;
-import com.mss301.supplier.dto.request.ShipRequest;
 import com.mss301.supplier.dto.response.PurchaseOrderResponse;
 import com.mss301.supplier.service.interfaces.PurchaseOrderService;
 import com.mss301.response.ApiResponse;
@@ -38,13 +37,6 @@ public class PurchaseOrderController {
         return ApiResponse.success(purchaseOrderService.list());
     }
 
-    @Operation(summary = "List purchase orders addressed to the logged-in supplier")
-    @PreAuthorize("hasRole('SUPPLIER')")
-    @GetMapping("/mine")
-    public ApiResponse<List<PurchaseOrderResponse>> listMine() {
-        return ApiResponse.success(purchaseOrderService.listMine());
-    }
-
     @Operation(summary = "Get a purchase order by id")
     @GetMapping("/{id}")
     public ApiResponse<PurchaseOrderResponse> getById(@PathVariable UUID id) {
@@ -52,7 +44,7 @@ public class PurchaseOrderController {
     }
 
     @Operation(summary = "Create a purchase order")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO','WAREHOUSE_MANAGER')")
+    @PreAuthorize("hasAnyRole('WAREHOUSE_MANAGER','CEO')")
     @PostMapping
     public ResponseEntity<ApiResponse<PurchaseOrderResponse>> create(@Valid @RequestBody PurchaseOrderRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -60,63 +52,35 @@ public class PurchaseOrderController {
     }
 
     @Operation(summary = "Update a purchase order")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO','WAREHOUSE_MANAGER')")
+    @PreAuthorize("hasAnyRole('WAREHOUSE_MANAGER','CEO')")
     @PutMapping("/{id}")
     public ApiResponse<PurchaseOrderResponse> update(@PathVariable UUID id, @Valid @RequestBody PurchaseOrderRequest request) {
         return ApiResponse.success("Purchase order updated", purchaseOrderService.update(id, request));
     }
 
     @Operation(summary = "Approve a purchase order")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO','WAREHOUSE_MANAGER')")
+    @PreAuthorize("hasAnyRole('WAREHOUSE_MANAGER','CEO')")
     @PostMapping("/{id}/approve")
     public ApiResponse<PurchaseOrderResponse> approve(@PathVariable UUID id) {
         return ApiResponse.success("Purchase order approved", purchaseOrderService.approve(id));
     }
 
     @Operation(summary = "Reject a purchase order")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO','WAREHOUSE_MANAGER')")
+    @PreAuthorize("hasAnyRole('WAREHOUSE_MANAGER','CEO')")
     @PostMapping("/{id}/reject")
     public ApiResponse<PurchaseOrderResponse> reject(@PathVariable UUID id) {
         return ApiResponse.success("Purchase order rejected", purchaseOrderService.reject(id));
     }
 
     @Operation(summary = "Mark a purchase order as received")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO','WAREHOUSE_MANAGER')")
+    @PreAuthorize("hasAnyRole('WAREHOUSE_MANAGER','CEO')")
     @PostMapping("/{id}/receive")
     public ApiResponse<PurchaseOrderResponse> receive(@PathVariable UUID id) {
         return ApiResponse.success("Purchase order received", purchaseOrderService.receive(id));
     }
 
-    @Operation(summary = "Supplier confirms a purchase order")
-    @PreAuthorize("hasRole('SUPPLIER')")
-    @PostMapping("/{id}/confirm")
-    public ApiResponse<PurchaseOrderResponse> confirm(@PathVariable UUID id) {
-        return ApiResponse.success("Đã xác nhận đơn mua", purchaseOrderService.confirmBySupplier(id));
-    }
-
-    @Operation(summary = "Supplier rejects a purchase order")
-    @PreAuthorize("hasRole('SUPPLIER')")
-    @PostMapping("/{id}/reject-by-supplier")
-    public ApiResponse<PurchaseOrderResponse> rejectBySupplier(@PathVariable UUID id) {
-        return ApiResponse.success("Đã từ chối đơn mua", purchaseOrderService.rejectBySupplier(id));
-    }
-
-    @Operation(summary = "Supplier marks a purchase order as shipping")
-    @PreAuthorize("hasRole('SUPPLIER')")
-    @PostMapping("/{id}/ship")
-    public ApiResponse<PurchaseOrderResponse> ship(@PathVariable UUID id, @Valid @RequestBody(required = false) ShipRequest request) {
-        return ApiResponse.success("Đã cập nhật giao hàng", purchaseOrderService.ship(id, request));
-    }
-
-    @Operation(summary = "Supplier marks a purchase order as delivered")
-    @PreAuthorize("hasRole('SUPPLIER')")
-    @PostMapping("/{id}/deliver")
-    public ApiResponse<PurchaseOrderResponse> deliver(@PathVariable UUID id) {
-        return ApiResponse.success("Đã giao hàng", purchaseOrderService.deliver(id));
-    }
-
     @Operation(summary = "Delete a purchase order")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO')")
+    @PreAuthorize("hasAnyRole('WAREHOUSE_MANAGER','CEO')")
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable UUID id) {
         purchaseOrderService.delete(id);

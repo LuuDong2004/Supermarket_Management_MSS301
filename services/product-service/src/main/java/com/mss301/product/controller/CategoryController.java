@@ -38,7 +38,7 @@ public class CategoryController {
     }
 
     @Operation(summary = "Create a category")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO','WAREHOUSE_MANAGER')")
+    @PreAuthorize("hasAnyRole('CEO','WAREHOUSE_MANAGER')")
     @PostMapping
     public ResponseEntity<ApiResponse<CategoryResponse>> create(@Valid @RequestBody CategoryRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -46,14 +46,14 @@ public class CategoryController {
     }
 
     @Operation(summary = "Update a category")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO','WAREHOUSE_MANAGER')")
+    @PreAuthorize("hasAnyRole('CEO','WAREHOUSE_MANAGER')")
     @PutMapping("/{id}")
     public ApiResponse<CategoryResponse> update(@PathVariable UUID id, @Valid @RequestBody CategoryRequest request) {
         return ApiResponse.success("Category updated", categoryService.update(id, request));
     }
 
     @Operation(summary = "Delete a category")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO')")
+    @PreAuthorize("hasRole('CEO')")
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable UUID id) {
         categoryService.delete(id);

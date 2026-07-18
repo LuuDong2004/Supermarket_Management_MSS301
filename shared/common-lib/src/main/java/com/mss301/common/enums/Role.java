@@ -10,7 +10,7 @@ public enum Role {
     ROLE_ADMIN,
     ROLE_WAREHOUSE_MANAGER,
     ROLE_WAREHOUSE_STAFF,
-    ROLE_SUPPLIER,
+    ROLE_STAFF_MANAGER,
     ROLE_CASHIER;
 
     public String authority() {

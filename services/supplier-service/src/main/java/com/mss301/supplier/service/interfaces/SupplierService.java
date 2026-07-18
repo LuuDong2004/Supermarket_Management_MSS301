@@ -1,7 +1,6 @@
 package com.mss301.supplier.service.interfaces;
 
 import com.mss301.supplier.dto.request.SupplierRequest;
-import com.mss301.supplier.dto.request.SupplierSelfRequest;
 import com.mss301.supplier.dto.response.SupplierResponse;
 import com.mss301.response.PageResponse;
 import org.springframework.data.domain.Pageable;
@@ -22,9 +21,4 @@ public interface SupplierService {
     PageResponse<SupplierResponse> search(String query, Pageable pageable);
 
     void delete(UUID id);
-
-    // ----- Supplier self-service (logged-in supplier's own profile) -----
-    SupplierResponse getMine();
-
-    SupplierResponse updateMine(SupplierSelfRequest request);
 }

@@ -36,7 +36,7 @@ public class AttendanceController {
     private final AttendanceService attendanceService;
 
     @Operation(summary = "List attendance records (optionally filter by date)")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO')")
+    @PreAuthorize("hasRole('STAFF_MANAGER')")
     @GetMapping
     public ApiResponse<List<AttendanceResponse>> getAll(
             @RequestParam(name = "date", required = false)
@@ -45,7 +45,7 @@ public class AttendanceController {
     }
 
     @Operation(summary = "Aggregated timesheet report over a date range (UC-HR-03)")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO','WAREHOUSE_MANAGER')")
+    @PreAuthorize("hasRole('STAFF_MANAGER')")
     @GetMapping("/timesheet")
     public ApiResponse<List<TimesheetRowResponse>> timesheet(
             @RequestParam(name = "from", required = false)
@@ -56,14 +56,14 @@ public class AttendanceController {
     }
 
     @Operation(summary = "Get an attendance record by id")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO')")
+    @PreAuthorize("hasRole('STAFF_MANAGER')")
     @GetMapping("/{id}")
     public ApiResponse<AttendanceResponse> getById(@PathVariable UUID id) {
         return ApiResponse.success(attendanceService.getById(id));
     }
 
     @Operation(summary = "Create an attendance record")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO')")
+    @PreAuthorize("hasRole('STAFF_MANAGER')")
     @PostMapping
     public ResponseEntity<ApiResponse<AttendanceResponse>> create(@Valid @RequestBody AttendanceRequest request) {
         AttendanceResponse created = attendanceService.create(request);
@@ -72,7 +72,7 @@ public class AttendanceController {
     }
 
     @Operation(summary = "Update an attendance record")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO')")
+    @PreAuthorize("hasRole('STAFF_MANAGER')")
     @PutMapping("/{id}")
     public ApiResponse<AttendanceResponse> update(@PathVariable UUID id,
                                                   @Valid @RequestBody AttendanceRequest request) {
@@ -80,7 +80,7 @@ public class AttendanceController {
     }
 
     @Operation(summary = "Soft delete an attendance record")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO')")
+    @PreAuthorize("hasRole('STAFF_MANAGER')")
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable UUID id) {
         attendanceService.softDelete(id);

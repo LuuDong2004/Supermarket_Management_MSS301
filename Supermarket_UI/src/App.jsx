@@ -38,6 +38,7 @@ import GoodsReceipts from './pages/warehouse/GoodsReceipts.jsx'
 import GoodsReceiptForm from './pages/warehouse/GoodsReceiptForm.jsx'
 import GoodsReceiptDetail from './pages/warehouse/GoodsReceiptDetail.jsx'
 import BarcodePrint from './pages/warehouse/BarcodePrint.jsx'
+import Suppliers from './pages/warehouse/Suppliers.jsx'
 
 // HR (3.5)
 import Employees from './pages/hr/Employees.jsx'
@@ -49,12 +50,6 @@ import Attendance from './pages/hr/Attendance.jsx'
 import AttendanceForm from './pages/hr/AttendanceForm.jsx'
 import Timesheet from './pages/hr/Timesheet.jsx'
 import Performance from './pages/hr/Performance.jsx'
-
-// Supplier portal (3.11)
-import MyPurchaseOrders from './pages/supplier/MyPurchaseOrders.jsx'
-import Catalog from './pages/supplier/Catalog.jsx'
-import CatalogItemForm from './pages/supplier/CatalogItemForm.jsx'
-import SupplierProfile from './pages/supplier/Profile.jsx'
 
 // Admin (3.4)
 import Users from './pages/admin/Users.jsx'
@@ -77,7 +72,6 @@ import StrategicDecisions from './pages/ceo/StrategicDecisions.jsx'
 import StrategicDecisionForm from './pages/ceo/StrategicDecisionForm.jsx'
 
 // Reports (3.10)
-import SalesReport from './pages/reports/SalesReport.jsx'
 import InventoryReport from './pages/reports/InventoryReport.jsx'
 import EmployeeReport from './pages/reports/EmployeeReport.jsx'
 
@@ -130,6 +124,7 @@ export default function App() {
         <Route path="warehouse/products" element={G('/app/warehouse/products', <Products />)} />
         <Route path="warehouse/products/new" element={G('/app/warehouse/products', <ProductForm />)} />
         <Route path="warehouse/products/:id/edit" element={G('/app/warehouse/products', <ProductForm />)} />
+        <Route path="warehouse/suppliers" element={G('/app/warehouse/suppliers', <Suppliers />)} />
         <Route path="warehouse/goods-receipts" element={G('/app/warehouse/goods-receipts', <GoodsReceipts />)} />
         <Route path="warehouse/goods-receipts/new" element={G('/app/warehouse/goods-receipts', <GoodsReceiptForm />)} />
         <Route path="warehouse/goods-receipts/:id" element={G('/app/warehouse/goods-receipts', <GoodsReceiptDetail />)} />
@@ -147,11 +142,6 @@ export default function App() {
         <Route path="hr/attendance/:id/edit" element={G('/app/hr/attendance', <AttendanceForm />)} />
         <Route path="hr/timesheet" element={G('/app/hr/timesheet', <Timesheet />)} />
         <Route path="hr/performance" element={G('/app/hr/performance', <Performance />)} />
-        <Route path="supplier/orders" element={G('/app/supplier/orders', <MyPurchaseOrders />)} />
-        <Route path="supplier/catalog" element={G('/app/supplier/catalog', <Catalog />)} />
-        <Route path="supplier/catalog/new" element={G('/app/supplier/catalog', <CatalogItemForm />)} />
-        <Route path="supplier/catalog/:id/edit" element={G('/app/supplier/catalog', <CatalogItemForm />)} />
-        <Route path="supplier/profile" element={G('/app/supplier/profile', <SupplierProfile />)} />
 
         {/* Admin */}
         <Route path="admin/users" element={G('/app/admin/users', <Users />)} />
@@ -176,7 +166,6 @@ export default function App() {
         <Route path="ceo/decisions/:id/edit" element={G('/app/ceo/decisions', <StrategicDecisionForm />)} />
 
         {/* Reports */}
-        <Route path="reports/sales" element={G('/app/reports/sales', <SalesReport />)} />
         <Route path="reports/inventory" element={G('/app/reports/inventory', <InventoryReport />)} />
         <Route path="reports/employees" element={G('/app/reports/employees', <EmployeeReport />)} />
 

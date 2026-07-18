@@ -52,7 +52,7 @@ public class SaleController {
     }
 
     @Operation(summary = "Create a sale")
-    @PreAuthorize("hasAnyRole('CASHIER','ADMIN')")
+    @PreAuthorize("hasRole('CASHIER')")
     @PostMapping
     public ResponseEntity<ApiResponse<SaleResponse>> create(@Valid @RequestBody SaleRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -60,7 +60,7 @@ public class SaleController {
     }
 
     @Operation(summary = "Delete a sale")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO')")
+    @PreAuthorize("hasRole('CEO')")
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable UUID id) {
         saleService.delete(id);

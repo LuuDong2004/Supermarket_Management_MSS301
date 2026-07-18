@@ -56,7 +56,7 @@ public class InventoryItemController {
     }
 
     @Operation(summary = "Create an inventory item")
-    @PreAuthorize("hasAnyRole('ADMIN','WAREHOUSE_MANAGER','WAREHOUSE_STAFF')")
+    @PreAuthorize("hasAnyRole('WAREHOUSE_MANAGER','WAREHOUSE_STAFF')")
     @PostMapping
     public ResponseEntity<ApiResponse<InventoryItemResponse>> create(@Valid @RequestBody InventoryItemRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -64,14 +64,14 @@ public class InventoryItemController {
     }
 
     @Operation(summary = "Update an inventory item")
-    @PreAuthorize("hasAnyRole('ADMIN','WAREHOUSE_MANAGER','WAREHOUSE_STAFF')")
+    @PreAuthorize("hasAnyRole('WAREHOUSE_MANAGER','WAREHOUSE_STAFF')")
     @PutMapping("/{id}")
     public ApiResponse<InventoryItemResponse> update(@PathVariable UUID id, @Valid @RequestBody InventoryItemRequest request) {
         return ApiResponse.success("Inventory item updated", inventoryItemService.update(id, request));
     }
 
     @Operation(summary = "Delete an inventory item")
-    @PreAuthorize("hasAnyRole('ADMIN','WAREHOUSE_MANAGER','WAREHOUSE_STAFF')")
+    @PreAuthorize("hasAnyRole('WAREHOUSE_MANAGER','WAREHOUSE_STAFF')")
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable UUID id) {
         inventoryItemService.delete(id);

@@ -8,7 +8,7 @@ import { roleLabel } from '../../lib/format.js'
 import { userService, withFallback, toList, mockUsers } from '../../services/index.js'
 import { ArrowLeft, Save, Lock, Unlock, Ban, Trash2 } from 'lucide-react'
 
-const ROLES = ['ROLE_CASHIER', 'ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_STAFF', 'ROLE_ADMIN', 'ROLE_CEO', 'ROLE_SUPPLIER']
+const ROLES = ['ROLE_CASHIER', 'ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_STAFF', 'ROLE_STAFF_MANAGER', 'ROLE_ADMIN', 'ROLE_CEO']
 
 // Backend Role enum is the bare name (CASHIER, ADMIN...) - strip the ROLE_ prefix on write.
 const toBackendRole = (r) => (r || '').replace(/^ROLE_/, '')

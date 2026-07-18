@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate, Navigate } from 'react-router-dom'
 import {
   Lock, User, ArrowRight, Eye, EyeOff, ShieldCheck, ShoppingCart,
-  Boxes, BarChart3, Crown, Wrench, Package, Truck,
+  Boxes, BarChart3, Crown, Wrench, Package, UserCog,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
@@ -14,7 +14,7 @@ const QUICK = [
   { u: 'cashier', label: 'Thu ngân', icon: ShoppingCart },
   { u: 'warehouse', label: 'Quản lý kho', icon: Wrench },
   { u: 'staff', label: 'Nhân viên kho', icon: Package },
-  { u: 'supplier', label: 'Nhà cung cấp', icon: Truck },
+  { u: 'staffmanager', label: 'Nhân sự', icon: UserCog },
 ]
 
 const FEATURES = [
