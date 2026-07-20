@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { PageHeader } from '../../components/ui/PageHeader.jsx'
+import { PageHeader, FilterBar } from '../../components/ui/PageHeader.jsx'
 import { Card, CardHeader, CardBody, Button, Badge, Field, Input, Select, Spinner } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { Modal } from '../../components/ui/Modal.jsx'
@@ -41,6 +41,7 @@ export default function SystemSettings() {
   const [source, setSource] = useState('backend')
 
   const [editing, setEditing] = useState(null)
+  const [selected, setSelected] = useState(null)
   const [form, setForm] = useState(emptyForm)
 
   const load = async () => {
@@ -112,40 +113,50 @@ export default function SystemSettings() {
         }
       />
 
-      <Tabs tabs={TABS} value={tab} onChange={setTab} className="mb-6" />
+      <FilterBar>
+        <Field label="Configuration Type"><Select value={tab} onChange={(e) => setTab(e.target.value)}><option value="all">VAT / Loyalty / Role</option></Select></Field>
+        <Field label="Status"><Select value="status" onChange={() => {}}><option value="status">Draft/Pending</option></Select></Field>
+        <Field label="Effective Date"><Input placeholder="dd/mm/yyyy" /></Field>
+        <Field label="Approval"><Input value="CEO" readOnly /></Field>
+        <div className="flex gap-3"><Button>Apply</Button><Button variant="secondary">Reset</Button></div>
+      </FilterBar>
 
-      <Card>
-        <CardHeader
-          title="Danh sách cấu hình"
-          subtitle="Các tham số key/value điều khiển hệ thống"
-          icon={tab === 'all' ? Settings : Store}
-        />
-        <CardBody className="p-0">
-          {loading ? (
-            <div className="flex items-center justify-center py-16">
-              <Spinner className="h-7 w-7" />
+      <div className="grid gap-7 xl:grid-cols-[minmax(0,1.05fr)_minmax(360px,1fr)]">
+        <Card>
+          <CardHeader title="Configuration Requests" icon={Settings} />
+          <CardBody className="p-0">
+            {loading ? <div className="flex items-center justify-center py-16"><Spinner className="h-7 w-7" /></div> : (
+              <DataTable
+                className="rounded-none border-0 shadow-none"
+                rows={filtered}
+                rowKey="id"
+                onRowClick={(r) => setSelected(r)}
+                empty={{ title: 'Chưa có cấu hình', subtitle: 'Thêm tham số cấu hình đầu tiên.' }}
+                columns={[
+                  { key: 'id', header: 'Config ID' },
+                  { key: 'category', header: 'Type' },
+                  { key: 'settingValue', header: 'Current' },
+                  { key: 'label', header: 'New' },
+                  { key: 'status', header: 'Status', render: () => 'Pending' },
+                ]}
+                actions={(r) => <Button size="sm" variant="secondary" icon={Pencil} onClick={() => { setSelected(r); openEdit(r) }}>Edit</Button>}
+              />
+            )}
+          </CardBody>
+        </Card>
+        <Card className="sms-detail-panel">
+          <CardBody>
+            <h2 className="mb-5 text-lg font-bold">Configuration Change</h2>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Current Value"><Input value={selected?.settingValue || 'Existing value'} readOnly /></Field>
+              <Field label="New Value"><Input placeholder="Requested value" /></Field>
+              <Field label="Effective Date"><Input type="date" /></Field>
+              <Field label="Approval Status"><Input value="Pending" readOnly /></Field>
             </div>
-          ) : (
-            <DataTable
-              className="rounded-none border-0 shadow-none"
-              rows={filtered}
-              rowKey="id"
-              empty={{ title: 'Chưa có cấu hình', subtitle: 'Thêm tham số cấu hình đầu tiên.' }}
-              columns={[
-                { key: 'label', header: 'Tên cấu hình', render: (r) => <span className="font-medium text-slate-700">{r.label}</span> },
-                { key: 'settingKey', header: 'Khóa', render: (r) => <span className="font-mono text-xs text-slate-500">{r.settingKey}</span> },
-                { key: 'settingValue', header: 'Giá trị', render: (r) => <span className="font-mono text-sm text-slate-700">{r.settingValue}</span> },
-                { key: 'category', header: 'Nhóm', render: (r) => <Badge tone={CATEGORY_TONE[r.category] || 'slate'}>{r.category}</Badge> },
-              ]}
-              actions={(r) => (
-                <>
-                  <Button size="sm" variant="secondary" icon={Pencil} onClick={() => openEdit(r)}>Sửa</Button>
-                </>
-              )}
-            />
-          )}
-        </CardBody>
-      </Card>
+            <div className="mt-16"><Button onClick={openNew}>Submit Request</Button></div>
+          </CardBody>
+        </Card>
+      </div>
 
       <Modal
         open={!!editing}

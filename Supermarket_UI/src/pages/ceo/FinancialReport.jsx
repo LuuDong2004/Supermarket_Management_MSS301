@@ -61,9 +61,9 @@ export default function FinancialReport() {
               data={rows}
               x="month"
               series={[
-                { key: 'revenue', name: 'Doanh thu', color: '#4f46e5' },
-                { key: 'cost', name: 'Giá vốn', color: '#f59e0b' },
-                { key: 'grossProfit', name: 'LN gộp', color: '#10b981' },
+                { key: 'revenue', name: 'Doanh thu', color: '#111111' },
+                { key: 'cost', name: 'Giá vốn', color: '#777777' },
+                { key: 'grossProfit', name: 'LN gộp', color: '#bbbbbb' },
               ]}
             />
           </CardBody>
@@ -71,7 +71,7 @@ export default function FinancialReport() {
         <Card>
           <CardHeader title="Xu hướng lợi nhuận ròng" subtitle="Triệu đồng" icon={LineChart} />
           <CardBody>
-            <AreaTrend data={rows} x="month" y="netProfit" color="#10b981" />
+            <AreaTrend data={rows} x="month" y="netProfit" color="#111111" />
           </CardBody>
         </Card>
       </div>

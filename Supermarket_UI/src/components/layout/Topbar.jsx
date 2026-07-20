@@ -33,16 +33,24 @@ export function Topbar({ onMenu }) {
   }, [canViewNotifications])
 
   return (
-    <header className="sms-topbar sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-slate-200 bg-white px-4 shadow-none lg:px-6">
+    <header className="sms-topbar sticky top-0 z-50 flex h-16 shrink-0 items-center gap-3 border-b border-slate-200 bg-white px-4 shadow-none lg:px-7">
       <button onClick={onMenu} className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 lg:hidden" aria-label="Mở menu">
         <Menu size={20} />
       </button>
 
-      <div className="relative hidden max-w-md flex-1 sm:block">
-        <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+      <div className="sms-topbar-brand hidden shrink-0 items-center gap-3 lg:flex">
+        <div className="sms-topbar-mark">S</div>
+        <div className="leading-tight">
+          <p className="text-xl font-black tracking-tight text-slate-900">SMS</p>
+          <p className="text-[11px] font-semibold text-slate-900">Supermarket Management System</p>
+        </div>
+      </div>
+
+      <div className="relative hidden w-full max-w-[302px] flex-none sm:block lg:ml-[84px]">
+        <label className="mb-1 block text-xs text-slate-900">Search</label>
         <input
           placeholder="Tìm module, sản phẩm, khách hàng..."
-          className="w-full rounded-none border border-slate-200 bg-white py-2 pl-10 pr-4 text-sm placeholder:text-slate-400 transition-all duration-200 focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/10"
+          className="w-full rounded-none border border-slate-200 bg-white px-3 py-2 text-xs placeholder:text-slate-400 transition-all duration-200 focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/10"
         />
       </div>
 
@@ -65,7 +73,7 @@ export function Topbar({ onMenu }) {
           </button>
         )}
 
-        <div className="relative" ref={ref}>
+        <div className="relative flex items-center gap-5" ref={ref}>
           <button
             onClick={() => setMenuOpen((o) => !o)}
             className="flex items-center gap-2 rounded-none py-1.5 pl-1.5 pr-2 transition-colors hover:bg-slate-100"
@@ -74,11 +82,13 @@ export function Topbar({ onMenu }) {
               {initials(user?.fullName || user?.username || 'U')}
             </span>
             <span className="hidden text-left leading-tight sm:block">
-              <span className="block text-sm font-semibold text-slate-800">{user?.fullName || user?.username}</span>
-              <span className="block text-[11px] text-slate-400">{roleLabel(user?.role)}</span>
+              <span className="block text-sm font-medium text-slate-900">Role: {roleLabel(user?.role)}</span>
+              <span className="block text-[11px] text-slate-700">{user?.fullName || user?.username}</span>
             </span>
             <ChevronDown size={15} className="text-slate-400" />
           </button>
+
+          <button type="button" onClick={() => { logout(); navigate('/login') }} className="sms-logout-button hidden sm:inline-flex">Logout</button>
 
           {menuOpen && (
             <div className="absolute right-0 mt-2 w-52 animate-fade-in rounded-xl border border-slate-200 bg-white py-1.5 shadow-card-hover">

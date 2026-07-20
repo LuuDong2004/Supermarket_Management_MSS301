@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PageHeader, FilterBar } from '../../components/ui/PageHeader.jsx'
-import { Button, Badge, StatusBadge, Field, Input, Select, Spinner } from '../../components/ui/primitives.jsx'
+import { Button, Badge, StatusBadge, Field, Input, Select, Spinner, Card, CardBody } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { StatCard } from '../../components/ui/StatCard.jsx'
 import { formatCurrency, formatNumber, formatDate } from '../../lib/format.js'
@@ -17,6 +17,7 @@ export default function PurchaseOrders() {
   const [suppliers, setSuppliers] = useState([])
   const [loading, setLoading] = useState(true)
   const [source, setSource] = useState('backend')
+  const [selectedOrder, setSelectedOrder] = useState(null)
 
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('all')
@@ -31,6 +32,7 @@ export default function PurchaseOrders() {
     setOrders(toList(po.data))
     setSuppliers(toList(sup.data))
     setSource(po.source)
+    setSelectedOrder(toList(po.data)[0] || null)
     setLoading(false)
   }
   useEffect(() => { load() }, [])
@@ -54,19 +56,7 @@ export default function PurchaseOrders() {
         breadcrumb="Kho · 3.6.1"
         title="Đơn mua hàng"
         subtitle="Quản lý đơn đặt mua từ nhà cung cấp và theo dõi trạng thái duyệt."
-        actions={
-          <div className="flex items-center gap-3">
-            <Button icon={Plus} onClick={() => navigate('/app/warehouse/purchase-orders/new')}>Tạo đơn mua</Button>
-          </div>
-        }
       />
-
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Tổng đơn mua" value={formatNumber(orders.length)} icon={ClipboardList} tone="brand" hint="trong kỳ" />
-        <StatCard label="Chờ duyệt" value={formatNumber(pending)} icon={Clock} tone="amber" hint="cần xử lý" />
-        <StatCard label="Đã duyệt" value={formatNumber(approved)} icon={CheckCircle2} tone="green" hint="đã thông qua" />
-        <StatCard label="Tổng giá trị" value={formatCurrency(totalValue, { compact: true })} icon={DollarSign} tone="blue" hint="toàn bộ đơn" />
-      </div>
 
       <div className="mt-6">
         <FilterBar>
@@ -100,23 +90,36 @@ export default function PurchaseOrders() {
             <Spinner className="h-7 w-7" />
           </div>
         ) : (
-          <DataTable
-            rows={filtered}
-            onRowClick={(r) => navigate(`/app/warehouse/purchase-orders/${r.id || r.code}`)}
-            empty={{ title: 'Không có đơn mua', subtitle: 'Thử thay đổi bộ lọc hoặc tạo đơn mới.' }}
-            columns={[
-              { key: 'code', header: 'Mã đơn', render: (r) => <span className="font-mono text-xs">{r.code}</span> },
-              { key: 'supplier', header: 'Nhà cung cấp' },
-              { key: 'orderDate', header: 'Ngày', render: (r) => formatDate(r.orderDate) },
-              { key: 'items', header: 'Số mặt hàng', align: 'center' },
-              { key: 'total', header: 'Giá trị', align: 'right', render: (r) => <span className="font-semibold">{formatCurrency(r.total)}</span> },
-              { key: 'status', header: 'Trạng thái', render: (r) => <StatusBadge status={r.status} /> },
-              { key: 'approval', header: 'Duyệt', render: (r) => <StatusBadge status={r.approval} /> },
-            ]}
-            actions={(r) => (
-              <Button size="sm" variant="secondary" icon={Eye} onClick={() => navigate(`/app/warehouse/purchase-orders/${r.id || r.code}`)}>Xem</Button>
-            )}
-          />
+          <div className="grid gap-7 xl:grid-cols-[minmax(0,1.65fr)_minmax(330px,1fr)]">
+            <DataTable
+              rows={filtered}
+              onRowClick={(r) => setSelectedOrder(r)}
+              empty={{ title: 'Không có đơn mua', subtitle: 'Thử thay đổi bộ lọc hoặc tạo đơn mới.' }}
+              columns={[
+                { key: 'code', header: 'PO No', render: (r) => <span className="font-mono text-xs">{r.code}</span> },
+                { key: 'supplier', header: 'Supplier' },
+                { key: 'orderDate', header: 'Expected Date', render: (r) => formatDate(r.orderDate) },
+                { key: 'total', header: 'Total', align: 'right', render: (r) => <span className="font-semibold">{formatCurrency(r.total)}</span> },
+                { key: 'status', header: 'Status', render: (r) => <StatusBadge status={r.status} /> },
+              ]}
+            />
+            <Card className="sms-detail-panel">
+              <CardBody>
+                <h2 className="mb-5 text-lg font-bold">Purchase Order Detail</h2>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field label="PO Number"><Input value={selectedOrder?.code || 'Auto'} readOnly /></Field>
+                  <Field label="Supplier"><Select value={selectedOrder?.supplier || ''} onChange={() => {}}><option>{selectedOrder?.supplier || 'Select'}</option></Select></Field>
+                  <Field label="Product Items"><Input value={selectedOrder ? `${selectedOrder.items} items` : 'Table'} readOnly /></Field>
+                  <Field label="Expected Delivery Date"><Input type="date" value={selectedOrder?.orderDate || ''} onChange={() => {}} /></Field>
+                  <Field label="PO Status"><Input value={selectedOrder?.status || 'Draft'} readOnly /></Field>
+                </div>
+                <div className="mt-16 flex gap-3">
+                  <Button onClick={() => navigate('/app/warehouse/purchase-orders/new')}>Submit</Button>
+                  <Button variant="secondary" onClick={() => setSelectedOrder(null)}>Cancel</Button>
+                </div>
+              </CardBody>
+            </Card>
+          </div>
         )}
       </div>
     </div>

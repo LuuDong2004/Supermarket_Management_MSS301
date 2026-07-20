@@ -2,28 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
-/* -------------------------------------------------------------------------- */
-/* Presentation mockup mode                                                   */
-/* -------------------------------------------------------------------------- */
-/*
- * This is deliberately a visual treatment rather than a second set of
- * components: every page, modal, table, chart, empty state and error screen
- * remains the product UI that users see.  The mode is enabled only by adding
- * `?mockup=bw` to a URL, so it cannot affect the normal application.
- */
-html.mockup-bw #root {
-  filter: grayscale(1) contrast(1.18);
-}
-
-html.mockup-bw,
-html.mockup-bw body {
-  background: #fff;
-}
-
-@media print {
-  html.mockup-bw #root {
-    filter: grayscale(1) contrast(1.25);
-  }
+/* Reference UI system from the supplied realistic black/white mock-ups. */
+html,
+body,
+#root {
+  background: #fff !important;
+  color: #111 !important;
 }
 
 @layer base {
@@ -34,14 +18,14 @@ html.mockup-bw body {
     font-size: 90%;
   }
   body {
-    @apply bg-slate-50/50 text-slate-800 font-sans;
+    @apply bg-white text-slate-900 font-sans;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-display tracking-tight text-slate-900;
   }
   * {
     scrollbar-width: thin;
-    scrollbar-color: #c7d2fe transparent;
+    scrollbar-color: #111 transparent;
   }
   *::-webkit-scrollbar {
     width: 6px;
@@ -51,7 +35,7 @@ html.mockup-bw body {
     background: transparent;
   }
   *::-webkit-scrollbar-thumb {
-    @apply bg-slate-200 rounded-full hover:bg-slate-300;
+    @apply bg-slate-400 rounded-none hover:bg-slate-700;
   }
 }
 
@@ -74,29 +58,211 @@ html.mockup-bw body {
   }
 }
 
-/* Keep the mockup's form-first desktop geometry while restoring the product's
-   colored brand and semantic status system for the normal application. */
-.sms-app-shell { color: #334155; }
-.sms-app-shell, #root { background: #f8fafc !important; }
-.sms-app-shell, .sms-main, .sms-card, .sms-card > *, .sms-stat-card { background-color: #fff !important; }
-.sms-sidebar { min-width: 14rem; }
-.sms-sidebar .sms-nav-item:hover { background: #eef2ff; }
-.sms-topbar { min-height: 4rem; }
-.sms-main { background: #f8fafc; }
-.sms-page-header h1 { font-size: 1.5rem; }
+/* Shared frame: 250px rail, 64px top bar, form-first desktop content. */
+.sms-app-shell { color: #111; background: #fff !important; }
+.sms-main { background: #fff !important; }
+.sms-sidebar { width: 250px; min-width: 250px; border-color: #111 !important; }
+.sms-sidebar nav { padding: 32px 21px 20px; }
+.sms-sidebar .sms-nav-item {
+  min-height: 39px;
+  margin-bottom: 9px;
+  border: 1px solid #111;
+  padding: 9px 13px;
+  color: #111 !important;
+  background: #fff !important;
+  border-radius: 0 !important;
+  transform: none !important;
+}
+.sms-sidebar .sms-nav-item:hover,
+.sms-sidebar .sms-nav-item[aria-current='page'] { background: #f1f1f1 !important; }
+.sms-sidebar .sms-nav-item svg { display: none; }
+.sms-sidebar nav > div > p { display: none; }
+.sms-sidebar .border-t { border-color: #111 !important; }
+.sms-sidebar .border-t button { border-radius: 0 !important; color: #111 !important; }
+
+.sms-topbar { min-height: 64px; border-color: #111 !important; color: #111; }
+.sms-topbar-brand { min-width: 465px; }
+.sms-topbar-mark {
+  display: flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #111;
+  font-weight: 900;
+  font-size: 16px;
+}
+.sms-topbar .sms-logout-button {
+  min-width: 96px;
+  height: 35px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #111;
+  background: #fff;
+  color: #111;
+}
+.sms-topbar .sms-logout-button:hover { background: #f1f1f1; }
+.sms-topbar input,
+.sms-topbar [class*='rounded-xl'],
+.sms-topbar [class*='rounded-lg'] { border-radius: 0 !important; box-shadow: none !important; }
+.sms-topbar .sms-topbar-brand + div input { border-color: #111 !important; }
+.sms-topbar .relative > button { border-radius: 0 !important; }
+.sms-topbar .relative > button > span:first-child { border-radius: 0 !important; border-color: #111 !important; background: #111 !important; }
+.sms-topbar .relative > button > span:first-child { display: none; }
+
+.sms-page-header {
+  margin-bottom: 20px !important;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #111;
+}
+.sms-page-header h1 { font-size: 24px !important; line-height: 1.15; color: #111 !important; }
+.sms-page-header > div > p:first-child { display: none; }
+.sms-page-header > div > p:last-child { display: none; }
 .sms-main .max-w-4xl { max-width: 100% !important; }
-.sms-card-header h3 { font-size: .95rem; }
-.sms-table { border-color: #e2e8f0; }
-.sms-table th, .sms-table td { border-color: #e2e8f0; }
+
+.sms-card,
+.sms-stat-card,
+.sms-table,
+.sms-filter-bar {
+  border-color: #111 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+.sms-card { border-width: 2px !important; }
+.sms-card-header { border-color: #111 !important; padding: 10px 18px !important; }
+.sms-card-header h3 { font-size: 17px; color: #111 !important; }
+.sms-card-header svg,
+.sms-card-header span { display: none; }
+.sms-card-body { color: #111; }
+.sms-stat-card { padding: 13px 15px !important; }
+.sms-stat-card p { color: #111 !important; }
+.sms-stat-card > div > span { display: none; }
+
+.input-base,
+.sms-filter-bar .input-base,
+select,
+textarea {
+  min-height: 35px;
+  border-color: #111 !important;
+  border-radius: 0 !important;
+  background: #fff !important;
+  color: #111 !important;
+  box-shadow: none !important;
+}
+.sms-filter-bar { padding: 12px 18px !important; gap: 18px !important; }
+.sms-filter-bar label,
+.sms-card label { color: #111 !important; }
 .sms-button { border-radius: 0 !important; box-shadow: none !important; }
-.sms-filter-bar { border-color: #e2e8f0; }
-.sms-filter-bar label { color: #334155; }
-.sms-filter-bar .input-base { min-height: 2.35rem; }
-.sms-login { color: #334155; }
-.sms-login > div { background: #fff !important; }
+.sms-button.bg-brand-600,
+.sms-button.bg-rose-600,
+.sms-button.bg-emerald-600 { background: #111 !important; border-color: #111 !important; }
+.sms-button.bg-white { color: #111 !important; border-color: #111 !important; }
+.sms-table { border-width: 2px !important; }
+.sms-table table { border-collapse: collapse; }
+.sms-table th,
+.sms-table td { border: 1px solid #111 !important; color: #111 !important; }
+.sms-table th { background: #f1f1f1 !important; font-size: 11px !important; text-transform: none !important; letter-spacing: 0 !important; }
+.sms-table td { height: 41px; }
+.sms-table tr:hover { background: #f4f4f4 !important; }
+.sms-filter-bar + .sms-table { margin-top: 0; }
+.sms-reference-footer {
+  min-height: 34px;
+  margin-top: 44px;
+  border: 1px solid #111;
+  padding: 8px 17px;
+  font-size: 11px;
+  color: #111;
+}
+.sms-sale-panel { border-width: 2px !important; }
+.sms-sale-cart { border-top: 0 !important; }
+
+/* Exact document screen geometry. These classes intentionally use the fixed
+   desktop proportions from the supplied 1440px mock-ups; the surrounding app
+   remains responsive below the desktop breakpoint. */
+.ref-screen { color: #111; width: 100%; }
+.ref-title { height: 48px; border-bottom: 2px solid #111; margin-bottom: 21px; display: flex; align-items: flex-start; }
+.ref-title h1 { margin: 0; font-size: 24px; line-height: 1; font-weight: 700; }
+.ref-filterbar { min-height: 79px; border: 2px solid #111; display: flex; align-items: flex-end; gap: 18px; padding: 12px 18px; margin-bottom: 19px; }
+.ref-filterbar label, .ref-detail-panel label, .ref-sale-left > label, .ref-sale-right > label, .ref-table-section > label { display: flex; flex: 1 1 0; min-width: 0; flex-direction: column; gap: 5px; font-size: 13px; color: #111; }
+.ref-filterbar input, .ref-detail-panel input, .ref-detail-panel select, .ref-sale-left input, .ref-sale-right input, .ref-table-section input { width: 100%; height: 35px; border: 1px solid #111; border-radius: 0; padding: 0 10px; background: #fff; color: #111; font-size: 12px; }
+.ref-filter-actions { display: flex; gap: 13px; align-items: flex-end; flex: 0 0 auto; }
+.ref-btn { height: 35px; min-width: 70px; padding: 0 16px; border: 2px solid #111; background: #fff; color: #111; font-size: 12px; cursor: pointer; }
+.ref-btn:hover { background: #eee; }
+.ref-btn-dark { background: #111; color: #fff; }
+.ref-btn-dark:hover { background: #333; }
+.ref-kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 19px; margin-bottom: 18px; }
+.ref-kpi { min-height: 81px; border: 2px solid #111; padding: 14px 16px; display: flex; flex-direction: column; justify-content: space-between; }
+.ref-kpi span { font-size: 12px; }
+.ref-kpi strong { font-size: 18px; line-height: 1; }
+.ref-split { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(330px, 1fr); gap: 29px; align-items: start; }
+.ref-table-section h2, .ref-chart-panel h2, .ref-detail-panel h2, .ref-sale-left h2, .ref-sale-right h2 { margin: 0 0 7px; font-size: 18px; line-height: 1.1; font-weight: 700; }
+.ref-table-wrap { border: 2px solid #111; overflow-x: auto; background: #fff; }
+.ref-table-wrap table { width: 100%; min-width: 560px; border-collapse: collapse; table-layout: fixed; font-size: 11px; }
+.ref-table-wrap th, .ref-table-wrap td { border: 1px solid #111; height: 41px; padding: 6px 9px; text-align: left; vertical-align: middle; word-break: break-word; }
+.ref-table-wrap th { height: 35px; background: #f1f1f1; font-weight: 500; }
+.ref-table-wrap tr { cursor: pointer; }
+.ref-table-wrap tr:hover, .ref-table-wrap tr.is-selected { background: #eee; }
+.ref-detail-panel { min-height: 420px; border: 2px solid #111; padding: 20px; background: #fff; }
+.ref-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 22px; }
+.ref-form-grid label { display: flex; flex-direction: column; gap: 5px; font-size: 13px; }
+.ref-form-grid .ref-form-wide { grid-column: 1 / -1; }
+.ref-panel-actions { display: flex; gap: 17px; margin-top: 50px; align-items: center; }
+.ref-feedback { margin-top: 12px; font-size: 12px; }
+.ref-report-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 29px; align-items: start; }
+.ref-chart-panel { min-height: 425px; }
+.ref-chart { height: 300px; border: 2px solid #111; margin-top: 5px; display: flex; align-items: flex-end; gap: 25px; padding: 20px 35px 31px; position: relative; }
+.ref-chart .ref-axis { position: absolute; left: 34px; right: 22px; bottom: 31px; border-bottom: 1px solid #111; }
+.ref-chart i { display: block; flex: 1 1 0; max-width: 35px; border: 1px solid #111; background: #eee; z-index: 1; }
+.ref-report-grid .ref-table-section { min-width: 0; }
+.ref-report-grid .ref-table-wrap table { min-width: 630px; }
+.ref-report-grid .ref-panel-actions { margin-top: 44px; }
+.ref-inline-btn { margin: 8px 0 16px; }
+.ref-sale-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(360px, .82fr); gap: 29px; }
+.ref-sale-left, .ref-sale-right { min-height: 620px; border: 2px solid #111; padding: 22px 18px; position: relative; }
+.ref-sale-left > label { display: inline-flex; width: 68%; }
+.ref-sale-left .ref-inline-btn { display: inline-block; vertical-align: bottom; margin: 0 0 0 14px; }
+.ref-sale-left h2:nth-of-type(2) { margin-top: 17px; }
+.ref-sale-right > label { max-width: 75%; margin-bottom: 28px; }
+.ref-totals { border: 2px solid #111; padding: 15px; font-size: 13px; line-height: 2; min-height: 138px; }
+.ref-payment-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 29px; }
+.ref-payment-grid .ref-detail-panel { min-height: 526px; }
+.ref-payment-grid .ref-detail-panel > label { display: block; margin: 16px 0; }
+.ref-payment-grid .ref-detail-panel > label input { width: auto; height: auto; margin-right: 8px; }
+.ref-qr { width: 175px; height: 175px; margin: 45px auto 25px; border: 2px solid #111; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; }
+.ref-loyalty-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 29px; }
+.ref-loyalty-grid .ref-detail-panel { min-height: 520px; }
+.ref-loyalty-grid .ref-kpi-row { margin: 30px 0 25px; grid-template-columns: repeat(2, 1fr); gap: 9px; }
+.ref-loyalty-grid .ref-kpi { min-height: 58px; }
+.ref-promotion-grid { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.45fr); gap: 29px; }
+.ref-promotion-grid .ref-table-section, .ref-promotion-grid .ref-detail-panel { min-height: 530px; border: 2px solid #111; padding: 16px; }
+.ref-promotion-grid .ref-table-section > .ref-table-section { border: 0; padding: 0; min-height: 0; }
+.ref-promotion-grid .ref-table-section .ref-table-wrap { margin-top: 8px; }
+.ref-rules-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 29px; }
+.ref-rules-grid > div { display: grid; gap: 25px; align-content: start; }
+.ref-rules-grid .ref-detail-panel { min-height: 170px; }
+.ref-rules-grid .ref-table-section h2 { font-size: 17px; }
+
+@media (max-width: 1023px) {
+  .ref-filterbar, .ref-kpi-row, .ref-split, .ref-report-grid, .ref-sale-grid, .ref-payment-grid, .ref-loyalty-grid, .ref-promotion-grid, .ref-rules-grid { grid-template-columns: 1fr; }
+  .ref-filterbar { align-items: stretch; flex-direction: column; }
+  .ref-filter-actions { justify-content: flex-start; }
+  .ref-sale-left, .ref-sale-right, .ref-detail-panel { min-height: auto; }
+}
+
+.sms-main .rounded-xl,
+.sms-main .rounded-2xl,
+.sms-main .rounded-lg,
+.sms-main .rounded-md { border-radius: 0 !important; }
+.sms-login { color: #111; }
+.sms-login > div { background: #fff !important; border-color: #111 !important; border-radius: 0 !important; box-shadow: none !important; }
 .sms-login .rounded-2xl, .sms-login .rounded-xl { border-radius: 0 !important; }
 .sms-login .shadow-lg, .sms-login [class*="shadow-["], .sms-login .shadow-sm { box-shadow: none !important; }
 
 @media (min-width: 1024px) {
-  .sms-main { padding-left: 2.25rem; padding-right: 2.25rem; }
+  .sms-main { padding: 32px 35px 44px !important; }
+}
+
+@media (max-width: 1023px) {
+  .sms-sidebar { width: 250px; min-width: 250px; }
+  .sms-topbar-brand { min-width: 0; }
 }

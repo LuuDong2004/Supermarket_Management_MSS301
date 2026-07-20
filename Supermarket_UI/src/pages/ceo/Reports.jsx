@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { PageHeader, FilterBar } from '../../components/ui/PageHeader.jsx'
-import { Card, CardHeader, CardBody, Field, Select, Badge } from '../../components/ui/primitives.jsx'
+import { Card, CardHeader, CardBody, Field, Input, Select, Button } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { StatCard } from '../../components/ui/StatCard.jsx'
 import { Bars, Donut, AreaTrend } from '../../components/ui/Charts.jsx'
@@ -53,6 +53,14 @@ export default function Reports() {
         .slice(0, 6),
     [products],
   )
+  const reportDetails = [
+    { date: '12/01/26', category: 'Milk', revenue: '120', cost: 'Milk', profit: 'Milk', status: 'Pending' },
+    { date: '12/02/26', category: 'Rice', revenue: '240', cost: 'Rice', profit: 'Rice', status: 'Approved' },
+    { date: '12/03/26', category: 'Staff A', revenue: '360', cost: 'Staff A', profit: 'Staff A', status: 'Active' },
+    { date: '12/04/26', category: 'Customer B', revenue: '480', cost: 'Customer B', profit: 'Customer B', status: 'Rejected' },
+    { date: '12/05/26', category: 'Supplier C', revenue: '600', cost: 'Supplier C', profit: 'Supplier C', status: 'Pending' },
+    { date: '12/06/26', category: 'Order D', revenue: '720', cost: 'Order D', profit: 'Order D', status: 'Approved' },
+  ]
 
   return (
     <div>
@@ -63,12 +71,18 @@ export default function Reports() {
       />
 
       <FilterBar>
-        <Field label="Khoảng thời gian">
+        <Field label="Report Type">
+          <Select value="management" onChange={() => {}}><option value="management">Select report</option></Select>
+        </Field>
+        <Field label="Date Range">
           <Select value={period} onChange={(e) => setPeriod(e.target.value)}>
             <option value="3m">3 tháng gần nhất</option>
             <option value="6m">6 tháng gần nhất</option>
           </Select>
         </Field>
+        <Field label="Filter"><Input placeholder="Branch/category" /></Field>
+        <Field label="Export"><Select value="pdf" onChange={() => {}}><option value="pdf">PDF / Excel</option></Select></Field>
+        <div className="flex gap-3"><Button>Apply</Button><Button variant="secondary">Reset</Button></div>
       </FilterBar>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -78,47 +92,41 @@ export default function Reports() {
         <StatCard label="Đơn hàng" value={formatNumber(4820)} icon={ShoppingCart} tone="violet" delta={6} hint="trong tháng" />
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader title="Doanh thu vs Mục tiêu" subtitle="Triệu đồng" icon={BarChart3} />
+      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
+        <Card>
+          <CardHeader title="Trend Summary" subtitle="Triệu đồng" icon={BarChart3} />
           <CardBody>
             <Bars
               data={monthly}
               x="month"
               series={[
-                { key: 'revenue', name: 'Doanh thu', color: '#4f46e5' },
-                { key: 'target', name: 'Mục tiêu', color: '#94a3b8' },
+                { key: 'revenue', name: 'Doanh thu', color: '#111111' },
+                { key: 'target', name: 'Mục tiêu', color: '#999999' },
               ]}
             />
           </CardBody>
         </Card>
         <Card>
-          <CardHeader title="Cơ cấu ngành hàng" icon={PieChart} />
-          <CardBody><Donut data={share} /></CardBody>
+          <CardHeader title="Report Detail" icon={PieChart} />
+          <CardBody className="p-0">
+            <DataTable
+              rows={reportDetails}
+              stt={false}
+              dense
+              columns={[
+                { key: 'date', header: 'Date' },
+                { key: 'category', header: 'Category' },
+                { key: 'revenue', header: 'Revenue' },
+                { key: 'cost', header: 'Cost' },
+                { key: 'profit', header: 'Profit' },
+                { key: 'status', header: 'Status' },
+              ]}
+            />
+          </CardBody>
         </Card>
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader title="Xu hướng doanh thu" subtitle="7 ngày · Triệu đồng" icon={LineChart} />
-          <CardBody><AreaTrend data={trend} x="label" y="revenue" /></CardBody>
-        </Card>
-        <Card>
-          <CardHeader title="Top sản phẩm" subtitle="Theo doanh thu ước tính" icon={Package} />
-          <CardBody className="p-0">
-            <DataTable
-              className="rounded-none border-0 shadow-none"
-              rows={topProducts}
-              dense
-              columns={[
-                { key: 'name', header: 'Sản phẩm', render: (p) => <span className="font-medium text-slate-700">{p.name}</span> },
-                { key: 'category', header: 'Ngành', render: (p) => <Badge tone="slate">{p.category}</Badge> },
-                { key: 'revenue', header: 'Doanh thu', align: 'right', render: (p) => <span className="font-semibold">{formatCurrency(p.revenue, { compact: true })}</span> },
-              ]}
-            />
-          </CardBody>
-        </Card>
-      </div>
+      <div className="mt-6 flex gap-3"><Button>Generate</Button><Button variant="secondary">Export</Button></div>
     </div>
   )
 }

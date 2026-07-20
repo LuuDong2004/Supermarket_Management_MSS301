@@ -75,7 +75,7 @@ function RowActionsMenu({ children }) {
  * actions: (row) => JSX — appends a "Thao tác" column shown behind a single ⋮
  * menu; clicks inside it never trigger onRowClick
  */
-export function DataTable({ columns, rows, rowKey = 'id', onRowClick, empty, className, dense, stt = true, actions }) {
+export function DataTable({ columns, rows, rowKey = 'id', onRowClick, empty, className, dense, stt = false, actions }) {
   if (!rows || rows.length === 0) {
     return (
       <div className={cn('sms-table rounded-none border border-slate-900 bg-white', className)}>

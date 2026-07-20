@@ -83,8 +83,8 @@ export default function Reports() {
                   data={flowData}
                   x="day"
                   series={[
-                    { key: 'inbound', name: 'Nhập kho', color: '#10b981' },
-                    { key: 'outbound', name: 'Xuất kho', color: '#0ea5e9' },
+                    { key: 'inbound', name: 'Nhập kho', color: '#111111' },
+                    { key: 'outbound', name: 'Xuất kho', color: '#999999' },
                   ]}
                 />
               </CardBody>

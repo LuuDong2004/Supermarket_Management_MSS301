@@ -18,11 +18,15 @@ export function toList(res) {
 // Backend-only fetch. Demo/mock fallbacks were removed — on error the caller
 // gets an empty result (never fake data). Returns { data, source } where
 // source is 'backend' on success or 'error' on failure.
-export async function withFallback(call) {
+export async function withFallback(call, fallback) {
+  if (import.meta.env.VITE_USE_MOCK === 'true' && fallback) {
+    return { data: typeof fallback === 'function' ? fallback() : fallback, source: 'mock' }
+  }
   try {
     return { data: await call(), source: 'backend' }
   } catch (err) {
     console.error('[api] request failed:', err?.message || err)
+    if (fallback) return { data: typeof fallback === 'function' ? fallback() : fallback, source: 'mock', error: err }
     return { data: [], source: 'error', error: err }
   }
 }

@@ -110,7 +110,7 @@ export default function SalesReport() {
       <div className="mt-6 grid gap-6 lg:grid-cols-5">
         <Card className="lg:col-span-3">
           <CardHeader title="Xu hướng doanh thu" subtitle="Triệu đồng theo ngày" icon={BarChart3} />
-          <CardBody><Bars data={trend} x="label" series={[{ key: 'revenue', name: 'Doanh thu', color: '#4f46e5' }]} /></CardBody>
+          <CardBody><Bars data={trend} x="label" series={[{ key: 'revenue', name: 'Doanh thu', color: '#111111' }]} /></CardBody>
         </Card>
         <Card className="lg:col-span-2">
           <CardHeader title="Tóm tắt báo cáo" subtitle="Kỳ đã chọn" icon={FileText} />

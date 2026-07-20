@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
 import { Sidebar } from './Sidebar.jsx'
 import { Topbar } from './Topbar.jsx'
+import { ReferenceFooter } from './ReferenceFooter.jsx'
 
 const COLLAPSE_KEY = 'sms.sidebarCollapsed'
 
@@ -14,17 +15,18 @@ export function AppShell() {
   }, [collapsed])
 
   return (
-    <div className="sms-app-shell flex h-screen overflow-hidden bg-white">
-      <Sidebar
-        open={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        collapsed={collapsed}
-        onToggleCollapse={() => setCollapsed((c) => !c)}
-      />
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-white">
-        <Topbar onMenu={() => setSidebarOpen(true)} />
-        <main className="sms-main flex-1 overflow-y-auto px-4 py-6 lg:px-8">
+    <div className="sms-app-shell flex h-screen flex-col overflow-hidden bg-white">
+      <Topbar onMenu={() => setSidebarOpen(true)} />
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        <Sidebar
+          open={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          collapsed={collapsed}
+          onToggleCollapse={() => setCollapsed((c) => !c)}
+        />
+        <main className="sms-main min-w-0 flex-1 overflow-y-auto px-4 py-6 lg:px-8">
           <Outlet />
+          <ReferenceFooter />
         </main>
       </div>
     </div>

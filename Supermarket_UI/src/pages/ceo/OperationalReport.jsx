@@ -59,8 +59,8 @@ export default function OperationalReport() {
               data={rows}
               x="area"
               series={[
-                { key: 'orders', name: 'Đơn hàng', color: '#4f46e5' },
-                { key: 'staffScore', name: 'Điểm nhân sự', color: '#0ea5e9' },
+                { key: 'orders', name: 'Đơn hàng', color: '#111111' },
+                { key: 'staffScore', name: 'Điểm nhân sự', color: '#999999' },
               ]}
             />
           </CardBody>

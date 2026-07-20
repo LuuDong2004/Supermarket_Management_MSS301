@@ -78,7 +78,7 @@ export default function Performance() {
       <Card className="mt-6">
         <CardHeader title="Phân bố điểm hiệu suất" subtitle="Thang điểm 100" icon={Gauge} />
         <CardBody>
-          <Bars data={rows} x="name" series={[{ key: 'score', name: 'Điểm', color: '#4f46e5' }]} />
+          <Bars data={rows} x="name" series={[{ key: 'score', name: 'Điểm', color: '#111111' }]} />
         </CardBody>
       </Card>
 

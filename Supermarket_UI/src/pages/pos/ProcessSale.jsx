@@ -455,14 +455,14 @@ export default function ProcessSale() {
     <div>
       <PageHeader
         breadcrumb="POS · 3.8.1"
-        title="Bán hàng & Thanh toán"
+        title="Process Sale"
         subtitle="Quét mã hoặc tìm sản phẩm để thêm vào giỏ. Hoàn tất quy trình trên cùng một màn hình."
       />
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Left Side: Products & Cart (col-span-2) */}
-        <div className="space-y-6 lg:col-span-2">
-          <Card hoverEffect>
+        <div className="space-y-0 lg:col-span-2">
+          <Card className="sms-sale-panel" hoverEffect>
             <CardHeader title="Nhập sản phẩm" icon={ScanLine} subtitle="Barcode / tên sản phẩm" />
             <CardBody>
               <div className="relative">
@@ -536,7 +536,7 @@ export default function ProcessSale() {
             </CardBody>
           </Card>
 
-          <Card hoverEffect>
+          <Card className="sms-sale-panel sms-sale-cart" hoverEffect>
             <CardHeader title="Giỏ hàng hiện tại" icon={ShoppingCart} subtitle={`${cart.length} mặt hàng`} />
             <CardBody className="p-0">
               {cart.length === 0 ? (
@@ -589,7 +589,7 @@ export default function ProcessSale() {
 
         {/* Right Side: Checkout Summary (col-span-1) — sticky so it follows the cart while scrolling */}
         <div className="space-y-6 lg:sticky lg:top-4 lg:self-start">
-          <Card hoverEffect>
+          <Card className="sms-sale-panel" hoverEffect>
             <CardHeader title="Khách hàng & Khuyến mãi" icon={UserPlus} />
             <CardBody className="space-y-4">
               <Field label="Khách hàng thành viên">
@@ -644,7 +644,7 @@ export default function ProcessSale() {
             </CardBody>
           </Card>
 
-          <Card hoverEffect>
+          <Card className="sms-sale-panel" hoverEffect>
             <CardHeader title="Tổng kết thanh toán" icon={BadgePercent} />
             <CardBody className="space-y-3.5">
               <Row label="Tạm tính" value={formatCurrency(subtotal)} />

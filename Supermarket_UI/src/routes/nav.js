@@ -114,9 +114,20 @@ export const ROUTE_ROLES = NAV.flatMap((g) => g.items).reduce((acc, it) => {
   return acc
 }, {})
 
+// Compact role rails used by the realistic screen captures. The full NAV
+// model remains above for route authorization and deep links.
+const REFERENCE_NAV = {
+  ROLE_CEO: [['/app/dashboard', 'CEO Dashboard'], ['/app/ceo/reports', 'Reports'], ['/app/ceo/approvals', 'Approvals'], ['/app/ceo/policies', 'Business Policies'], ['/app/ceo/promotions', 'Notifications']],
+  ROLE_ADMIN: [['/app/dashboard', 'Dashboard'], ['/app/admin/users', 'User Accounts'], ['/app/admin/approval-requests', 'Approval Requests'], ['/app/admin/monitoring', 'System Monitoring'], ['/app/settings/rules', 'Audit Logs']],
+  ROLE_STAFF_MANAGER: [['/app/dashboard', 'Staff Dashboard'], ['/app/hr/employees', 'Employees'], ['/app/hr/attendance', 'Attendance'], ['/app/hr/performance', 'Performance'], ['/app/reports/employees', 'Reports']],
+  ROLE_WAREHOUSE_MANAGER: [['/app/dashboard', 'WM Dashboard'], ['/app/warehouse/purchase-orders', 'Purchase Orders'], ['/app/warehouse/transactions', 'Approvals'], ['/app/warehouse/products', 'Inventory'], ['/app/warehouse/reports', 'Warehouse Reports'], ['/app/warehouse/monitor', 'Stock Monitoring']],
+  ROLE_WAREHOUSE_STAFF: [['/app/dashboard', 'WS Dashboard'], ['/app/warehouse/receive', 'Receive Goods'], ['/app/warehouse/inventory', 'Inventory'], ['/app/warehouse/stock-count', 'Stock Count'], ['/app/warehouse/adjustments', 'Adjustment Request'], ['/app/warehouse/approval-status', 'Approval Status']],
+  ROLE_CASHIER: [['/app/dashboard', 'Cashier Dashboard'], ['/app/pos/sale', 'Sales / Checkout'], ['/app/pos/members', 'Membership'], ['/app/pos/payment', 'Payments'], ['/app/pos/shift', 'Shift']],
+}
+
 export function navForRole(role) {
-  return NAV.map((g) => ({
-    ...g,
-    items: g.items.filter((it) => it.roles.includes(role)),
-  })).filter((g) => g.items.length > 0)
+  const routes = REFERENCE_NAV[role]
+  if (!routes) return NAV.map((g) => ({ ...g, items: g.items.filter((it) => it.roles.includes(role)) })).filter((g) => g.items.length > 0)
+  const lookup = new Map(NAV.flatMap((group) => group.items.map((item) => [item.to, item])))
+  return [{ section: null, items: routes.map(([to, label]) => ({ ...lookup.get(to), ...(label ? { label } : {}) })) }]
 }

@@ -4,20 +4,6 @@ import { navForRole } from '../../routes/nav.js'
 import { cn } from '../../lib/cn.js'
 import { X, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 
-function Brand({ collapsed }) {
-  return (
-    <div className={cn('flex flex-1 items-center gap-3 px-6 py-5', collapsed && 'lg:justify-center lg:px-0')}>
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-brand-700 bg-brand-600 text-sm font-black text-white shadow-sm">
-        S
-      </div>
-      <div className={cn('leading-tight', collapsed && 'lg:hidden')}>
-        <p className="text-sm font-extrabold text-slate-800 tracking-wide font-display">SMS</p>
-        <p className="text-[10px] text-slate-400 font-medium">Supermarket Mgmt</p>
-      </div>
-    </div>
-  )
-}
-
 export function Sidebar({ open, onClose, collapsed, onToggleCollapse }) {
   const { user } = useAuth()
   const groups = navForRole(user?.role)
@@ -32,9 +18,8 @@ export function Sidebar({ open, onClose, collapsed, onToggleCollapse }) {
           open ? 'translate-x-0' : '-translate-x-full',
         )}
       >
-        <div className="flex shrink-0 items-center justify-between">
-          <Brand collapsed={collapsed} />
-          <button onClick={onClose} className="mr-3 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 lg:hidden">
+        <div className="flex shrink-0 justify-end lg:hidden">
+          <button onClick={onClose} className="mr-3 mt-3 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100">
             <X size={18} />
           </button>
         </div>
