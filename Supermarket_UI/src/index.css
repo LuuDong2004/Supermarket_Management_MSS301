@@ -2,6 +2,30 @@
 @tailwind components;
 @tailwind utilities;
 
+/* -------------------------------------------------------------------------- */
+/* Presentation mockup mode                                                   */
+/* -------------------------------------------------------------------------- */
+/*
+ * This is deliberately a visual treatment rather than a second set of
+ * components: every page, modal, table, chart, empty state and error screen
+ * remains the product UI that users see.  The mode is enabled only by adding
+ * `?mockup=bw` to a URL, so it cannot affect the normal application.
+ */
+html.mockup-bw #root {
+  filter: grayscale(1) contrast(1.18);
+}
+
+html.mockup-bw,
+html.mockup-bw body {
+  background: #fff;
+}
+
+@media print {
+  html.mockup-bw #root {
+    filter: grayscale(1) contrast(1.25);
+  }
+}
+
 @layer base {
   html {
     -webkit-font-smoothing: antialiased;
@@ -43,9 +67,36 @@
 
 @layer components {
   .input-base {
-    @apply w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800
-           placeholder:text-slate-400 transition-all duration-200
-           focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10
+    @apply w-full rounded-none border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800
+           placeholder:text-slate-400 transition-all duration-150
+           focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/10
            disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 shadow-sm;
   }
+}
+
+/* Keep the mockup's form-first desktop geometry while restoring the product's
+   colored brand and semantic status system for the normal application. */
+.sms-app-shell { color: #334155; }
+.sms-app-shell, #root { background: #f8fafc !important; }
+.sms-app-shell, .sms-main, .sms-card, .sms-card > *, .sms-stat-card { background-color: #fff !important; }
+.sms-sidebar { min-width: 14rem; }
+.sms-sidebar .sms-nav-item:hover { background: #eef2ff; }
+.sms-topbar { min-height: 4rem; }
+.sms-main { background: #f8fafc; }
+.sms-page-header h1 { font-size: 1.5rem; }
+.sms-main .max-w-4xl { max-width: 100% !important; }
+.sms-card-header h3 { font-size: .95rem; }
+.sms-table { border-color: #e2e8f0; }
+.sms-table th, .sms-table td { border-color: #e2e8f0; }
+.sms-button { border-radius: 0 !important; box-shadow: none !important; }
+.sms-filter-bar { border-color: #e2e8f0; }
+.sms-filter-bar label { color: #334155; }
+.sms-filter-bar .input-base { min-height: 2.35rem; }
+.sms-login { color: #334155; }
+.sms-login > div { background: #fff !important; }
+.sms-login .rounded-2xl, .sms-login .rounded-xl { border-radius: 0 !important; }
+.sms-login .shadow-lg, .sms-login [class*="shadow-["], .sms-login .shadow-sm { box-shadow: none !important; }
+
+@media (min-width: 1024px) {
+  .sms-main { padding-left: 2.25rem; padding-right: 2.25rem; }
 }

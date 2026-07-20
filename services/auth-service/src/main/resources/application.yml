@@ -25,12 +25,12 @@ spring:
 security:
   jwt:
     # MUST match api-gateway's security.jwt.secret (HMAC key, >= 32 bytes)
-    secret: ${JWT_SECRET}
+    secret: ${JWT_SECRET:mss301-local-dev-jwt-secret-change-me-32-chars}
     issuer: ${JWT_ISSUER:mss301-auth-service}
     access-token-minutes: ${JWT_ACCESS_MINUTES:15}
     refresh-token-days: ${JWT_REFRESH_DAYS:7}
   internal:
-    api-key: ${INTERNAL_API_KEY}
+    api-key: ${INTERNAL_API_KEY:mss301-local-internal-api-key}
 
 eureka:
   client:

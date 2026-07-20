@@ -8,7 +8,7 @@ import { useToast } from '../../components/ui/Toast.jsx'
 import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { settingService, withFallback, toList, mockSettings } from '../../services/index.js'
 import {
-  Settings, Store, Plus, Pencil, Trash2, Save,
+  Settings, Store, Plus, Pencil, Save,
 } from 'lucide-react'
 
 // Categories map to the tab shell; "Tất cả" shows every setting row.
@@ -88,7 +88,7 @@ export default function SystemSettings() {
         label: form.label,
         category: form.category,
       }
-      if (form.id) await settingService.update(form.id, payload)
+      if (form.id) await settingService.update(form.settingKey, { value: form.settingValue })
       else await settingService.create(payload)
       toast.success('Đã lưu cấu hình hệ thống.')
       setEditing(null)
@@ -96,17 +96,6 @@ export default function SystemSettings() {
       await load()
     } catch (e) {
       toast.error(e.message || 'Lưu cấu hình thất bại.')
-    }
-  }
-
-  const removeSetting = async (s) => {
-    if (!(await confirm({ title: 'Xóa cấu hình?', message: `Cấu hình "${s.label || s.settingKey}" sẽ bị xóa vĩnh viễn.`, confirmLabel: 'Xóa', danger: true }))) return
-    try {
-      await settingService.remove(s.id)
-      toast.success('Đã xóa cấu hình.')
-      await load()
-    } catch (e) {
-      toast.error(e.message || 'Xóa cấu hình thất bại.')
     }
   }
 
@@ -151,7 +140,6 @@ export default function SystemSettings() {
               actions={(r) => (
                 <>
                   <Button size="sm" variant="secondary" icon={Pencil} onClick={() => openEdit(r)}>Sửa</Button>
-                  <Button size="sm" variant="danger" icon={Trash2} onClick={() => removeSetting(r)}>Xóa</Button>
                 </>
               )}
             />
@@ -174,16 +162,16 @@ export default function SystemSettings() {
         {editing && (
           <div className="space-y-4">
             <Field label="Tên cấu hình" hint="Nhãn hiển thị cho người dùng">
-              <Input value={form.label} onChange={set('label')} placeholder="Tên cửa hàng" />
+              <Input value={form.label} onChange={set('label')} placeholder="Tên cửa hàng" disabled={!!form.id} />
             </Field>
             <Field label="Khóa cấu hình" hint="Định danh key kỹ thuật, ví dụ: store.name">
-              <Input value={form.settingKey} onChange={set('settingKey')} placeholder="store.name" className="font-mono" />
+              <Input value={form.settingKey} onChange={set('settingKey')} placeholder="store.name" className="font-mono" disabled={!!form.id} />
             </Field>
             <Field label="Giá trị">
               <Input value={form.settingValue} onChange={set('settingValue')} placeholder="Siêu thị SMS Central" />
             </Field>
             <Field label="Nhóm">
-              <Select value={form.category} onChange={set('category')}>
+              <Select value={form.category} onChange={set('category')} disabled={!!form.id}>
                 <option value="Chung">Chung</option>
                 <option value="Thuế">Thuế & Hóa đơn</option>
                 <option value="Thông báo">Thông báo</option>

@@ -107,6 +107,19 @@ The MySQL init script creates every service database via its
 create and seed its own schema. To run a service locally, start the DB container
 first (`docker compose up -d mysql`).
 
+The project targets Java 21. In PowerShell, run a service with its module POM
+(running `spring-boot:run` from the aggregator can fail because the aggregator
+has no main class):
+
+```powershell
+$env:JAVA_HOME = 'C:\Program Files\Java\jdk-21.0.10'
+$env:Path = "$env:JAVA_HOME\bin;$env:Path"
+mvn -f services/auth-service/pom.xml spring-boot:run
+```
+
+Local `application.yml` files provide development fallbacks for shared secrets;
+real environment variables or Docker Compose values override them.
+
 ### Frontend — `Supermarket_UI/` (React 19 + Vite)
 
 POS admin dashboard. Talks to the backend **only through the gateway** (`/api`).
@@ -128,8 +141,8 @@ Login uses the seeded **username** accounts below (not email). The wiring lives 
 
 | Username | Password   | Role       |
 |----------|------------|------------|
-| `ceo`    | `password` | ROLE_CEO   |
-| `admin`  | `password` | ROLE_ADMIN |
+| `ceo`    | `123456`   | ROLE_CEO   |
+| `admin`  | `123456`   | ROLE_ADMIN |
 
 ### Team workflow (GitHub)
 
@@ -144,7 +157,7 @@ Login uses the seeded **username** accounts below (not email). The wiring lives 
 ```bash
 curl -s -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"password"}'
+  -d '{"username":"admin","password":"123456"}'
 
 curl -s http://localhost:8080/api/users/me -H "Authorization: Bearer <accessToken>"
 ```

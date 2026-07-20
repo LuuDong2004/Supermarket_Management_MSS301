@@ -14,16 +14,16 @@ export function AppShell() {
   }, [collapsed])
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50">
+    <div className="sms-app-shell flex h-screen overflow-hidden bg-white">
       <Sidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         collapsed={collapsed}
         onToggleCollapse={() => setCollapsed((c) => !c)}
       />
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-white">
         <Topbar onMenu={() => setSidebarOpen(true)} />
-        <main className="flex-1 overflow-y-auto px-4 py-6 lg:px-8">
+        <main className="sms-main flex-1 overflow-y-auto px-4 py-6 lg:px-8">
           <Outlet />
         </main>
       </div>

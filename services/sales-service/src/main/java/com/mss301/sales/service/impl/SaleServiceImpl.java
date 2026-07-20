@@ -59,6 +59,7 @@ public class SaleServiceImpl implements SaleService {
 
     @Override
     public SaleResponse create(SaleRequest request) {
+        validateSaleRequest(request);
         if (saleRepository.existsByCode(request.code())) {
             throw new ConflictException(ErrorCode.CONFLICT, "Sale code already exists: " + request.code());
         }
@@ -66,9 +67,7 @@ public class SaleServiceImpl implements SaleService {
 
         List<SaleItem> lineItems = buildLineItems(request.lineItems());
         sale.setLineItems(lineItems);
-        if (!lineItems.isEmpty()) {
-            sale.setItems(lineItems.size());
-        }
+        sale.setItems(lineItems.stream().mapToInt(SaleItem::getQuantity).sum());
         sale.setPointsRedeemed(request.pointsRedeemed() == null ? 0 : request.pointsRedeemed());
         applyCashChange(sale);
 
@@ -145,9 +144,21 @@ public class SaleServiceImpl implements SaleService {
         if (status == null || status.isBlank()) {
             throw new BadRequestException(ErrorCode.BAD_REQUEST, "status is required");
         }
+        String normalized = status.trim().toUpperCase(Locale.ROOT);
+        if (!List.of("PENDING", "COMPLETED", "CANCELLED").contains(normalized)) {
+            throw new BadRequestException(ErrorCode.BAD_REQUEST, "Unsupported sale status: " + status);
+        }
         Sale sale = find(id);
-        boolean completing = STATUS_COMPLETED.equalsIgnoreCase(status) && !STATUS_COMPLETED.equals(sale.getStatus());
-        sale.setStatus(status);
+        String current = sale.getStatus() == null ? "" : sale.getStatus().trim().toUpperCase(Locale.ROOT);
+        if (!current.isBlank() && !current.equals(normalized) && !"PENDING".equals(current)) {
+            throw new BadRequestException(ErrorCode.BAD_REQUEST,
+                    "Only pending sales can change status; completed sales require return/refund.");
+        }
+        if (STATUS_COMPLETED.equals(normalized) && "QR Code".equalsIgnoreCase(sale.getPayment())) {
+            throw new BadRequestException(ErrorCode.BAD_REQUEST, "QR payment must be confirmed by the payment gateway.");
+        }
+        boolean completing = STATUS_COMPLETED.equals(normalized) && !STATUS_COMPLETED.equals(sale.getStatus());
+        sale.setStatus(normalized);
         if (completing) {
             applyCompletionEffects(sale);
         }
@@ -157,6 +168,10 @@ public class SaleServiceImpl implements SaleService {
     @Override
     public SaleResponse completeCashSale(UUID id) {
         Sale sale = find(id);
+        if (!"PENDING".equalsIgnoreCase(sale.getStatus())) {
+            throw new BadRequestException(ErrorCode.BAD_REQUEST,
+                    "Only pending sales can be completed with cash.");
+        }
         boolean completing = !STATUS_COMPLETED.equals(sale.getStatus());
         sale.setStatus(STATUS_COMPLETED);
         sale.setPayment("Tiền mặt");
@@ -200,6 +215,54 @@ public class SaleServiceImpl implements SaleService {
                     .build());
         }
         return result;
+    }
+
+    private void validateSaleRequest(SaleRequest request) {
+        if (request.lineItems() == null || request.lineItems().isEmpty()) {
+            throw new BadRequestException(ErrorCode.BAD_REQUEST, "A sale must contain at least one product item.");
+        }
+        BigDecimal subtotal = request.subtotal() == null ? request.total() : request.subtotal();
+        BigDecimal discount = request.discount() == null ? BigDecimal.ZERO : request.discount();
+        BigDecimal vat = request.vat() == null ? BigDecimal.ZERO : request.vat();
+        if (subtotal == null || subtotal.compareTo(BigDecimal.ZERO) < 0
+                || discount.compareTo(BigDecimal.ZERO) < 0
+                || vat.compareTo(BigDecimal.ZERO) < 0
+                || request.total() == null || request.total().compareTo(BigDecimal.ZERO) < 0
+                || discount.compareTo(subtotal) > 0
+                || request.total().compareTo(subtotal.subtract(discount).add(vat)) != 0) {
+            throw new BadRequestException(ErrorCode.BAD_REQUEST, "Sale totals are invalid.");
+        }
+        int quantity = 0;
+        BigDecimal calculated = BigDecimal.ZERO;
+        for (SaleItemRequest item : request.lineItems()) {
+            if (item == null || item.quantity() == null || item.quantity() <= 0
+                    || item.unitPrice() == null || item.unitPrice().compareTo(BigDecimal.ZERO) < 0) {
+                throw new BadRequestException(ErrorCode.BAD_REQUEST, "Each sale item needs a positive quantity and a valid price.");
+            }
+            quantity += item.quantity();
+            BigDecimal lineTotal = item.lineTotal() == null
+                    ? item.unitPrice().multiply(BigDecimal.valueOf(item.quantity()))
+                    : item.lineTotal();
+            if (lineTotal.compareTo(BigDecimal.ZERO) < 0) {
+                throw new BadRequestException(ErrorCode.BAD_REQUEST, "Sale item total cannot be negative.");
+            }
+            calculated = calculated.add(lineTotal);
+        }
+        if (quantity != request.items()) {
+            throw new BadRequestException(ErrorCode.BAD_REQUEST, "Sale item count does not match line quantities.");
+        }
+        if (calculated.compareTo(subtotal) != 0) {
+            throw new BadRequestException(ErrorCode.BAD_REQUEST, "Sale subtotal does not match its line items.");
+        }
+        String payment = request.payment() == null ? "" : request.payment().trim();
+        if ("Tiền mặt".equalsIgnoreCase(payment)
+                && (request.amountReceived() == null || request.amountReceived().compareTo(request.total()) < 0)) {
+            throw new BadRequestException(ErrorCode.BAD_REQUEST, "Cash received is not enough to complete the sale.");
+        }
+        String status = request.status() == null ? "" : request.status().trim().toUpperCase(Locale.ROOT);
+        if (!status.isBlank() && !List.of("PENDING", "COMPLETED", "CANCELLED").contains(status)) {
+            throw new BadRequestException(ErrorCode.BAD_REQUEST, "Unsupported sale status: " + request.status());
+        }
     }
 
     private void applyCashChange(Sale sale) {

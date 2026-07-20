@@ -1,6 +1,7 @@
 package com.mss301.notification.service.impl;
 
 import com.mss301.common.exception.ConflictException;
+import com.mss301.common.exception.BadRequestException;
 import com.mss301.common.exception.ErrorCode;
 import com.mss301.common.exception.ResourceNotFoundException;
 import com.mss301.notification.dto.request.ApprovalRequestRequest;
@@ -50,6 +51,10 @@ public class ApprovalRequestServiceImpl implements ApprovalRequestService {
     @Override
     public ApprovalRequestResponse update(UUID id, ApprovalRequestRequest request) {
         ApprovalRequest approvalRequest = find(id);
+        if (!"Pending".equalsIgnoreCase(approvalRequest.getStatus())
+                && !"Chờ duyệt".equalsIgnoreCase(approvalRequest.getStatus())) {
+            throw new BadRequestException(ErrorCode.BAD_REQUEST, "Only pending approval requests can be edited.");
+        }
         if (!approvalRequest.getCode().equals(request.code()) && approvalRequestRepository.existsByCode(request.code())) {
             throw new ConflictException(ErrorCode.CONFLICT, "Approval request code already exists: " + request.code());
         }
@@ -60,6 +65,10 @@ public class ApprovalRequestServiceImpl implements ApprovalRequestService {
     @Override
     public ApprovalRequestResponse approve(UUID id) {
         ApprovalRequest approvalRequest = find(id);
+        String status = approvalRequest.getStatus() == null ? "" : approvalRequest.getStatus().toLowerCase();
+        if (!status.contains("pending") && !status.contains("chờ")) {
+            throw new BadRequestException(ErrorCode.BAD_REQUEST, "Only pending approval requests can be approved.");
+        }
         approvalRequest.setStatus("Đã duyệt");
         return notificationMapper.toResponse(approvalRequest);
     }
@@ -67,6 +76,10 @@ public class ApprovalRequestServiceImpl implements ApprovalRequestService {
     @Override
     public ApprovalRequestResponse reject(UUID id) {
         ApprovalRequest approvalRequest = find(id);
+        String status = approvalRequest.getStatus() == null ? "" : approvalRequest.getStatus().toLowerCase();
+        if (!status.contains("pending") && !status.contains("chờ")) {
+            throw new BadRequestException(ErrorCode.BAD_REQUEST, "Only pending approval requests can be rejected.");
+        }
         approvalRequest.setStatus("Từ chối");
         return notificationMapper.toResponse(approvalRequest);
     }

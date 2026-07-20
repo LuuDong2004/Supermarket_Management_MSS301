@@ -1,6 +1,7 @@
 package com.mss301.inventory.service.impl;
 
 import com.mss301.common.exception.ConflictException;
+import com.mss301.common.exception.BadRequestException;
 import com.mss301.common.exception.ErrorCode;
 import com.mss301.common.exception.ResourceNotFoundException;
 import com.mss301.inventory.dto.request.StockAdjustmentRequest;
@@ -33,6 +34,7 @@ public class StockAdjustmentServiceImpl implements StockAdjustmentService {
 
     @Override
     public StockAdjustmentResponse create(StockAdjustmentRequest request) {
+        validate(request);
         if (stockAdjustmentRepository.existsByCode(request.code())) {
             throw new ConflictException(ErrorCode.CONFLICT, "Adjustment code already exists: " + request.code());
         }
@@ -45,6 +47,10 @@ public class StockAdjustmentServiceImpl implements StockAdjustmentService {
     @Override
     public StockAdjustmentResponse update(UUID id, StockAdjustmentRequest request) {
         StockAdjustment adjustment = find(id);
+        if (!STATUS_PENDING.equals(adjustment.getStatus())) {
+            throw new BadRequestException(ErrorCode.BAD_REQUEST, "Only pending stock adjustments can be edited.");
+        }
+        validate(request);
         if (!adjustment.getCode().equals(request.code()) && stockAdjustmentRepository.existsByCode(request.code())) {
             throw new ConflictException(ErrorCode.CONFLICT, "Adjustment code already exists: " + request.code());
         }
@@ -69,6 +75,9 @@ public class StockAdjustmentServiceImpl implements StockAdjustmentService {
     @Override
     public StockAdjustmentResponse approve(UUID id) {
         StockAdjustment adjustment = find(id);
+        if (!STATUS_PENDING.equals(adjustment.getStatus())) {
+            throw new BadRequestException(ErrorCode.BAD_REQUEST, "Only pending stock adjustments can be approved.");
+        }
         // Apply the counted quantity as the new official on-hand stock.
         // Setting on-hand to the absolute counted value keeps approval idempotent.
         inventoryItemRepository.findFirstByNameIgnoreCase(adjustment.getProduct())
@@ -80,6 +89,9 @@ public class StockAdjustmentServiceImpl implements StockAdjustmentService {
     @Override
     public StockAdjustmentResponse reject(UUID id) {
         StockAdjustment adjustment = find(id);
+        if (!STATUS_PENDING.equals(adjustment.getStatus())) {
+            throw new BadRequestException(ErrorCode.BAD_REQUEST, "Only pending stock adjustments can be rejected.");
+        }
         adjustment.setStatus(STATUS_REJECTED);
         return inventoryMapper.toResponse(adjustment);
     }
@@ -92,5 +104,14 @@ public class StockAdjustmentServiceImpl implements StockAdjustmentService {
     private StockAdjustment find(UUID id) {
         return stockAdjustmentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.RESOURCE_NOT_FOUND, "Stock adjustment not found: " + id));
+    }
+
+    private void validate(StockAdjustmentRequest request) {
+        if (request.systemQty() < 0 || request.countedQty() < 0) {
+            throw new BadRequestException(ErrorCode.BAD_REQUEST, "Inventory quantities cannot be negative.");
+        }
+        if (request.diff() != request.countedQty() - request.systemQty()) {
+            throw new BadRequestException(ErrorCode.BAD_REQUEST, "Adjustment difference must equal counted quantity minus system quantity.");
+        }
     }
 }

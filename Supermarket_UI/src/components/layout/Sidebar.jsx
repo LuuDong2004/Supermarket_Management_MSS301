@@ -7,7 +7,7 @@ import { X, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 function Brand({ collapsed }) {
   return (
     <div className={cn('flex flex-1 items-center gap-3 px-6 py-5', collapsed && 'lg:justify-center lg:px-0')}>
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-600 to-brand-500 text-sm font-black text-white shadow-premium">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-brand-700 bg-brand-600 text-sm font-black text-white shadow-sm">
         S
       </div>
       <div className={cn('leading-tight', collapsed && 'lg:hidden')}>
@@ -27,7 +27,7 @@ export function Sidebar({ open, onClose, collapsed, onToggleCollapse }) {
       {open && <div className="fixed inset-0 z-30 bg-slate-900/30 lg:hidden" onClick={onClose} />}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-40 flex h-full w-64 flex-col border-r border-slate-100 bg-white shadow-premium transition-all duration-300 lg:static lg:translate-x-0',
+          'sms-sidebar fixed inset-y-0 left-0 z-40 flex h-full w-64 flex-col border-r border-slate-200 bg-white shadow-none transition-all duration-300 lg:static lg:translate-x-0',
           collapsed ? 'lg:w-[76px]' : 'lg:w-64',
           open ? 'translate-x-0' : '-translate-x-full',
         )}
@@ -59,11 +59,11 @@ export function Sidebar({ open, onClose, collapsed, onToggleCollapse }) {
                     title={collapsed ? it.label : undefined}
                     className={({ isActive }) =>
                       cn(
-                        'group flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-200',
+                        'sms-nav-item group flex items-center gap-3 rounded-none px-3.5 py-2.5 text-sm font-medium transition-all duration-200',
                         collapsed && 'lg:justify-center lg:px-0 lg:rounded-none',
                         isActive
-                          ? 'bg-brand-50/80 text-brand-800 shadow-sm font-semibold border-l-4 border-brand-600 rounded-l-none'
-                          : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:translate-x-0.5',
+                          ? 'bg-brand-50 text-brand-700 shadow-none font-semibold border-l-4 border-brand-600 rounded-l-none'
+                          : 'text-slate-600 hover:bg-brand-50 hover:text-brand-700 hover:translate-x-0.5',
                       )
                     }
                   >
@@ -71,7 +71,7 @@ export function Sidebar({ open, onClose, collapsed, onToggleCollapse }) {
                       <>
                         <it.icon
                           size={18}
-                          className={cn('shrink-0 transition-transform duration-200 group-hover:scale-105', isActive ? 'text-brand-600' : 'text-slate-400 group-hover:text-slate-600')}
+                          className={cn('shrink-0 transition-transform duration-200 group-hover:scale-105', isActive ? 'text-brand-600' : 'text-slate-400 group-hover:text-brand-600')}
                         />
                         <span className={cn('flex-1 truncate', collapsed && 'lg:hidden')}>{it.label}</span>
                       </>

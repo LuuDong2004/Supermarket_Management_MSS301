@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
+  <style>
+    .frame,.box,.line{fill:#fff;stroke:#161616;stroke-width:3}.line{fill:none;stroke-width:2}.thin{stroke-width:1.5}.brand{font:700 29px Arial,sans-serif}.title{font:700 32px Arial,sans-serif}.subtitle{font:18px Arial,sans-serif}.label{font:17px Arial,sans-serif}.small{font:14px Arial,sans-serif}.muted{fill:#555}.button{font:700 17px Arial,sans-serif}.dash{stroke-dasharray:6 6}
+  </style>
+  <rect class="frame" x="14" y="14" width="1572" height="972" rx="14"/>
+  <rect class="frame" x="14" y="14" width="1572" height="64" rx="14"/>
+  <circle cx="48" cy="46" r="9" fill="none" stroke="#161616" stroke-width="3"/><circle cx="76" cy="46" r="9" fill="none" stroke="#161616" stroke-width="3"/><circle cx="104" cy="46" r="9" fill="none" stroke="#161616" stroke-width="3"/>
+  <rect x="165" y="31" width="630" height="30" rx="8" class="box" />
+  <rect class="frame" x="46" y="103" width="1508" height="56" rx="8"/>
+  <text x="76" y="140" class="brand" >SMS</text><text x="216" y="139" class="label muted" >Supermarket Management System</text><text x="1475" y="139" class="label" text-anchor="end">Mockup user  ▾</text>
+  <rect x="46" y="159" width="245" height="762" fill="#fff" stroke="#161616" stroke-width="3"/>
+  <text x="76" y="222" class="label" >Tổng quan</text><text x="76" y="286" class="label" >Bán hàng</text><rect x="47" y="322" width="8" height="43" fill="#161616"/><text x="76" y="350" class="label" >Kho hàng</text><text x="76" y="414" class="label" >Nhân sự</text><text x="76" y="478" class="label" >Quản trị</text><text x="76" y="542" class="label" >Báo cáo</text><text x="76" y="606" class="label" >Cài đặt</text>
+  <line x1="291" y1="159" x2="291" y2="921" class="line "/>
+  <text x="330" y="211" class="title" >Giám sát tồn kho</text><text x="330" y="245" class="subtitle muted" >Màn hình 14-warehouse-monitor • Tóm tắt hoạt động</text><rect x="330" y="280" width="255" height="110" rx="8" class="box" /><text x="350" y="315" class="label" >Doanh thu</text><text x="350" y="360" class="title" >0 đ</text><rect x="620" y="280" width="255" height="110" rx="8" class="box" /><text x="640" y="315" class="label" >Đơn hàng</text><text x="640" y="360" class="title" >0</text><rect x="910" y="280" width="255" height="110" rx="8" class="box" /><text x="930" y="315" class="label" >Sản phẩm</text><text x="930" y="360" class="title" >0</text><rect x="1200" y="280" width="255" height="110" rx="8" class="box" /><text x="1220" y="315" class="label" >Cảnh báo</text><text x="1220" y="360" class="title" >0</text>
+    <rect x="330" y="430" width="700" height="330" rx="8" class="box" /><text x="360" y="470" class="label" >Biểu đồ xu hướng</text><line x1="375" y1="700" x2="970" y2="700" class="line "/><line x1="375" y1="500" x2="375" y2="700" class="line "/><polyline points="390,665 495,620 600,650 710,535 815,590 940,490" fill="none" stroke="#161616" stroke-width="4"/>
+    <rect x="1060" y="430" width="440" height="330" rx="8" class="box" /><text x="1090" y="470" class="label" >Ghi chú / cảnh báo</text><line x1="1090" y1="520" x2="1460" y2="520" class="line thin"/><line x1="1090" y1="568" x2="1460" y2="568" class="line thin"/><line x1="1090" y1="616" x2="1460" y2="616" class="line thin"/><line x1="1090" y1="664" x2="1460" y2="664" class="line thin"/>
+    <rect x="330" y="800" width="1170" height="66" rx="8" class="box" /><text x="355" y="841" class="label" >Hoạt động gần đây</text><line x1="620" y1="820" x2="620" y2="850" class="line thin"/><text x="645" y="841" class="label muted" >Chưa có dữ liệu</text>
+  <rect class="frame" x="46" y="921" width="1508" height="42" rx="0"/><text x="76" y="948" class="small muted" >SMS • Low-fidelity wireframe</text>
+  </svg>

@@ -31,7 +31,7 @@ eureka:
 
 security:
   internal:
-    api-key: ${INTERNAL_API_KEY}
+    api-key: ${INTERNAL_API_KEY:mss301-local-internal-api-key}
 
 management:
   endpoints:
@@ -52,8 +52,7 @@ logging:
     com.mss301.sales: INFO
 
 sepay:
-  webhook-token: ${SEPAY_WEBHOOK_TOKEN}
+  webhook-token: ${SEPAY_WEBHOOK_TOKEN:mss301-local-sepay-token}
   bank-id: ${SEPAY_BANK_ID:MB}
   account-no: ${SEPAY_ACCOUNT_NO:0000000000}
   account-name: ${SEPAY_ACCOUNT_NAME:DEMO ACCOUNT}
-

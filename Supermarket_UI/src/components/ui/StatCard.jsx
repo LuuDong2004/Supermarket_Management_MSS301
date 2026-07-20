@@ -13,7 +13,7 @@ const TONES = {
 export function StatCard({ label, value, icon: Icon, tone = 'brand', delta, hint }) {
   const positive = delta != null && delta >= 0
   return (
-    <div className="rounded-2xl border border-slate-100 bg-white/90 p-5 shadow-premium transition-all duration-300 hover:shadow-premium-hover hover:-translate-y-0.5 backdrop-blur-sm">
+    <div className="sms-stat-card rounded-none border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:border-brand-200 hover:shadow-md hover:-translate-y-0.5">
       <div className="flex items-start justify-between">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{label}</p>

@@ -4,7 +4,8 @@ import { PageHeader } from '../../components/ui/PageHeader.jsx'
 import { Card, CardBody, Button, Field, Input, Select, Spinner } from '../../components/ui/primitives.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { useConfirm } from '../../components/ui/Confirm.jsx'
-import { policyService, withFallback, toList } from '../../services/index.js'
+import { useAuth } from '../../context/AuthContext.jsx'
+import { policyService, approvalRequestService, withFallback, toList } from '../../services/index.js'
 import { ArrowLeft, Save } from 'lucide-react'
 
 const emptyForm = { code: '', name: '', value: '', category: 'Bán hàng', updatedDate: '' }
@@ -15,6 +16,8 @@ export default function BusinessRuleForm() {
   const navigate = useNavigate()
   const toast = useToast()
   const confirm = useConfirm()
+  const { user } = useAuth()
+  const canEdit = user?.role === 'ROLE_CEO'
 
   const [form, setForm] = useState(emptyForm)
   const [loading, setLoading] = useState(!!id)
@@ -57,9 +60,22 @@ export default function BusinessRuleForm() {
     }
     setSaving(true)
     try {
-      if (id) await policyService.update(id, payload)
-      else await policyService.create(payload)
-      toast.success(`Đã lưu quy tắc "${form.name}".`)
+      if (canEdit) {
+        if (id) await policyService.update(id, payload)
+        else await policyService.create(payload)
+        toast.success(`Đã lưu quy tắc "${form.name}".`)
+      } else {
+        await approvalRequestService.create({
+          code: `CFG-${Date.now()}`,
+          type: 'CONFIGURATION',
+          requester: user?.fullName || user?.username || 'Administrator',
+          target: form.code || form.name,
+          reqDate: new Date().toISOString().slice(0, 10),
+          status: 'Pending',
+          note: `${id ? 'Update' : 'Create'} business rule: ${form.name} = ${form.value}`,
+        })
+        toast.success('Đã gửi yêu cầu thay đổi để CEO phê duyệt.')
+      }
       navigate('/app/settings/rules')
     } catch (e) {
       toast.error(e.message || 'Lưu quy tắc thất bại.')

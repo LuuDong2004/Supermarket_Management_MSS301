@@ -10,6 +10,7 @@ import { Forbidden, NotFound } from './pages/Errors.jsx'
 
 // POS (3.8, 3.9)
 import ProcessSale from './pages/pos/ProcessSale.jsx'
+import ProcessPayment from './pages/pos/ProcessPayment.jsx'
 import Returns from './pages/pos/Returns.jsx'
 import Shift from './pages/pos/Shift.jsx'
 import Members from './pages/pos/Members.jsx'
@@ -72,6 +73,7 @@ import StrategicDecisions from './pages/ceo/StrategicDecisions.jsx'
 import StrategicDecisionForm from './pages/ceo/StrategicDecisionForm.jsx'
 
 // Reports (3.10)
+import SalesReport from './pages/reports/SalesReport.jsx'
 import InventoryReport from './pages/reports/InventoryReport.jsx'
 import EmployeeReport from './pages/reports/EmployeeReport.jsx'
 
@@ -98,6 +100,7 @@ export default function App() {
 
         {/* POS */}
         <Route path="pos/sale" element={G('/app/pos/sale', <ProcessSale />)} />
+        <Route path="pos/payment" element={G('/app/pos/payment', <ProcessPayment />)} />
         <Route path="pos/returns" element={G('/app/pos/returns', <Returns />)} />
         <Route path="pos/returns/new" element={G('/app/pos/returns', <ReturnForm />)} />
         <Route path="pos/shift" element={G('/app/pos/shift', <Shift />)} />
@@ -166,6 +169,7 @@ export default function App() {
         <Route path="ceo/decisions/:id/edit" element={G('/app/ceo/decisions', <StrategicDecisionForm />)} />
 
         {/* Reports */}
+        <Route path="reports/sales" element={G('/app/reports/sales', <SalesReport />)} />
         <Route path="reports/inventory" element={G('/app/reports/inventory', <InventoryReport />)} />
         <Route path="reports/employees" element={G('/app/reports/employees', <EmployeeReport />)} />
 

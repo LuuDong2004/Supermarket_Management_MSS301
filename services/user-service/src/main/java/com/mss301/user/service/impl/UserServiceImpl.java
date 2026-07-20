@@ -17,6 +17,7 @@ import com.mss301.user.entity.User;
 import com.mss301.user.mapper.UserMapper;
 import com.mss301.user.repository.UserRepository;
 import com.mss301.user.service.interfaces.UserService;
+import com.mss301.user.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -60,6 +61,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse updateUser(UUID userId, AdminUpdateUserRequest request) {
+        if (userId.equals(SecurityUtils.currentUser().uuid())
+                && (request.role() != null || request.status() != null)) {
+            throw new BadRequestException(ErrorCode.BAD_REQUEST, "Administrator cannot change their own role or status.");
+        }
         User user = findActive(userId);
         user.setFullName(request.fullName());
         user.setPhone(request.phone());
@@ -103,6 +108,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse updateStatus(UUID id, UserStatus status) {
+        if (id.equals(SecurityUtils.currentUser().uuid())) {
+            throw new BadRequestException(ErrorCode.BAD_REQUEST, "You cannot lock, deactivate, or activate your own account.");
+        }
         User user = findActive(id);
         user.setStatus(status);
         return userMapper.toResponse(user);
@@ -110,6 +118,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void softDelete(UUID id) {
+        if (id.equals(SecurityUtils.currentUser().uuid())) {
+            throw new BadRequestException(ErrorCode.BAD_REQUEST, "You cannot delete your own account.");
+        }
         User user = findActive(id);
         userRepository.delete(user); // @SQLDelete flips the deleted flag
     }

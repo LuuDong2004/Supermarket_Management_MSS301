@@ -60,7 +60,7 @@ export default function ReturnForm() {
       .map((it) => {
         const qty = picks[it.productCode]
         const unit = it.unitPrice || 0
-        return { productCode: it.productCode, productName: it.productName, unitPrice: unit, quantity: qty, lineTotal: unit * qty }
+        return { productCode: it.productCode, productName: it.productName, unitPrice: unit, quantity: qty, lineTotal: unit * qty, restockable: true }
       })
   }, [sale, picks])
 

@@ -2,9 +2,9 @@ import { cn } from '../../lib/cn.js'
 
 export function PageHeader({ title, subtitle, actions, breadcrumb }) {
   return (
-    <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div className="sms-page-header mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        {breadcrumb && <p className="mb-1 text-xs font-medium uppercase tracking-wide text-brand-600">{breadcrumb}</p>}
+        {breadcrumb && <p className="mb-1 text-xs font-medium uppercase tracking-wide text-slate-500">{breadcrumb}</p>}
         <h1 className="text-xl font-bold tracking-tight text-slate-900">{title}</h1>
         {subtitle && <p className="mt-1 text-sm text-slate-500">{subtitle}</p>}
       </div>
@@ -21,7 +21,7 @@ export function FilterBar({ children, className }) {
   return (
     <div
       className={cn(
-        'mb-5 flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-card',
+        'sms-filter-bar mb-5 flex flex-wrap items-end gap-3 rounded-none border border-slate-900 bg-white p-3 shadow-none',
         // Controls share one row and grow, but never balloon: a lone search or
         // dropdown caps at max-w-md instead of stretching across the screen.
         // Children marked .grow (search boxes) get a 50% wider cap than plain filters.

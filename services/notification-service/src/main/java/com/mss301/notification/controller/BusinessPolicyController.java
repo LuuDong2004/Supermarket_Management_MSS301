@@ -44,7 +44,7 @@ public class BusinessPolicyController {
     }
 
     @Operation(summary = "Create a business policy")
-    @PreAuthorize("hasAnyRole('CEO','ADMIN')")
+    @PreAuthorize("hasRole('CEO')")
     @PostMapping
     public ResponseEntity<ApiResponse<BusinessPolicyResponse>> create(@Valid @RequestBody BusinessPolicyRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -52,14 +52,14 @@ public class BusinessPolicyController {
     }
 
     @Operation(summary = "Update a business policy")
-    @PreAuthorize("hasAnyRole('CEO','ADMIN')")
+    @PreAuthorize("hasRole('CEO')")
     @PutMapping("/{id}")
     public ApiResponse<BusinessPolicyResponse> update(@PathVariable UUID id, @Valid @RequestBody BusinessPolicyRequest request) {
         return ApiResponse.success("Policy updated", businessPolicyService.update(id, request));
     }
 
     @Operation(summary = "Delete a business policy")
-    @PreAuthorize("hasAnyRole('CEO','ADMIN')")
+    @PreAuthorize("hasRole('CEO')")
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable UUID id) {
         businessPolicyService.delete(id);

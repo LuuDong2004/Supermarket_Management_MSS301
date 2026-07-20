@@ -12,6 +12,7 @@ import { shiftService, saleService, withFallback, toList, mockShifts } from '../
 import { Clock, DollarSign, ShoppingCart, Banknote, Scale, LockKeyhole, Plus } from 'lucide-react'
 
 const EMPTY_SHIFT = { code: '', cashier: '', open: '', close: '', opening: 0, sales: 0, status: 'Đang mở' }
+const isClosedStatus = (status) => ['CLOSED', 'Đã đóng'].includes(String(status || '').trim())
 
 export default function Shift() {
   const toast = useToast()
@@ -39,8 +40,8 @@ export default function Shift() {
   useEffect(() => { load() }, [])
 
   // Current shift = first open one, else most recent.
-  const shift = shifts.find((s) => s.status !== 'Đã đóng') || shifts[0] || EMPTY_SHIFT
-  const closed = shift.status === 'Đã đóng'
+  const shift = shifts.find((s) => !isClosedStatus(s.status)) || shifts[0] || EMPTY_SHIFT
+  const closed = isClosedStatus(shift.status)
 
   // Real per-shift aggregation: completed sales by this cashier since the shift opened.
   const live = useMemo(() => {
@@ -74,7 +75,7 @@ export default function Shift() {
         closingActual: actualNum,
         orders: shiftOrders,
         varianceNote: note || null,
-        status: 'Đã đóng',
+        status: 'CLOSED',
       })
       setConfirm(false)
       toast.success(`Đã đóng ca ${shift.code || shift.id}. Chênh lệch ${formatCurrency(diff)}.`)
@@ -98,7 +99,7 @@ export default function Shift() {
         closeAt: '',
         opening: Number(openForm.opening) || 0,
         sales: 0,
-        status: 'Đang mở',
+        status: 'OPEN',
       })
       setOpenShift(false)
       setOpenForm({ opening: '' })

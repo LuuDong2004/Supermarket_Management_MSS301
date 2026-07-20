@@ -57,14 +57,14 @@ public class ApprovalRequestController {
     }
 
     @Operation(summary = "Approve a request")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO')")
+    @PreAuthorize("hasRole('CEO')")
     @PostMapping("/{id}/approve")
     public ApiResponse<ApprovalRequestResponse> approve(@PathVariable UUID id) {
         return ApiResponse.success("Approval request approved", approvalRequestService.approve(id));
     }
 
     @Operation(summary = "Reject a request")
-    @PreAuthorize("hasAnyRole('ADMIN','CEO')")
+    @PreAuthorize("hasRole('CEO')")
     @PostMapping("/{id}/reject")
     public ApiResponse<ApprovalRequestResponse> reject(@PathVariable UUID id) {
         return ApiResponse.success("Approval request rejected", approvalRequestService.reject(id));

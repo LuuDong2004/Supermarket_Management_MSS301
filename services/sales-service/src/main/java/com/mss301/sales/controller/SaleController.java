@@ -95,6 +95,7 @@ public class SaleController {
     }
 
     @Operation(summary = "Update sale status")
+    @PreAuthorize("hasRole('CASHIER')")
     @PutMapping("/{id}/status")
     public ApiResponse<SaleResponse> updateStatus(
             @PathVariable UUID id, 
@@ -104,6 +105,7 @@ public class SaleController {
     }
 
     @Operation(summary = "Transition a pending sale to cash payment")
+    @PreAuthorize("hasRole('CASHIER')")
     @PutMapping("/{id}/complete-cash")
     public ApiResponse<SaleResponse> completeCashSale(@PathVariable UUID id) {
         return ApiResponse.success("Sale completed with cash", saleService.completeCashSale(id));

@@ -16,6 +16,7 @@ public record PurchaseOrderRequest(
         @NotNull @PositiveOrZero Integer items,
         @NotNull @DecimalMin("0.0") BigDecimal total,
         @Size(max = 30) String status,
-        @Size(max = 30) String approval
+        @Size(max = 30) String approval,
+        LocalDate expectedDelivery
 ) {
 }

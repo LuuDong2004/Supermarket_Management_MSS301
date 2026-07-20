@@ -288,10 +288,9 @@ export const policyService = {
 // System settings are served at /api/settings.
 export const settingService = {
   list: () => api.get('/settings'),
-  get: (id) => api.get(`/settings/${id}`),
+  get: (key) => api.get(`/settings/${key}`),
   create: (body) => api.post('/settings', body),
-  update: (id, body) => api.put(`/settings/${id}`, body),
-  remove: (id) => api.delete(`/settings/${id}`),
+  update: (key, body) => api.put(`/settings/${key}`, body),
 }
 
 // Legacy no-op mock symbols kept only so existing pages' imports resolve.

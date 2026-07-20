@@ -27,6 +27,7 @@ export const NAV = [
     section: 'Bán hàng (POS)',
     items: [
       { to: '/app/pos/sale', label: 'Bán hàng / Thanh toán', icon: ShoppingCart, roles: ['ROLE_CASHIER'], code: '3.8.1' },
+      { to: '/app/pos/payment', label: 'Thanh toán', icon: Wallet, roles: ['ROLE_CASHIER'], code: '3.8.2' },
       { to: '/app/pos/returns', label: 'Trả hàng / Hoàn tiền', icon: Undo2, roles: ['ROLE_CASHIER'], code: '3.8.4' },
       { to: '/app/pos/shift', label: 'Ca thu ngân', icon: Receipt, roles: ['ROLE_CASHIER'], code: '3.8.3' },
       { to: '/app/pos/members', label: 'Khách hàng thành viên', icon: Users, roles: ['ROLE_CASHIER'], code: '3.9.1' },
@@ -93,6 +94,7 @@ export const NAV = [
   {
     section: 'Báo cáo',
     items: [
+      { to: '/app/reports/sales', label: 'Doanh thu & hiệu suất', icon: BarChart3, roles: ['ROLE_CEO', 'ROLE_WAREHOUSE_MANAGER', 'ROLE_STAFF_MANAGER'], code: '3.10.1' },
       { to: '/app/reports/inventory', label: 'Kho & Tồn kho', icon: FileBarChart, roles: ['ROLE_CEO', 'ROLE_WAREHOUSE_MANAGER'], code: '3.10.2' },
       { to: '/app/reports/employees', label: 'Hiệu suất nhân viên', icon: FileBarChart, roles: ['ROLE_CEO', 'ROLE_STAFF_MANAGER'], code: '3.10.3' },
     ],

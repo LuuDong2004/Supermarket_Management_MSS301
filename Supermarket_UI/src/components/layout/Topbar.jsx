@@ -33,7 +33,7 @@ export function Topbar({ onMenu }) {
   }, [canViewNotifications])
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-slate-100 bg-white/80 px-4 backdrop-blur-md shadow-sm lg:px-6">
+    <header className="sms-topbar sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-slate-200 bg-white px-4 shadow-none lg:px-6">
       <button onClick={onMenu} className="rounded-xl p-2 text-slate-500 hover:bg-slate-100 lg:hidden" aria-label="Mở menu">
         <Menu size={20} />
       </button>
@@ -42,7 +42,7 @@ export function Topbar({ onMenu }) {
         <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
         <input
           placeholder="Tìm module, sản phẩm, khách hàng..."
-          className="w-full rounded-xl border border-slate-100 bg-slate-50/80 py-2 pl-10 pr-4 text-sm placeholder:text-slate-400 transition-all duration-200 focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-brand-500/10"
+          className="w-full rounded-none border border-slate-200 bg-white py-2 pl-10 pr-4 text-sm placeholder:text-slate-400 transition-all duration-200 focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/10"
         />
       </div>
 
@@ -68,9 +68,9 @@ export function Topbar({ onMenu }) {
         <div className="relative" ref={ref}>
           <button
             onClick={() => setMenuOpen((o) => !o)}
-            className="flex items-center gap-2 rounded-xl py-1.5 pl-1.5 pr-2 transition-colors hover:bg-slate-100"
+            className="flex items-center gap-2 rounded-none py-1.5 pl-1.5 pr-2 transition-colors hover:bg-slate-100"
           >
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl border border-brand-400/20 bg-gradient-to-br from-brand-600 to-brand-500 text-xs font-bold text-white shadow-premium">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full border border-brand-700 bg-brand-600 text-xs font-bold text-white shadow-sm">
               {initials(user?.fullName || user?.username || 'U')}
             </span>
             <span className="hidden text-left leading-tight sm:block">

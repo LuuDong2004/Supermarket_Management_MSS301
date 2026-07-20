@@ -406,7 +406,7 @@ export default function ProcessSale() {
       code: orderCode,
       saleTime: now.toTimeString().slice(0, 5),
       cashier: user?.fullName || user?.username || 'Thu ngân',
-      items: cart.length,
+      items: cart.reduce((sum, item) => sum + Number(item.qty || 0), 0),
       total: grandTotal,
       payment: methodLabel,
       status: method === 'qr' ? 'PENDING' : 'COMPLETED',

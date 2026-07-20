@@ -46,6 +46,10 @@ public class SaleReturnItem {
     @Column(name = "line_total", precision = 14, scale = 2)
     private BigDecimal lineTotal;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean restockable = true;
+
     @PrePersist
     void ensureId() {
         if (id == null) {

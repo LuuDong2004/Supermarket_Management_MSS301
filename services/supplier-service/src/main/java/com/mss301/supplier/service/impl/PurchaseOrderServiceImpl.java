@@ -1,6 +1,7 @@
 package com.mss301.supplier.service.impl;
 
 import com.mss301.common.exception.ConflictException;
+import com.mss301.common.exception.BadRequestException;
 import com.mss301.common.exception.ErrorCode;
 import com.mss301.common.exception.ResourceNotFoundException;
 import com.mss301.supplier.dto.request.PurchaseOrderRequest;
@@ -26,6 +27,7 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
 
     @Override
     public PurchaseOrderResponse create(PurchaseOrderRequest request) {
+        validateDraft(request);
         if (purchaseOrderRepository.existsByCode(request.code())) {
             throw new ConflictException(ErrorCode.CONFLICT, "Purchase order code already exists: " + request.code());
         }
@@ -45,6 +47,10 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     @Override
     public PurchaseOrderResponse update(UUID id, PurchaseOrderRequest request) {
         PurchaseOrder order = find(id);
+        if (!"Pending".equalsIgnoreCase(order.getStatus()) && !"Draft".equalsIgnoreCase(order.getStatus())) {
+            throw new BadRequestException(ErrorCode.BAD_REQUEST, "Only pending purchase orders can be edited.");
+        }
+        validateDraft(request);
         if (!order.getCode().equals(request.code()) && purchaseOrderRepository.existsByCode(request.code())) {
             throw new ConflictException(ErrorCode.CONFLICT, "Purchase order code already exists: " + request.code());
         }
@@ -69,6 +75,9 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     @Override
     public PurchaseOrderResponse approve(UUID id) {
         PurchaseOrder order = find(id);
+        if (!"Pending".equalsIgnoreCase(order.getStatus())) {
+            throw new BadRequestException(ErrorCode.BAD_REQUEST, "Only pending purchase orders can be approved.");
+        }
         order.setStatus("Approved");
         order.setApproval("Đã duyệt");
         return supplierMapper.toResponse(order);
@@ -77,6 +86,9 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     @Override
     public PurchaseOrderResponse reject(UUID id) {
         PurchaseOrder order = find(id);
+        if (!"Pending".equalsIgnoreCase(order.getStatus())) {
+            throw new BadRequestException(ErrorCode.BAD_REQUEST, "Only pending purchase orders can be rejected.");
+        }
         order.setStatus("Rejected");
         order.setApproval("Từ chối");
         return supplierMapper.toResponse(order);
@@ -85,6 +97,9 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     @Override
     public PurchaseOrderResponse receive(UUID id) {
         PurchaseOrder order = find(id);
+        if (!"Approved".equalsIgnoreCase(order.getStatus())) {
+            throw new BadRequestException(ErrorCode.BAD_REQUEST, "Only approved purchase orders can be received.");
+        }
         order.setStatus("Received");
         return supplierMapper.toResponse(order);
     }
@@ -97,5 +112,17 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
     private PurchaseOrder find(UUID id) {
         return purchaseOrderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.RESOURCE_NOT_FOUND, "Purchase order not found: " + id));
+    }
+
+    private void validateDraft(PurchaseOrderRequest request) {
+        if (request.items() == null || request.items() < 1) {
+            throw new BadRequestException(ErrorCode.BAD_REQUEST, "Purchase order must contain at least one product item.");
+        }
+        if (request.total() == null || request.total().signum() <= 0) {
+            throw new BadRequestException(ErrorCode.BAD_REQUEST, "Purchase order total must be greater than zero.");
+        }
+        if (request.expectedDelivery() != null && request.expectedDelivery().isBefore(request.orderDate())) {
+            throw new BadRequestException(ErrorCode.BAD_REQUEST, "Expected delivery cannot be before the order date.");
+        }
     }
 }

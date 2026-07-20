@@ -2,9 +2,10 @@ server:
   port: ${SERVER_PORT:8080}
 
 spring:
-  codec:
-    # Allow proxying multipart image uploads up to 10MB through the gateway.
-    max-in-memory-size: 10MB
+  http:
+    codec:
+      # Allow proxying multipart image uploads up to 10MB through the gateway.
+      max-in-memory-size: 10MB
   application:
     name: api-gateway
   cloud:
@@ -52,10 +53,10 @@ spring:
 # Shared HMAC secret — MUST equal auth-service's security.jwt.secret
 security:
   jwt:
-    secret: ${JWT_SECRET}
+    secret: ${JWT_SECRET:mss301-local-dev-jwt-secret-change-me-32-chars}
 
 cors:
-  allowed-origins: ${CORS_ALLOWED_ORIGINS}
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
 
 eureka:
   client:

@@ -1,6 +1,7 @@
 package com.mss301.inventory.service.impl;
 
 import com.mss301.common.exception.ConflictException;
+import com.mss301.common.exception.BadRequestException;
 import com.mss301.common.exception.ErrorCode;
 import com.mss301.common.exception.ResourceNotFoundException;
 import com.mss301.inventory.dto.request.WarehouseTransactionRequest;
@@ -32,6 +33,9 @@ public class WarehouseTransactionServiceImpl implements WarehouseTransactionServ
 
     @Override
     public WarehouseTransactionResponse create(WarehouseTransactionRequest request) {
+        if (request.qty() <= 0) {
+            throw new BadRequestException(ErrorCode.BAD_REQUEST, "Warehouse transaction quantity must be positive.");
+        }
         if (warehouseTransactionRepository.existsByCode(request.code())) {
             throw new ConflictException(ErrorCode.CONFLICT, "Transaction code already exists: " + request.code());
         }
@@ -43,6 +47,12 @@ public class WarehouseTransactionServiceImpl implements WarehouseTransactionServ
     @Override
     public WarehouseTransactionResponse update(UUID id, WarehouseTransactionRequest request) {
         WarehouseTransaction transaction = find(id);
+        if (!STATUS_PENDING.equals(transaction.getStatus())) {
+            throw new BadRequestException(ErrorCode.BAD_REQUEST, "Only pending warehouse transactions can be edited.");
+        }
+        if (request.qty() <= 0) {
+            throw new BadRequestException(ErrorCode.BAD_REQUEST, "Warehouse transaction quantity must be positive.");
+        }
         if (!transaction.getCode().equals(request.code()) && warehouseTransactionRepository.existsByCode(request.code())) {
             throw new ConflictException(ErrorCode.CONFLICT, "Transaction code already exists: " + request.code());
         }
@@ -67,6 +77,9 @@ public class WarehouseTransactionServiceImpl implements WarehouseTransactionServ
     @Override
     public WarehouseTransactionResponse approve(UUID id) {
         WarehouseTransaction transaction = find(id);
+        if (!STATUS_PENDING.equals(transaction.getStatus())) {
+            throw new BadRequestException(ErrorCode.BAD_REQUEST, "Only pending warehouse transactions can be approved.");
+        }
         // Apply the movement to stock only on the first approval (guarded to stay idempotent).
         if (!STATUS_APPROVED.equals(transaction.getStatus())) {
             applyToStock(transaction);
@@ -86,6 +99,9 @@ public class WarehouseTransactionServiceImpl implements WarehouseTransactionServ
     @Override
     public WarehouseTransactionResponse reject(UUID id) {
         WarehouseTransaction transaction = find(id);
+        if (!STATUS_PENDING.equals(transaction.getStatus())) {
+            throw new BadRequestException(ErrorCode.BAD_REQUEST, "Only pending warehouse transactions can be rejected.");
+        }
         transaction.setStatus(STATUS_REJECTED);
         return inventoryMapper.toResponse(transaction);
     }

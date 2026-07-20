@@ -11,6 +11,7 @@ public record ReturnItemRequest(
         @Size(max = 200) String productName,
         BigDecimal unitPrice,
         @NotNull @Positive Integer quantity,
-        BigDecimal lineTotal
+        BigDecimal lineTotal,
+        Boolean restockable
 ) {
 }

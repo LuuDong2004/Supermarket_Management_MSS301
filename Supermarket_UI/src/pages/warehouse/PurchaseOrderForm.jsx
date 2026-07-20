@@ -23,7 +23,7 @@ export default function PurchaseOrderForm() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
-  const [form, setForm] = useState({ supplier: '', date: '2026-06-15' })
+  const [form, setForm] = useState({ supplier: '', date: '2026-06-15', expectedDelivery: '' })
   const [lines, setLines] = useState([])
 
   useEffect(() => {
@@ -51,6 +51,10 @@ export default function PurchaseOrderForm() {
   const draftTotal = lines.reduce((s, x) => s + Number(x.qty) * Number(x.price), 0)
 
   const createOrder = async () => {
+    if (!form.supplier || !form.date) return toast.error('Nhà cung cấp và ngày đặt là bắt buộc.')
+    if (lines.length === 0 || lines.some((line) => Number(line.qty) <= 0 || Number(line.price) < 0)) {
+      return toast.error('Đơn mua phải có ít nhất một mặt hàng với số lượng hợp lệ.')
+    }
     if (!(await confirm({
       title: 'Tạo đơn mua hàng?',
       message: `Tạo đơn mua từ ${form.supplier} với ${lines.length} mặt hàng, tổng ${formatCurrency(draftTotal)}.`,
@@ -67,6 +71,7 @@ export default function PurchaseOrderForm() {
         total: draftTotal,
         status: 'Pending',
         approval: 'Chờ duyệt',
+        expectedDelivery: form.expectedDelivery || null,
       })
       toast.success(`Đã tạo đơn mua ${code}.`)
       navigate('/app/warehouse/purchase-orders')
@@ -104,6 +109,9 @@ export default function PurchaseOrderForm() {
                 </Field>
                 <Field label="Ngày đặt" required>
                   <Input type="date" value={form.date} onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))} />
+                </Field>
+                <Field label="Ngày giao dự kiến">
+                  <Input type="date" min={form.date} value={form.expectedDelivery} onChange={(e) => setForm((f) => ({ ...f, expectedDelivery: e.target.value }))} />
                 </Field>
               </div>
 

@@ -4,11 +4,11 @@ import { Calendar, Check, ChevronLeft, ChevronRight, Loader2 } from 'lucide-reac
 
 /* ------------------------------ Button ------------------------------ */
 const BTN_VARIANTS = {
-  primary: 'bg-gradient-to-r from-brand-600 to-brand-500 text-white hover:from-brand-700 hover:to-brand-600 shadow-premium focus:ring-brand-500/20',
-  secondary: 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:border-slate-300 focus:ring-slate-500/10',
-  ghost: 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 focus:ring-slate-500/5',
-  danger: 'bg-gradient-to-r from-rose-600 to-rose-500 text-white hover:from-rose-700 hover:to-rose-600 shadow-premium focus:ring-rose-500/20',
-  success: 'bg-gradient-to-r from-emerald-600 to-emerald-500 text-white hover:from-emerald-700 hover:to-emerald-600 shadow-premium focus:ring-emerald-500/20',
+  primary: 'bg-brand-600 text-white border border-brand-600 hover:bg-brand-700 focus:ring-brand-500/20',
+  secondary: 'bg-white text-slate-700 border border-slate-200 hover:bg-brand-50 hover:border-brand-300 focus:ring-brand-500/10',
+  ghost: 'text-slate-600 border border-transparent hover:bg-brand-50 hover:text-brand-700 focus:ring-brand-500/5',
+  danger: 'bg-rose-600 text-white border border-rose-600 hover:bg-rose-700 focus:ring-rose-500/20',
+  success: 'bg-emerald-600 text-white border border-emerald-600 hover:bg-emerald-700 focus:ring-emerald-500/20',
 }
 
 const BTN_SIZES = {
@@ -29,7 +29,7 @@ export function Button({
   return (
     <button
       className={cn(
-        'inline-flex items-center justify-center font-medium transition-all duration-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100 focus:outline-none focus:ring-4',
+        'sms-button inline-flex items-center justify-center font-medium transition-colors duration-150 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100 focus:outline-none focus:ring-2',
         BTN_VARIANTS[variant],
         BTN_SIZES[size],
         className,
@@ -48,8 +48,8 @@ export function Card({ className, children, hoverEffect = false, ...props }) {
   return (
     <div
       className={cn(
-        'rounded-2xl border border-slate-100 bg-white/90 shadow-premium backdrop-blur-sm transition-all duration-300',
-        hoverEffect && 'hover:shadow-premium-hover hover:-translate-y-0.5',
+        'sms-card rounded-none border border-slate-200 bg-white shadow-sm transition-all duration-200',
+        hoverEffect && 'hover:border-brand-200 hover:shadow-md hover:-translate-y-0.5',
         className
       )}
       {...props}
@@ -61,10 +61,10 @@ export function Card({ className, children, hoverEffect = false, ...props }) {
 
 export function CardHeader({ title, subtitle, action, icon: Icon, className }) {
   return (
-    <div className={cn('flex items-center justify-between gap-3 border-b border-slate-100/80 px-5 py-3', className)}>
+    <div className={cn('sms-card-header flex items-center justify-between gap-3 border-b border-slate-200 px-5 py-3', className)}>
       <div className="flex items-center gap-2.5">
         {Icon && (
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 text-brand-600 border border-brand-100/50">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-brand-100 bg-brand-50 text-brand-600">
             <Icon size={15} />
           </span>
         )}
@@ -84,7 +84,7 @@ export function CardBody({ className, children }) {
 
 /* ------------------------------ Badge ------------------------------- */
 const BADGE_TONES = {
-  slate: 'bg-slate-100 text-slate-700 border-slate-200/50',
+  slate: 'bg-slate-100 text-slate-700 border-slate-200',
   brand: 'bg-brand-50 text-brand-700 border-brand-100',
   green: 'bg-emerald-50 text-emerald-700 border-emerald-100',
   amber: 'bg-amber-50 text-amber-700 border-amber-100',
@@ -97,7 +97,7 @@ export function Badge({ tone = 'slate', children, className, dot }) {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium shadow-sm/5',
+        'inline-flex items-center gap-1.5 rounded-md border px-2.5 py-0.5 text-xs font-medium shadow-sm/5',
         BADGE_TONES[tone],
         className,
       )}
@@ -112,9 +112,9 @@ export function Badge({ tone = 'slate', children, className, dot }) {
 export function StatusBadge({ status }) {
   const s = (status || '').toLowerCase()
   let tone = 'slate'
-  if (/(up|active|đang làm|đang mở|approved|đã duyệt|đúng giờ|received|hoàn thành|hoàn tất|đang chạy|completed|delivered|đã hoàn|đã giao|đã xác nhận|đang bán|đã đóng)/.test(s)) tone = 'green'
+  if (/(up|open|active|đang làm|đang mở|approved|đã duyệt|đúng giờ|received|hoàn thành|hoàn tất|đang chạy|completed|delivered|đã hoàn|đã giao|đã xác nhận|đang bán)/.test(s)) tone = 'green'
   else if (/(pending|chờ|đi muộn|lên lịch|warn|on hold|partial|đang giao|shipping|tạm nghỉ)/.test(s)) tone = 'amber'
-  else if (/(down|rejected|từ chối|vắng|error|locked|khóa|hết hàng|expired|cancelled|đã hủy|ngừng|nghỉ việc)/.test(s)) tone = 'red'
+  else if (/(down|closed|rejected|từ chối|vắng|error|locked|khóa|hết hàng|expired|cancelled|đã hủy|ngừng|nghỉ việc)/.test(s)) tone = 'red'
   else if (/(info|new|mới|draft)/.test(s)) tone = 'blue'
   return <Badge tone={tone} dot>{status}</Badge>
 }

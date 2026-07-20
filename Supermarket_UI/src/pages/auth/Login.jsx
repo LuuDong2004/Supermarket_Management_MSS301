@@ -131,7 +131,7 @@ export default function Login() {
   }
 
   return (
-    <div className="grid min-h-screen w-full bg-gradient-to-b from-[#eaf1fd] via-[#eef4fe] to-white lg:h-screen lg:grid-cols-2 lg:overflow-hidden">
+    <div className="sms-login grid min-h-screen w-full bg-white lg:h-screen lg:grid-cols-2 lg:overflow-hidden">
       {/* ---------------- Brand panel ---------------- */}
       <div className="relative mx-auto flex w-full max-w-xl flex-col justify-between gap-4 overflow-y-auto p-6 sm:p-8 lg:px-10 xl:py-10">
             {/* logo */}

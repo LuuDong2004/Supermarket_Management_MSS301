@@ -4,8 +4,22 @@ import { api, tokenStore } from '../lib/api.js'
 const AuthContext = createContext(null)
 const USER_KEY = 'sms.user'
 
+// Used exclusively for capturing the monochrome design pack. It never runs in
+// the normal app, never calls the API, and disappears as soon as the query is
+// removed. Keeping it here lets every role-specific screen be captured without
+// changing access control for real users.
+function mockupPreviewUser() {
+  const query = new URLSearchParams(window.location.search)
+  if (query.get('mockup') !== 'bw') return null
+  const role = query.get('role')
+  if (!role?.startsWith('ROLE_')) return null
+  return { id: 'mockup-preview', username: 'Mockup user', fullName: 'Mockup user', role }
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
+    const preview = mockupPreviewUser()
+    if (preview) return preview
     try {
       return JSON.parse(localStorage.getItem(USER_KEY) || 'null')
     } catch {
@@ -65,7 +79,7 @@ export function AuthProvider({ children }) {
   }, [user])
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, hasRole, mockMode: false }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, hasRole, mockMode: Boolean(mockupPreviewUser()) }}>
       {children}
     </AuthContext.Provider>
   )

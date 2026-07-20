@@ -7,6 +7,7 @@ import { StatCard } from '../../components/ui/StatCard.jsx'
 import { Tabs } from '../../components/ui/Tabs.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { useConfirm } from '../../components/ui/Confirm.jsx'
+import { useAuth } from '../../context/AuthContext.jsx'
 import { cn } from '../../lib/cn.js'
 import { formatDate, formatNumber } from '../../lib/format.js'
 import { policyService, monitoringService, withFallback, toList } from '../../services/index.js'
@@ -47,6 +48,8 @@ function Toggle({ checked, onChange }) {
 }
 
 export default function BusinessRules() {
+  const { user } = useAuth()
+  const canEdit = user?.role === 'ROLE_CEO'
   const toast = useToast()
   const confirm = useConfirm()
   const navigate = useNavigate()
@@ -87,6 +90,7 @@ export default function BusinessRules() {
   )
 
   const removeRule = async (rule) => {
+    if (!canEdit) return toast.info('Thay đổi quy tắc cần được CEO phê duyệt.')
     if (!(await confirm({ title: 'Xóa quy tắc?', message: `Quy tắc "${rule.name}" sẽ bị xóa vĩnh viễn.`, confirmLabel: 'Xóa', danger: true }))) return
     try {
       await policyService.remove(rule.id)
@@ -98,6 +102,7 @@ export default function BusinessRules() {
   }
 
   const toggleRule = (id) => {
+    if (!canEdit) return toast.info('Thay đổi quy tắc cần được CEO phê duyệt.')
     setEnabled((s) => {
       const next = { ...s, [id]: !s[id] }
       toast.info(next[id] ? 'Đã bật quy tắc.' : 'Đã tắt quy tắc.')
@@ -113,7 +118,7 @@ export default function BusinessRules() {
         subtitle="Quản lý quy tắc nghiệp vụ và truy vết mọi thay đổi (ai · khi nào · việc gì)."
         actions={
           <div className="flex items-center gap-3">
-            <Button icon={Plus} onClick={() => navigate('/app/settings/rules/new')}>Thêm quy tắc</Button>
+            <Button icon={Plus} onClick={() => navigate('/app/settings/rules/new')}>{canEdit ? 'Thêm quy tắc' : 'Gửi yêu cầu thay đổi'}</Button>
           </div>
         }
       />
@@ -154,8 +159,8 @@ export default function BusinessRules() {
                 ]}
                 actions={(r) => (
                   <>
-                    <Button size="sm" variant="secondary" icon={Pencil} onClick={() => navigate(`/app/settings/rules/${r.id}/edit`)}>Sửa</Button>
-                    <Button size="sm" variant="danger" icon={Trash2} onClick={() => removeRule(r)}>Xóa</Button>
+                    <Button size="sm" variant="secondary" icon={Pencil} onClick={() => navigate(`/app/settings/rules/${r.id}/edit`)}>{canEdit ? 'Sửa' : 'Yêu cầu sửa'}</Button>
+                    {canEdit && <Button size="sm" variant="danger" icon={Trash2} onClick={() => removeRule(r)}>Xóa</Button>}
                   </>
                 )}
               />
