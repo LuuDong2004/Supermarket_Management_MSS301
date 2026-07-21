@@ -78,7 +78,7 @@ function RowActionsMenu({ children }) {
 export function DataTable({ columns, rows, rowKey = 'id', onRowClick, empty, className, dense, stt = false, actions }) {
   if (!rows || rows.length === 0) {
     return (
-      <div className={cn('sms-table rounded-none border border-slate-900 bg-white', className)}>
+      <div className={cn('sms-table rounded-2xl border border-slate-200/80 bg-white', className)}>
         <EmptyState icon={Inbox} title={empty?.title || 'Không có dữ liệu'} subtitle={empty?.subtitle} />
       </div>
     )
@@ -103,7 +103,7 @@ export function DataTable({ columns, rows, rowKey = 'id', onRowClick, empty, cla
   const renderCell = (column, row, index) => (column.render ? column.render(row, index) : row[column.key])
 
   return (
-    <div className={cn('sms-table overflow-hidden rounded-none border border-slate-900 bg-white shadow-none', className)}>
+    <div className={cn('sms-table overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-card', className)}>
       <div className="divide-y divide-slate-100 sm:hidden">
         {rows.map((row, i) => (
           <div
@@ -141,7 +141,7 @@ export function DataTable({ columns, rows, rowKey = 'id', onRowClick, empty, cla
       <div className="hidden overflow-x-auto sm:block">
         <table className="w-full min-w-max text-sm">
           <thead>
-              <tr className="border-b border-slate-900 bg-white text-left text-xs font-bold uppercase tracking-wider text-slate-900">
+              <tr className="border-b border-slate-200 bg-slate-50/80 text-left text-[11px] font-bold uppercase tracking-wider text-slate-500">
               {allColumns.map((c) => (
                 <th
                   key={c.key}
@@ -153,7 +153,7 @@ export function DataTable({ columns, rows, rowKey = 'id', onRowClick, empty, cla
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-900">
+          <tbody className="divide-y divide-slate-100">
             {rows.map((row, i) => (
               <tr
                 key={row[rowKey] ?? i}

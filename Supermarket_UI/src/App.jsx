@@ -81,7 +81,6 @@ import EmployeeReport from './pages/reports/EmployeeReport.jsx'
 import SystemSettings from './pages/settings/SystemSettings.jsx'
 import BusinessRules from './pages/settings/BusinessRules.jsx'
 import BusinessRuleForm from './pages/settings/BusinessRuleForm.jsx'
-import ReferenceScreen from './pages/ReferenceScreen.jsx'
 
 const G = (path, el) => (
   <ProtectedRoute roles={ROUTE_ROLES[path]}>{el}</ProtectedRoute>
@@ -100,31 +99,31 @@ export default function App() {
         <Route path="forbidden" element={<Forbidden />} />
 
         {/* POS */}
-        <Route path="pos/sale" element={G('/app/pos/sale', <ReferenceScreen />)} />
-        <Route path="pos/payment" element={G('/app/pos/payment', <ReferenceScreen />)} />
+        <Route path="pos/sale" element={G('/app/pos/sale', <ProcessSale />)} />
+        <Route path="pos/payment" element={G('/app/pos/payment', <ProcessPayment />)} />
         <Route path="pos/returns" element={G('/app/pos/returns', <Returns />)} />
         <Route path="pos/returns/new" element={G('/app/pos/returns', <ReturnForm />)} />
-        <Route path="pos/shift" element={G('/app/pos/shift', <ReferenceScreen />)} />
-        <Route path="pos/members" element={G('/app/pos/members', <ReferenceScreen />)} />
-        <Route path="pos/members/:id" element={G('/app/pos/members', <ReferenceScreen />)} />
-        <Route path="pos/loyalty" element={G('/app/pos/loyalty', <ReferenceScreen />)} />
-        <Route path="pos/promotions" element={G('/app/pos/promotions', <ReferenceScreen />)} />
+        <Route path="pos/shift" element={G('/app/pos/shift', <Shift />)} />
+        <Route path="pos/members" element={G('/app/pos/members', <Members />)} />
+        <Route path="pos/members/:id" element={G('/app/pos/members', <MemberDetail />)} />
+        <Route path="pos/loyalty" element={G('/app/pos/loyalty', <Loyalty />)} />
+        <Route path="pos/promotions" element={G('/app/pos/promotions', <Promotions />)} />
 
         {/* Warehouse */}
-        <Route path="warehouse/purchase-orders" element={G('/app/warehouse/purchase-orders', <ReferenceScreen />)} />
-        <Route path="warehouse/purchase-orders/new" element={G('/app/warehouse/purchase-orders', <ReferenceScreen />)} />
-        <Route path="warehouse/purchase-orders/:id" element={G('/app/warehouse/purchase-orders', <ReferenceScreen />)} />
-        <Route path="warehouse/transactions" element={G('/app/warehouse/transactions', <ReferenceScreen />)} />
-        <Route path="warehouse/monitor" element={G('/app/warehouse/monitor', <ReferenceScreen />)} />
-        <Route path="warehouse/reports" element={G('/app/warehouse/reports', <ReferenceScreen />)} />
-        <Route path="warehouse/receive" element={G('/app/warehouse/receive', <ReferenceScreen />)} />
-        <Route path="warehouse/inventory" element={G('/app/warehouse/inventory', <ReferenceScreen />)} />
-        <Route path="warehouse/stock-count" element={G('/app/warehouse/stock-count', <ReferenceScreen />)} />
-        <Route path="warehouse/stock-count/new" element={G('/app/warehouse/stock-count', <ReferenceScreen />)} />
-        <Route path="warehouse/stock-count/:id/edit" element={G('/app/warehouse/stock-count', <ReferenceScreen />)} />
-        <Route path="warehouse/adjustments" element={G('/app/warehouse/adjustments', <ReferenceScreen />)} />
-        <Route path="warehouse/adjustments/new" element={G('/app/warehouse/adjustments', <ReferenceScreen />)} />
-        <Route path="warehouse/approval-status" element={G('/app/warehouse/approval-status', <ReferenceScreen />)} />
+        <Route path="warehouse/purchase-orders" element={G('/app/warehouse/purchase-orders', <PurchaseOrders />)} />
+        <Route path="warehouse/purchase-orders/new" element={G('/app/warehouse/purchase-orders', <PurchaseOrderForm />)} />
+        <Route path="warehouse/purchase-orders/:id" element={G('/app/warehouse/purchase-orders', <PurchaseOrderDetail />)} />
+        <Route path="warehouse/transactions" element={G('/app/warehouse/transactions', <Transactions />)} />
+        <Route path="warehouse/monitor" element={G('/app/warehouse/monitor', <Monitor />)} />
+        <Route path="warehouse/reports" element={G('/app/warehouse/reports', <WarehouseReports />)} />
+        <Route path="warehouse/receive" element={G('/app/warehouse/receive', <Receive />)} />
+        <Route path="warehouse/inventory" element={G('/app/warehouse/inventory', <Inventory />)} />
+        <Route path="warehouse/stock-count" element={G('/app/warehouse/stock-count', <StockCount />)} />
+        <Route path="warehouse/stock-count/new" element={G('/app/warehouse/stock-count', <StockCountForm />)} />
+        <Route path="warehouse/stock-count/:id/edit" element={G('/app/warehouse/stock-count', <StockCountForm />)} />
+        <Route path="warehouse/adjustments" element={G('/app/warehouse/adjustments', <Adjustments />)} />
+        <Route path="warehouse/adjustments/new" element={G('/app/warehouse/adjustments', <AdjustmentForm />)} />
+        <Route path="warehouse/approval-status" element={G('/app/warehouse/approval-status', <ApprovalStatus />)} />
         <Route path="warehouse/products" element={G('/app/warehouse/products', <Products />)} />
         <Route path="warehouse/products/new" element={G('/app/warehouse/products', <ProductForm />)} />
         <Route path="warehouse/products/:id/edit" element={G('/app/warehouse/products', <ProductForm />)} />
@@ -135,33 +134,33 @@ export default function App() {
         <Route path="warehouse/barcode" element={G('/app/warehouse/barcode', <BarcodePrint />)} />
 
         {/* HR */}
-        <Route path="hr/employees" element={G('/app/hr/employees', <ReferenceScreen />)} />
-        <Route path="hr/employees/new" element={G('/app/hr/employees', <ReferenceScreen />)} />
-        <Route path="hr/employees/:id" element={G('/app/hr/employees', <ReferenceScreen />)} />
-        <Route path="hr/employees/:id/edit" element={G('/app/hr/employees', <ReferenceScreen />)} />
+        <Route path="hr/employees" element={G('/app/hr/employees', <Employees />)} />
+        <Route path="hr/employees/new" element={G('/app/hr/employees', <EmployeeForm />)} />
+        <Route path="hr/employees/:id" element={G('/app/hr/employees', <EmployeeDetail />)} />
+        <Route path="hr/employees/:id/edit" element={G('/app/hr/employees', <EmployeeForm />)} />
         <Route path="hr/shifts" element={G('/app/hr/shifts', <StaffShifts />)} />
         <Route path="hr/shifts/new" element={G('/app/hr/shifts', <ShiftAssignForm />)} />
-        <Route path="hr/attendance" element={G('/app/hr/attendance', <ReferenceScreen />)} />
-        <Route path="hr/attendance/new" element={G('/app/hr/attendance', <ReferenceScreen />)} />
-        <Route path="hr/attendance/:id/edit" element={G('/app/hr/attendance', <ReferenceScreen />)} />
+        <Route path="hr/attendance" element={G('/app/hr/attendance', <Attendance />)} />
+        <Route path="hr/attendance/new" element={G('/app/hr/attendance', <AttendanceForm />)} />
+        <Route path="hr/attendance/:id/edit" element={G('/app/hr/attendance', <AttendanceForm />)} />
         <Route path="hr/timesheet" element={G('/app/hr/timesheet', <Timesheet />)} />
-        <Route path="hr/performance" element={G('/app/hr/performance', <ReferenceScreen />)} />
+        <Route path="hr/performance" element={G('/app/hr/performance', <Performance />)} />
 
         {/* Admin */}
-        <Route path="admin/users" element={G('/app/admin/users', <ReferenceScreen />)} />
-        <Route path="admin/users/new" element={G('/app/admin/users', <ReferenceScreen />)} />
-        <Route path="admin/users/:id/edit" element={G('/app/admin/users', <ReferenceScreen />)} />
-        <Route path="admin/approval-requests" element={G('/app/admin/approval-requests', <ReferenceScreen />)} />
-        <Route path="admin/approval-requests/:id" element={G('/app/admin/approval-requests', <ReferenceScreen />)} />
-        <Route path="admin/monitoring" element={G('/app/admin/monitoring', <ReferenceScreen />)} />
+        <Route path="admin/users" element={G('/app/admin/users', <Users />)} />
+        <Route path="admin/users/new" element={G('/app/admin/users', <UserForm />)} />
+        <Route path="admin/users/:id/edit" element={G('/app/admin/users', <UserForm />)} />
+        <Route path="admin/approval-requests" element={G('/app/admin/approval-requests', <ApprovalRequests />)} />
+        <Route path="admin/approval-requests/:id" element={G('/app/admin/approval-requests', <ApprovalRequestDetail />)} />
+        <Route path="admin/monitoring" element={G('/app/admin/monitoring', <Monitoring />)} />
         <Route path="admin/permissions" element={G('/app/admin/permissions', <Permissions />)} />
         <Route path="admin/security-alerts" element={G('/app/admin/security-alerts', <SecurityAlerts />)} />
         <Route path="admin/notifications" element={G('/app/admin/notifications', <Notifications />)} />
 
         {/* CEO */}
-        <Route path="ceo/reports" element={G('/app/ceo/reports', <ReferenceScreen />)} />
-        <Route path="ceo/approvals" element={G('/app/ceo/approvals', <ReferenceScreen />)} />
-        <Route path="ceo/policies" element={G('/app/ceo/policies', <ReferenceScreen />)} />
+        <Route path="ceo/reports" element={G('/app/ceo/reports', <CeoReports />)} />
+        <Route path="ceo/approvals" element={G('/app/ceo/approvals', <CeoApprovals />)} />
+        <Route path="ceo/policies" element={G('/app/ceo/policies', <Policies />)} />
         <Route path="ceo/promotions" element={G('/app/ceo/promotions', <PromotionApprovals />)} />
         <Route path="ceo/financial" element={G('/app/ceo/financial', <FinancialReport />)} />
         <Route path="ceo/operational" element={G('/app/ceo/operational', <OperationalReport />)} />
@@ -170,15 +169,15 @@ export default function App() {
         <Route path="ceo/decisions/:id/edit" element={G('/app/ceo/decisions', <StrategicDecisionForm />)} />
 
         {/* Reports */}
-        <Route path="reports/sales" element={G('/app/reports/sales', <ReferenceScreen />)} />
-        <Route path="reports/inventory" element={G('/app/reports/inventory', <ReferenceScreen />)} />
-        <Route path="reports/employees" element={G('/app/reports/employees', <ReferenceScreen />)} />
+        <Route path="reports/sales" element={G('/app/reports/sales', <SalesReport />)} />
+        <Route path="reports/inventory" element={G('/app/reports/inventory', <InventoryReport />)} />
+        <Route path="reports/employees" element={G('/app/reports/employees', <EmployeeReport />)} />
 
         {/* Settings */}
-        <Route path="settings/system" element={G('/app/settings/system', <ReferenceScreen />)} />
-        <Route path="settings/rules" element={G('/app/settings/rules', <ReferenceScreen />)} />
-        <Route path="settings/rules/new" element={G('/app/settings/rules', <ReferenceScreen />)} />
-        <Route path="settings/rules/:id/edit" element={G('/app/settings/rules', <ReferenceScreen />)} />
+        <Route path="settings/system" element={G('/app/settings/system', <SystemSettings />)} />
+        <Route path="settings/rules" element={G('/app/settings/rules', <BusinessRules />)} />
+        <Route path="settings/rules/new" element={G('/app/settings/rules', <BusinessRuleForm />)} />
+        <Route path="settings/rules/:id/edit" element={G('/app/settings/rules', <BusinessRuleForm />)} />
       </Route>
 
       <Route path="*" element={<NotFound />} />

@@ -48,7 +48,7 @@ export function Card({ className, children, hoverEffect = false, ...props }) {
   return (
     <div
       className={cn(
-        'sms-card rounded-none border border-slate-200 bg-white shadow-sm transition-all duration-200',
+        'sms-card rounded-2xl border border-slate-200/80 bg-white shadow-card transition-all duration-200',
         hoverEffect && 'hover:border-brand-200 hover:shadow-md hover:-translate-y-0.5',
         className
       )}
