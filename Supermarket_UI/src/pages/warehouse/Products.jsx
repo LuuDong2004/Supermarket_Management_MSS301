@@ -5,7 +5,7 @@ import { DataTable } from '../../components/ui/DataTable.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { formatCurrency } from '../../lib/format.js'
-import { categoryService, mockCategories, mockProducts, mockSuppliers, productService, supplierService, toList, withFallback } from '../../services/index.js'
+import { categoryService, productService, supplierService, toList, withFallback } from '../../services/index.js'
 import { Info, PackagePlus, RotateCcw, Search } from 'lucide-react'
 
 const emptyForm = { code: '', barcode: '', name: '', category: '', supplier: '', price: '', vat: '8', threshold: '10', status: 'ACTIVE' }
@@ -20,7 +20,7 @@ export default function Products() {
   const load = async () => {
     setLoading(true)
     const [productResult, categoryResult, supplierResult] = await Promise.all([
-      withFallback(() => productService.list(), mockProducts), withFallback(() => categoryService.list(), mockCategories), withFallback(() => supplierService.list(), mockSuppliers),
+      withFallback(() => productService.list()), withFallback(() => categoryService.list()), withFallback(() => supplierService.list()),
     ])
     setProducts(toList(productResult.data).map((row) => ({ status: 'ACTIVE', ...row }))); setCategories(toList(categoryResult.data)); setSuppliers(toList(supplierResult.data)); setSource(productResult.source); setLoading(false)
   }
@@ -35,15 +35,14 @@ export default function Products() {
     if (!form.code.trim() || !form.name.trim() || !form.category || form.price === '') return toast.error('SKU, product name, category, and price are required.')
     if (products.some((row) => row.id !== selected?.id && row.code === form.code.trim())) return toast.error('SKU must be unique.')
     const accepted = await confirm({ title: selected ? 'Update product?' : 'Create product?', message: `${selected ? 'Update' : 'Create'} ${form.name}?`, confirmLabel: 'Create/Update' }); if (!accepted) return
-    const payload = { code: form.code.trim(), barcode: form.barcode.trim(), name: form.name.trim(), category: form.category, price: Number(form.price), cost: Number(selected?.cost ?? Number(form.price) * 0.8), stock: Number(selected?.stock ?? 0), unit: selected?.unit || 'unit', expiry: selected?.expiry || null }
+    const payload = { code: form.code.trim(), barcode: form.barcode.trim(), name: form.name.trim(), category: form.category, price: Number(form.price), cost: Number(selected?.cost ?? Number(form.price) * 0.8), stock: Number(selected?.stock ?? 0), unit: selected?.unit || 'unit', expiry: selected?.expiry || null, supplier: form.supplier || null, vat: Number(form.vat || 0), threshold: Number(form.threshold || 0), status: form.status }
     setSaving(true)
     try {
-      let saved = source === 'backend' ? (selected ? await productService.update(selected.id, payload) : await productService.create(payload)) : { id: selected?.id || payload.code, ...payload }
-      saved = { ...saved, supplier: form.supplier, vat: form.vat, threshold: Number(form.threshold), status: form.status }
+      const saved = selected ? await productService.update(selected.id, payload) : await productService.create(payload)
       setProducts((current) => selected ? current.map((row) => row.id === selected.id ? saved : row) : [saved, ...current]); resetForm(); toast.success(selected ? 'Product updated.' : 'Product created.')
     } catch (error) { toast.error(error.message) } finally { setSaving(false) }
   }
-  const deactivate = async () => { if (!selected) return toast.error('Select a product first.'); const accepted = await confirm({ title: 'Deactivate product?', message: `${selected.name} will no longer be active for new transactions.`, confirmLabel: 'Deactivate', danger: true }); if (!accepted) return; const updated = { ...selected, status: 'INACTIVE' }; setProducts((current) => current.map((row) => row.id === selected.id ? updated : row)); setSelected(updated); setForm((current) => ({ ...current, status: 'INACTIVE' })); toast.success('Product deactivated in the management view.') }
+  const deactivate = async () => { if (!selected) return toast.error('Select a product first.'); const accepted = await confirm({ title: 'Deactivate product?', message: `${selected.name} will no longer be active for new transactions.`, confirmLabel: 'Deactivate', danger: true }); if (!accepted) return; try { const updated = await productService.update(selected.id, { ...selected, status: 'INACTIVE' }); setProducts((current) => current.map((row) => row.id === selected.id ? updated : row)); setSelected(updated); setForm((current) => ({ ...current, status: 'INACTIVE' })); toast.success('Product deactivated.') } catch (error) { toast.error(error.message) } }
 
   return <div>
     <PageHeader breadcrumb="Warehouse Management · 3.6.5" title="Product Management" subtitle="Maintain product master data for sales, inventory, and purchase orders." />

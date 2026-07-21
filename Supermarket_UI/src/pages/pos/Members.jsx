@@ -3,11 +3,11 @@ import { PageHeader, FilterBar } from '../../components/ui/PageHeader.jsx'
 import { Badge, Button, Card, CardBody, CardHeader, Field, Input, Select, Spinner } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
-import { customerService, mockCustomers, toList, withFallback } from '../../services/index.js'
+import { customerService, toList, withFallback } from '../../services/index.js'
 import { RotateCcw, Save, Search, Star } from 'lucide-react'
 
 const emptyFilters = { phone: '', name: '', status: '', email: '' }
-const emptyForm = { id: '', code: '', phone: '', name: '', email: '', tier: 'Member', points: 0, joined: '', spent: 0 }
+const emptyForm = { id: '', code: '', phone: '', name: '', email: '', tier: 'Member', points: 0, joined: '', spent: 0, membershipStatus: 'ACTIVE', lastPurchase: '' }
 const tierTone = { Platinum: 'violet', Gold: 'amber', Silver: 'slate', Member: 'blue' }
 
 export default function Members() {
@@ -21,10 +21,10 @@ export default function Members() {
   const [source, setSource] = useState('backend')
 
   useEffect(() => {
-    const load = async () => { const result = await withFallback(() => customerService.list(), mockCustomers); const rows = toList(result.data); setMembers(rows); setSource(result.source); setForm(rows[0] ? { ...emptyForm, ...rows[0] } : emptyForm); setLoading(false) }
+    const load = async () => { const result = await withFallback(() => customerService.list()); const rows = toList(result.data); setMembers(rows); setSource(result.source); setForm(rows[0] ? { ...emptyForm, ...rows[0] } : emptyForm); setLoading(false) }
     load()
   }, [])
-  const rows = useMemo(() => members.filter((member) => (!applied.phone || String(member.phone || '').includes(applied.phone)) && (!applied.name || String(member.name || '').toLowerCase().includes(applied.name.toLowerCase())) && (!applied.status || member.tier === applied.status)), [applied, members])
+  const rows = useMemo(() => members.filter((member) => (!applied.phone || String(member.phone || '').includes(applied.phone)) && (!applied.name || String(member.name || '').toLowerCase().includes(applied.name.toLowerCase())) && (!applied.email || String(member.email || '').toLowerCase().includes(applied.email.toLowerCase())) && (!applied.status || member.membershipStatus === applied.status)), [applied, members])
   const setFilter = (key, value) => setFilters((current) => ({ ...current, [key]: value }))
   const setField = (key, value) => setForm((current) => ({ ...current, [key]: value }))
   const selectMember = (member) => setForm({ ...emptyForm, ...member })
@@ -33,11 +33,10 @@ export default function Members() {
 
   const save = async () => {
     if (!form.phone.trim() || !form.name.trim()) return toast.error('Phone number and customer name are required.')
-    const payload = { code: form.code || `C${Date.now().toString().slice(-6)}`, name: form.name.trim(), phone: form.phone.trim(), tier: form.tier, points: Number(form.points || 0), joined: form.joined || new Date().toISOString().slice(0, 10), spent: Number(form.spent || 0) }
+    const payload = { code: form.code || `C${Date.now().toString().slice(-6)}`, name: form.name.trim(), phone: form.phone.trim(), email: form.email.trim() || null, tier: form.tier, points: Number(form.points || 0), joined: form.joined || new Date().toISOString().slice(0, 10), spent: Number(form.spent || 0), membershipStatus: form.membershipStatus || 'ACTIVE', lastPurchase: form.lastPurchase || null }
     setSaving(true)
     try {
-      const response = source === 'backend' ? (form.id ? await customerService.update(form.id, payload) : await customerService.create(payload)) : { id: form.id || payload.code, ...payload }
-      const saved = { ...response, email: form.email }
+      const saved = form.id ? await customerService.update(form.id, payload) : await customerService.create(payload)
       setMembers((current) => form.id ? current.map((member) => member.id === form.id ? saved : member) : [saved, ...current])
       setForm(saved); toast.success(form.id ? 'Customer profile updated.' : 'Customer member registered.')
     } catch (error) { toast.error(error.message) } finally { setSaving(false) }

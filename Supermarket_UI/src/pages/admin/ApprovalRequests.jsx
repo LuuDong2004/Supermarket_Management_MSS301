@@ -2,27 +2,13 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PageHeader, FilterBar } from '../../components/ui/PageHeader.jsx'
 import {
-  Badge,
-  Button,
-  Card,
-  CardBody,
-  CardHeader,
-  Field,
-  Input,
-  Select,
-  Spinner,
-  StatusBadge,
-} from '../../components/ui/primitives.jsx'
+  Badge, Button, Card, CardBody, CardHeader, Field, Input, Select, Spinner, StatusBadge, } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { formatDate, isoDate } from '../../lib/format.js'
 import {
-  approvalRequestService,
-  mockApprovalRequests,
-  toList,
-  withFallback,
-} from '../../services/index.js'
+  approvalRequestService, toList, withFallback } from '../../services/index.js'
 import { FileCheck2, RotateCcw, Search, Send, X } from 'lucide-react'
 
 const REQUEST_TYPES = [
@@ -88,7 +74,7 @@ export default function ApprovalRequests() {
 
   const load = async () => {
     setLoading(true)
-    const result = await withFallback(() => approvalRequestService.list(), mockApprovalRequests)
+    const result = await withFallback(() => approvalRequestService.list())
     setRequests(toList(result.data))
     setSource(result.source)
     setLoading(false)

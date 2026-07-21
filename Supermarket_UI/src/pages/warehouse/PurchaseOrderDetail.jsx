@@ -4,7 +4,7 @@ import { PageHeader } from '../../components/ui/PageHeader.jsx'
 import { Card, CardBody, Button, StatusBadge, Divider, Spinner } from '../../components/ui/primitives.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { formatCurrency, formatDate, formatNumber } from '../../lib/format.js'
-import { purchaseOrderService, withFallback, toList, mockPurchaseOrders } from '../../services/index.js'
+import { purchaseOrderService, withFallback, toList } from '../../services/index.js'
 import { ArrowLeft, Building2 } from 'lucide-react'
 
 // Full-page purchase order detail view (replaces the old detail modal).
@@ -17,7 +17,7 @@ export default function PurchaseOrderDetail() {
 
   useEffect(() => {
     const load = async () => {
-      const r = await withFallback(() => purchaseOrderService.list(), mockPurchaseOrders)
+      const r = await withFallback(() => purchaseOrderService.list())
       const o = toList(r.data).find((x) => String(x.id) === String(id) || x.code === id)
       if (!o) {
         toast.error('Không tìm thấy đơn mua.')

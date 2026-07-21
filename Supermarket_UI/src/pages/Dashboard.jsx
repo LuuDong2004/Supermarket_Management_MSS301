@@ -14,8 +14,7 @@ import { DataTable } from '../components/ui/DataTable.jsx'
 import { AreaTrend, Donut } from '../components/ui/Charts.jsx'
 import { roleLabel, formatCurrency, formatNumber } from '../lib/format.js'
 import {
-  reportService, productService, saleService, withFallback, toList,
-} from '../services/index.js'
+  reportService, productService, saleService, withFallback, toList } from '../services/index.js'
 import {
   DollarSign, ShoppingCart, Package, Users, AlertTriangle, ArrowRight,
   TrendingUp, Boxes, ClipboardList, Activity,

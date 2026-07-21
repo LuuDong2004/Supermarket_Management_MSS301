@@ -6,7 +6,7 @@ import { Modal } from '../../components/ui/Modal.jsx'
 import { Tabs } from '../../components/ui/Tabs.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { useConfirm } from '../../components/ui/Confirm.jsx'
-import { settingService, withFallback, toList, mockSettings } from '../../services/index.js'
+import { settingService, withFallback, toList } from '../../services/index.js'
 import {
   Settings, Store, Plus, Pencil, Save,
 } from 'lucide-react'
@@ -46,7 +46,7 @@ export default function SystemSettings() {
 
   const load = async () => {
     setLoading(true)
-    const r = await withFallback(() => settingService.list(), mockSettings)
+    const r = await withFallback(() => settingService.list())
     setRows(toList(r.data))
     setSource(r.source)
     setLoading(false)

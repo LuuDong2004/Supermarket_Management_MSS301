@@ -6,9 +6,7 @@ import { useToast } from '../../components/ui/Toast.jsx'
 import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { formatCurrency } from '../../lib/format.js'
 import {
-  purchaseOrderService, supplierService, productService,
-  withFallback, toList, mockPurchaseOrders, mockSuppliers, mockProducts,
-} from '../../services/index.js'
+  purchaseOrderService, supplierService, productService, withFallback, toList } from '../../services/index.js'
 import { ArrowLeft, Save, Plus, Trash2 } from 'lucide-react'
 
 // Full-page create purchase order (replaces the old modal).
@@ -29,9 +27,9 @@ export default function PurchaseOrderForm() {
   useEffect(() => {
     const load = async () => {
       const [po, sup, prod] = await Promise.all([
-        withFallback(() => purchaseOrderService.list(), mockPurchaseOrders),
-        withFallback(() => supplierService.list(), mockSuppliers),
-        withFallback(() => productService.list(), mockProducts),
+        withFallback(() => purchaseOrderService.list()),
+        withFallback(() => supplierService.list()),
+        withFallback(() => productService.list()),
       ])
       const supList = toList(sup.data)
       const prodList = toList(prod.data)

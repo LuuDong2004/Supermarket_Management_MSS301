@@ -5,9 +5,7 @@ import { Card, CardBody, Button, Badge, Field, Input, Select, Textarea, Divider,
 import { useToast } from '../../components/ui/Toast.jsx'
 import { useConfirm } from '../../components/ui/Confirm.jsx'
 import {
-  stockAdjustmentService, productService,
-  withFallback, toList, mockStockAdjustments, mockProducts,
-} from '../../services/index.js'
+  stockAdjustmentService, productService, withFallback, toList } from '../../services/index.js'
 import { ArrowLeft, Save } from 'lucide-react'
 
 // Full-page create stock adjustment request (replaces the old modal).
@@ -24,8 +22,8 @@ export default function AdjustmentForm() {
   useEffect(() => {
     const load = async () => {
       const [adj, prod] = await Promise.all([
-        withFallback(() => stockAdjustmentService.list(), mockStockAdjustments),
-        withFallback(() => productService.list(), mockProducts),
+        withFallback(() => stockAdjustmentService.list()),
+        withFallback(() => productService.list()),
       ])
       const prodList = toList(prod.data)
       setList(toList(adj.data))

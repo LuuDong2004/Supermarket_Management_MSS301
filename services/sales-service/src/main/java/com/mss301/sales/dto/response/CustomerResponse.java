@@ -10,10 +10,13 @@ public record CustomerResponse(
         String code,
         String name,
         String phone,
+        String email,
         String tier,
         Integer points,
         LocalDate joined,
         BigDecimal spent,
+        String membershipStatus,
+        LocalDate lastPurchase,
         Instant createdAt,
         Instant updatedAt
 ) {

@@ -67,6 +67,18 @@ public class Product {
 
     private LocalDate expiry;
 
+    @Column(length = 150)
+    private String supplier;
+
+    @Column(precision = 5, scale = 2)
+    private BigDecimal vat;
+
+    @Column(nullable = false)
+    private Integer threshold;
+
+    @Column(nullable = false, length = 20)
+    private String status;
+
     @Column(name = "image_url", length = 512)
     private String imageUrl;
 
@@ -85,6 +97,15 @@ public class Product {
     void ensureId() {
         if (id == null) {
             id = UUID.randomUUID();
+        }
+        if (vat == null) {
+            vat = new BigDecimal("8.00");
+        }
+        if (threshold == null) {
+            threshold = 10;
+        }
+        if (status == null || status.isBlank()) {
+            status = "ACTIVE";
         }
     }
 }

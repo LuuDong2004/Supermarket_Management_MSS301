@@ -5,7 +5,7 @@ import { Card, CardBody, Button, Badge, StatusBadge, Spinner } from '../../compo
 import { useToast } from '../../components/ui/Toast.jsx'
 import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { formatDate } from '../../lib/format.js'
-import { approvalRequestService, withFallback, toList, mockApprovalRequests } from '../../services/index.js'
+import { approvalRequestService, withFallback, toList } from '../../services/index.js'
 import { ArrowLeft, Check, X } from 'lucide-react'
 
 function typeTone(type) {
@@ -28,7 +28,7 @@ export default function ApprovalRequestDetail() {
 
   const load = async () => {
     setLoading(true)
-    const r = await withFallback(() => approvalRequestService.list(), mockApprovalRequests)
+    const r = await withFallback(() => approvalRequestService.list())
     const found = toList(r.data).find((x) => String(x.id) === String(id) || x.code === id)
     if (!found) {
       toast.error('Không tìm thấy yêu cầu phê duyệt.')

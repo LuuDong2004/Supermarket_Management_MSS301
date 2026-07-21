@@ -55,6 +55,26 @@ public class StockCount {
     @Column(length = 250)
     private String note;
 
+    @Column(name = "product_code", length = 30)
+    private String productCode;
+
+    @Column(name = "product_name", length = 200)
+    private String productName;
+
+    @Column(name = "system_qty")
+    private Integer systemQty;
+
+    @Column(name = "physical_qty")
+    private Integer physicalQty;
+
+    private Integer difference;
+
+    @Column(length = 200)
+    private String reason;
+
+    @Column(length = 80)
+    private String category;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

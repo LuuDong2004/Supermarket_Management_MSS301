@@ -16,6 +16,11 @@ public record GoodsReceiptRequest(
         @Size(max = 120) String receivedBy,
         @NotNull @PositiveOrZero Integer items,
         @NotNull @PositiveOrZero BigDecimal total,
-        @Size(max = 500) String note
+        @Size(max = 500) String note,
+        @Size(max = 30) String productCode,
+        @Size(max = 200) String productName,
+        @PositiveOrZero Integer quantity,
+        @Size(max = 30) String productCondition,
+        LocalDate expiry
 ) {
 }

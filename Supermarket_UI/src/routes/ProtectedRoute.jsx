@@ -3,10 +3,10 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { tokenStore } from '../lib/api.js'
 
 export function ProtectedRoute({ children, roles }) {
-  const { user, mockMode } = useAuth()
+  const { user } = useAuth()
   const location = useLocation()
 
-  if (!user || (!mockMode && !tokenStore.get())) {
+  if (!user || !tokenStore.get()) {
     return <Navigate to="/login" replace state={{ from: location }} />
   }
   if (roles && roles.length > 0 && !roles.includes(user.role)) {

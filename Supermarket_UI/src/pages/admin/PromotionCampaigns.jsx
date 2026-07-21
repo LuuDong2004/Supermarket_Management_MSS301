@@ -8,13 +8,6 @@ import { formatDate, isoDate } from '../../lib/format.js'
 import { approvalRequestService, promotionService, toList, withFallback } from '../../services/index.js'
 import { BadgePercent, ClipboardCopy, Eye, FileText, RotateCcw, Save, Send } from 'lucide-react'
 
-const DEMO_PROMOTIONS = [
-  { id: 'APR-241', code: 'APR-241', name: 'Weekend Dairy Sale', scope: 'Category: Dairy Products', fromDate: '2026-06-15', toDate: '2026-06-30', discount: 10, type: 'percent', status: 'Pending' },
-  { id: 'APR-242', code: 'APR-242', name: 'Member Voucher', scope: 'Active loyalty members', fromDate: '2026-06-18', toDate: '2026-06-25', discount: 50000, type: 'amount', status: 'Draft' },
-  { id: 'APR-243', code: 'APR-243', name: 'Rice Bundle', scope: 'Rice category', fromDate: '2026-07-01', toDate: '2026-07-15', discount: 12, type: 'percent', status: 'Rejected' },
-  { id: 'APR-244', code: 'APR-244', name: 'Back-to-school', scope: 'School supplies', fromDate: '2026-07-20', toDate: '2026-08-10', discount: 8, type: 'percent', status: 'Approved' },
-]
-
 const emptyForm = { name: '', scope: '', fromDate: '', toDate: '', type: 'percent', discount: 10, reason: '' }
 
 const statusLabel = (status = '') => {
@@ -48,7 +41,7 @@ export default function PromotionCampaigns() {
 
   const load = async () => {
     setLoading(true)
-    const result = await withFallback(() => promotionService.list(), DEMO_PROMOTIONS)
+    const result = await withFallback(() => promotionService.list())
     const rows = toList(result.data)
     setPromotions(rows)
     setSource(result.source)

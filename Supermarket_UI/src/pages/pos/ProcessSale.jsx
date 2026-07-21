@@ -8,9 +8,7 @@ import { escapeHtml } from '../../lib/escapeHtml.js'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { DEFAULT_SEPAY_CONFIG, buildVietQrUrl, normalizeSePayConfig } from '../../config/sepay.js'
 import {
-  productService, saleService, customerService, voucherService,
-  withFallback, toList, mockProducts, mockCustomers, mockVouchers,
-} from '../../services/index.js'
+  productService, saleService, customerService, voucherService, withFallback, toList } from '../../services/index.js'
 import {
   Search, Plus, Minus, Trash2, ScanLine, ShoppingCart, UserPlus, BadgePercent, X,
   Banknote, QrCode, CreditCard, CheckCircle2, Printer, Gift
@@ -168,9 +166,9 @@ export default function ProcessSale() {
   useEffect(() => {
     ;(async () => {
       const [rp, rc, rv] = await Promise.all([
-        withFallback(() => productService.list(), mockProducts),
-        withFallback(() => customerService.list(), mockCustomers),
-        withFallback(() => voucherService.list(), mockVouchers),
+        withFallback(() => productService.list()),
+        withFallback(() => customerService.list()),
+        withFallback(() => voucherService.list()),
       ])
       setProducts(toList(rp.data))
       setCustomers(toList(rc.data))

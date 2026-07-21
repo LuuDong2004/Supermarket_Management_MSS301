@@ -7,17 +7,6 @@ import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { policyService, withFallback, toList } from '../../services/index.js'
 import { BookOpenCheck, FilePenLine, History, Plus, Save, Trash2 } from 'lucide-react'
 
-const DEMO_POLICIES = [
-  { id: '001', code: '001', name: 'Loyalty redemption', category: 'Milk', effective: 'Milk', updatedDate: '2026-01-12', value: 'Defines loyalty point redemption limits and eligible rewards.', status: 'Pending', currentStatus: 'Active' },
-  { id: '002', code: '002', name: 'Rice pricing policy', category: 'Rice', effective: 'Rice', updatedDate: '2026-02-12', value: 'Controls pricing thresholds for the rice category.', status: 'Approved' },
-  { id: '003', code: '003', name: 'Staff access policy', category: 'Staff A', effective: 'Staff A', updatedDate: '2026-03-12', value: 'Defines staff access and operational responsibility.', status: 'Active' },
-  { id: '004', code: '004', name: 'Customer return policy', category: 'Customer B', effective: 'Customer B', updatedDate: '2026-04-12', value: 'Defines return eligibility for customer purchases.', status: 'Rejected' },
-  { id: '005', code: '005', name: 'Supplier payment terms', category: 'Supplier C', effective: 'Supplier C', updatedDate: '2026-05-12', value: 'Defines supplier settlement and review terms.', status: 'Pending' },
-  { id: '006', code: '006', name: 'Order approval threshold', category: 'Order D', effective: 'Order D', updatedDate: '2026-06-12', value: 'Defines executive approval thresholds for orders.', status: 'Approved' },
-  { id: '007', code: '007', name: 'Dairy handling policy', category: 'Milk', effective: 'Milk', updatedDate: '2026-07-12', value: 'Defines handling requirements for dairy products.', status: 'Active' },
-  { id: '008', code: '008', name: 'Dry goods review', category: 'Rice', effective: 'Rice', updatedDate: '2026-08-12', value: 'Defines dry-goods inspection and review criteria.', status: 'Rejected' },
-]
-
 const today = () => new Date().toISOString().slice(0, 10)
 
 const emptyForm = () => ({
@@ -75,9 +64,7 @@ export default function Policies() {
   const load = async () => {
     setLoading(true)
     const result = await withFallback(() => policyService.list())
-    const rows = result.source === 'backend'
-      ? toList(result.data).map((policy) => ({ ...policy, status: policy.status || 'Active' }))
-      : DEMO_POLICIES
+    const rows = toList(result.data).map((policy) => ({ ...policy, status: policy.status || 'Active' }))
     setPolicies(rows)
     setSource(result.source)
     const nextSelected = rows.find((policy) => policy.id === selected?.id) || rows[0] || null

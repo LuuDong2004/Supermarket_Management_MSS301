@@ -18,6 +18,10 @@ public record ProductRequest(
         @NotNull @DecimalMin("0.0") BigDecimal cost,
         @NotNull @PositiveOrZero Integer stock,
         @Size(max = 20) String unit,
-        LocalDate expiry
+        LocalDate expiry,
+        @Size(max = 150) String supplier,
+        @DecimalMin("0.0") BigDecimal vat,
+        @PositiveOrZero Integer threshold,
+        @Size(max = 20) String status
 ) {
 }

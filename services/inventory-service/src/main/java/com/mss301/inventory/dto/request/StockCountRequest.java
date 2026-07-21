@@ -11,6 +11,13 @@ public record StockCountRequest(
         @NotBlank @Size(max = 80) String location,
         @NotBlank @Size(max = 30) String status,
         @NotNull LocalDate countDate,
-        @Size(max = 250) String note
+        @Size(max = 250) String note,
+        @Size(max = 30) String productCode,
+        @Size(max = 200) String productName,
+        Integer systemQty,
+        Integer physicalQty,
+        Integer difference,
+        @Size(max = 200) String reason,
+        @Size(max = 80) String category
 ) {
 }

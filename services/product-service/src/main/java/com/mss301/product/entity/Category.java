@@ -52,6 +52,12 @@ public class Category {
     @Column(nullable = false)
     private boolean active;
 
+    @Column(name = "requires_expiry", nullable = false)
+    private boolean requiresExpiry;
+
+    @Column(name = "tax_group", nullable = false, length = 20)
+    private String taxGroup;
+
     @Column(nullable = false)
     private Integer seq;
 

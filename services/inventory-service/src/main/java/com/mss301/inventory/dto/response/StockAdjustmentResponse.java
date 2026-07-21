@@ -14,6 +14,8 @@ public record StockAdjustmentResponse(
         String reason,
         LocalDate adjDate,
         String status,
+        String evidenceName,
+        String decisionComment,
         Instant createdAt,
         Instant updatedAt
 ) {

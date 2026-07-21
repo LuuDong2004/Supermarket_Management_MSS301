@@ -40,6 +40,8 @@ public class CategoryServiceImpl implements CategoryService {
                 .name(request.name())
                 .description(request.description())
                 .active(request.active())
+                .requiresExpiry(request.requiresExpiry())
+                .taxGroup(request.taxGroup())
                 .seq(nextSeq)
                 .build();
         return toResponse(categoryRepository.save(category));
@@ -54,6 +56,8 @@ public class CategoryServiceImpl implements CategoryService {
         category.setName(request.name());
         category.setDescription(request.description());
         category.setActive(request.active());
+        category.setRequiresExpiry(request.requiresExpiry());
+        category.setTaxGroup(request.taxGroup());
         return toResponse(category);
     }
 
@@ -68,6 +72,6 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     private CategoryResponse toResponse(Category c) {
-        return new CategoryResponse(c.getId(), c.getName(), c.getDescription(), c.isActive());
+        return new CategoryResponse(c.getId(), c.getName(), c.getDescription(), c.isActive(), c.isRequiresExpiry(), c.getTaxGroup());
     }
 }

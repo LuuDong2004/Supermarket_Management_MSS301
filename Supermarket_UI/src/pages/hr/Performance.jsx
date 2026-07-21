@@ -1,27 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { PageHeader, FilterBar } from '../../components/ui/PageHeader.jsx'
 import {
-  Badge,
-  Button,
-  Card,
-  CardBody,
-  CardHeader,
-  Field,
-  Input,
-  Select,
-  Spinner,
-} from '../../components/ui/primitives.jsx'
+  Badge, Button, Card, CardBody, CardHeader, Field, Input, Select, Spinner, } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { formatDate, isoDate } from '../../lib/format.js'
 import {
-  approvalRequestService,
-  mockEmployeePerformance,
-  reportService,
-  toList,
-  withFallback,
-} from '../../services/index.js'
+  approvalRequestService, reportService, toList, withFallback } from '../../services/index.js'
 import { Award, RotateCcw, Search, Send, X } from 'lucide-react'
 
 const firstOfMonth = () => {
@@ -107,7 +93,7 @@ export default function Performance() {
   useEffect(() => {
     const load = async () => {
       setLoading(true)
-      const result = await withFallback(() => reportService.employeePerformance(), mockEmployeePerformance)
+      const result = await withFallback(() => reportService.employeePerformance())
       setReports(toList(result.data).map(normalizeRow))
       setSource(result.source)
       setLoading(false)

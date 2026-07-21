@@ -67,6 +67,19 @@ public class GoodsReceipt {
     @Column(nullable = false, precision = 14, scale = 2)
     private BigDecimal total;
 
+    @Column(name = "product_code", length = 30)
+    private String productCode;
+
+    @Column(name = "product_name", length = 200)
+    private String productName;
+
+    private Integer quantity;
+
+    @Column(name = "product_condition", length = 30)
+    private String productCondition;
+
+    private LocalDate expiry;
+
     // Chờ duyệt | Đã duyệt | Từ chối
     @Column(nullable = false, length = 30)
     private String status;

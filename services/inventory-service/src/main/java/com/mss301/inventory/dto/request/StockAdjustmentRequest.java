@@ -14,6 +14,8 @@ public record StockAdjustmentRequest(
         @NotNull Integer diff,
         @Size(max = 150) String reason,
         @NotNull LocalDate adjDate,
-        @NotBlank @Size(max = 30) String status
+        @NotBlank @Size(max = 30) String status,
+        @Size(max = 255) String evidenceName,
+        @Size(max = 500) String decisionComment
 ) {
 }

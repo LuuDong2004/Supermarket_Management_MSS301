@@ -6,17 +6,7 @@ import { Card, CardBody, CardHeader, Badge, Button, Spinner } from '../../compon
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { Bars } from '../../components/ui/Charts.jsx'
 import {
-  inventoryService,
-  mockInventory,
-  mockProducts,
-  mockPurchaseOrders,
-  mockWarehouseTxns,
-  productService,
-  purchaseOrderService,
-  toList,
-  warehouseTxnService,
-  withFallback,
-} from '../../services/index.js'
+  inventoryService, productService, purchaseOrderService, toList, warehouseTxnService, withFallback } from '../../services/index.js'
 import {
   AlertTriangle,
   ArrowRight,
@@ -28,32 +18,6 @@ import {
   PackageSearch,
   Warehouse,
 } from 'lucide-react'
-
-const DEMO_ORDERS = [
-  { id: 'PO-1001', code: 'PO-1001', supplier: 'Vinamilk', expected: '12/06', total: 24.5, status: 'Open' },
-  { id: 'PO-1002', code: 'PO-1002', supplier: 'Acecook', expected: '14/06', total: 18.2, status: 'Draft' },
-  { id: 'PO-1003', code: 'PO-1003', supplier: 'Masan', expected: '14/06', total: 35.1, status: 'Open' },
-  { id: 'PO-1004', code: 'PO-1004', supplier: 'Coca-Cola', expected: '13/06', total: 12.6, status: 'Review' },
-  { id: 'PO-1005', code: 'PO-1005', supplier: 'TH True Milk', expected: '16/06', total: 20.7, status: 'Open' },
-]
-
-const DEMO_TRANSACTIONS = [
-  { id: 'TX-301', code: 'TX-301', type: 'Receipt', product: 'Milk', qty: 120, status: 'Pending' },
-  { id: 'TX-302', code: 'TX-302', type: 'Adjust', product: 'Rice', qty: -8, status: 'Pending' },
-  { id: 'TX-303', code: 'TX-303', type: 'Count Diff', product: 'Noodle', qty: 12, status: 'Review' },
-  { id: 'TX-304', code: 'TX-304', type: 'Receipt', product: 'Eggs', qty: 200, status: 'Pending' },
-  { id: 'TX-305', code: 'TX-305', type: 'Adjust', product: 'Sugar', qty: -2, status: 'Pending' },
-]
-
-const DEMO_RISK = [
-  { category: 'Dairy', risk: 9 },
-  { category: 'Dry', risk: 5 },
-  { category: 'Fresh', risk: 13 },
-  { category: 'Drink', risk: 21 },
-  { category: 'Home', risk: 12 },
-  { category: 'Snacks', risk: 25 },
-  { category: 'Other', risk: 18 },
-]
 
 function normalizedStatus(status) {
   const value = String(status || '').toUpperCase()
@@ -114,13 +78,11 @@ export default function WarehouseManagerDashboard() {
 
     ;(async () => {
       const [orderResult, transactionResult, stockResult, productResult] = await Promise.all([
-        withFallback(() => purchaseOrderService.list(), mockPurchaseOrders),
-        withFallback(() => warehouseTxnService.list(), mockWarehouseTxns),
+        withFallback(() => purchaseOrderService.list()),
+        withFallback(() => warehouseTxnService.list()),
         withFallback(
-          () => inventoryService.lowStock(),
-          () => mockInventory().filter((item) => Number(item.onHand) <= Number(item.threshold)),
-        ),
-        withFallback(() => productService.list({ size: 200 }), mockProducts),
+          () => inventoryService.lowStock()),
+        withFallback(() => productService.list({ size: 200 })),
       ])
 
       if (!alive) return
@@ -141,7 +103,6 @@ export default function WarehouseManagerDashboard() {
   }, [])
 
   const orderRows = useMemo(() => {
-    if (sources.orders !== 'backend') return DEMO_ORDERS
     return orders.slice(0, 5).map((order, index) => ({
       ...order,
       id: order.id || order.code || `PO-${1001 + index}`,
@@ -153,7 +114,6 @@ export default function WarehouseManagerDashboard() {
   }, [orders, sources.orders])
 
   const transactionRows = useMemo(() => {
-    if (sources.transactions !== 'backend') return DEMO_TRANSACTIONS
     return transactions.slice(0, 5).map((transaction, index) => ({
       ...transaction,
       id: transaction.id || transaction.code || `TX-${301 + index}`,
@@ -166,7 +126,6 @@ export default function WarehouseManagerDashboard() {
   }, [sources.transactions, transactions])
 
   const riskByCategory = useMemo(() => {
-    if (sources.stock !== 'backend') return DEMO_RISK
     const categoryCounts = new Map()
     lowStock.forEach((item) => {
       const product = products.find((row) => row.id === item.productId || row.name === item.productName || row.name === item.product)

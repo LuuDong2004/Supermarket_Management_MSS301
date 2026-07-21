@@ -64,6 +64,12 @@ public class StockAdjustment {
     @Column(nullable = false, length = 30)
     private String status;
 
+    @Column(name = "evidence_name", length = 255)
+    private String evidenceName;
+
+    @Column(name = "decision_comment", length = 500)
+    private String decisionComment;
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;

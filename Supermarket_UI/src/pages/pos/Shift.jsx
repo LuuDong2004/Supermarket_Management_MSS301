@@ -5,7 +5,7 @@ import { DataTable } from '../../components/ui/DataTable.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { formatCurrency } from '../../lib/format.js'
-import { mockShifts, shiftService, toList, withFallback } from '../../services/index.js'
+import { shiftService, toList, withFallback } from '../../services/index.js'
 import { Clock, RotateCcw, Search, Send, X } from 'lucide-react'
 
 const emptyFilters = { search: '', status: '', dateFrom: '', dateTo: '', type: '' }
@@ -15,7 +15,7 @@ const isOpen = (status) => /open|đang mở/i.test(status || '')
 export default function Shift() {
   const toast = useToast(); const { user } = useAuth()
   const [shifts, setShifts] = useState([]); const [filters, setFilters] = useState(emptyFilters); const [applied, setApplied] = useState(emptyFilters); const [form, setForm] = useState(emptyForm); const [selected, setSelected] = useState(null); const [loading, setLoading] = useState(true); const [saving, setSaving] = useState(false); const [source, setSource] = useState('backend')
-  useEffect(() => { const load = async () => { const result = await withFallback(() => shiftService.list(), mockShifts); const rows = toList(result.data); setShifts(rows); const active = rows.find((row) => isOpen(row.status)) || rows[0] || null; setSelected(active); setForm({ opening: active?.opening || '', closing: active?.closingActual || '' }); setSource(result.source); setLoading(false) }; load() }, [])
+  useEffect(() => { const load = async () => { const result = await withFallback(() => shiftService.list()); const rows = toList(result.data); setShifts(rows); const active = rows.find((row) => isOpen(row.status)) || rows[0] || null; setSelected(active); setForm({ opening: active?.opening || '', closing: active?.closingActual || '' }); setSource(result.source); setLoading(false) }; load() }, [])
   const rows = useMemo(() => { const query = applied.search.trim().toLowerCase(); return shifts.filter((row) => (!query || [row.code, row.id, row.cashier].some((value) => String(value || '').toLowerCase().includes(query))) && (!applied.status || row.status === applied.status)) }, [applied, shifts])
   const setFilter = (key, value) => setFilters((current) => ({ ...current, [key]: value })); const reset = () => { setFilters(emptyFilters); setApplied(emptyFilters) }
   const choose = (row) => { setSelected(row); setForm({ opening: row.opening || '', closing: row.closingActual || '' }) }

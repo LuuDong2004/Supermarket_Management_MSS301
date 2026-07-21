@@ -5,15 +5,7 @@ import { StatCard } from '../../components/ui/StatCard.jsx'
 import { Card, CardBody, CardHeader, Badge, Button, Spinner } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import {
-  attendanceService,
-  employeeService,
-  mockAttendance,
-  mockEmployeePerformance,
-  mockEmployees,
-  reportService,
-  toList,
-  withFallback,
-} from '../../services/index.js'
+  attendanceService, employeeService, reportService, toList, withFallback } from '../../services/index.js'
 import {
   AlarmClock,
   AlertTriangle,
@@ -27,14 +19,6 @@ import {
   UserCheck,
   Users,
 } from 'lucide-react'
-
-const DEMO_ATTENDANCE = [
-  { id: 'ST-001', employee: 'ST-001', role: 'Cashier', checkIn: '07:55', checkOut: '—', status: 'Present' },
-  { id: 'ST-004', employee: 'ST-004', role: 'Warehouse', checkIn: '08:25', checkOut: '—', status: 'Late' },
-  { id: 'ST-016', employee: 'ST-016', role: 'Cashier', checkIn: '07:58', checkOut: '—', status: 'Present' },
-  { id: 'ST-020', employee: 'ST-020', role: 'Warehouse', checkIn: '—', checkOut: '—', status: 'Absent' },
-  { id: 'ST-028', employee: 'ST-028', role: 'Cashier', checkIn: '08:03', checkOut: '—', status: 'Present' },
-]
 
 const PERFORMANCE_TASKS = [
   {
@@ -105,9 +89,9 @@ export default function StaffManagerDashboard() {
 
     ;(async () => {
       const [employeeResult, attendanceResult, performanceResult] = await Promise.all([
-        withFallback(() => employeeService.list({ size: 200 }), mockEmployees),
-        withFallback(() => attendanceService.list(), mockAttendance),
-        withFallback(() => reportService.employeePerformance(), mockEmployeePerformance),
+        withFallback(() => employeeService.list({ size: 200 })),
+        withFallback(() => attendanceService.list()),
+        withFallback(() => reportService.employeePerformance()),
       ])
 
       if (!alive) return
@@ -126,7 +110,6 @@ export default function StaffManagerDashboard() {
   }, [])
 
   const attendanceRows = useMemo(() => {
-    if (sources.attendance !== 'backend') return DEMO_ATTENDANCE
     return attendance.slice(0, 5).map((row, index) => ({
       ...row,
       id: row.id || employeeCode(row, employees, index),

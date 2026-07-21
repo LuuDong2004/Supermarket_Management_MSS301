@@ -90,6 +90,9 @@ public class ReportServiceImpl implements ReportService {
             todayRevenue = REVENUE_SCALE.multiply(BigDecimal.valueOf(last.getRevenue()));
             todayOrders = last.getOrders();
         }
-        return new DashboardResponse(todayRevenue, todayOrders, 3L, 1L);
+        long lowStockCount = operationalMetricRepository.findAllByOrderBySeqAsc().stream()
+                .mapToLong(metric -> metric.getLowStockItems() == null ? 0L : metric.getLowStockItems())
+                .sum();
+        return new DashboardResponse(todayRevenue, todayOrders, lowStockCount, 0L);
     }
 }

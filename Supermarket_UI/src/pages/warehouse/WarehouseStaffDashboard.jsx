@@ -5,15 +5,7 @@ import { StatCard } from '../../components/ui/StatCard.jsx'
 import { Card, CardBody, CardHeader, Badge, Button, Spinner } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import {
-  mockPurchaseOrders,
-  mockStockAdjustments,
-  mockStockCounts,
-  purchaseOrderService,
-  stockAdjustmentService,
-  stockCountService,
-  toList,
-  withFallback,
-} from '../../services/index.js'
+  purchaseOrderService, stockAdjustmentService, stockCountService, toList, withFallback } from '../../services/index.js'
 import {
   ArrowRight,
   Boxes,
@@ -26,19 +18,6 @@ import {
   PackageOpen,
   ScanLine,
 } from 'lucide-react'
-
-const DEMO_RECEIVING = [
-  { id: 'PO-1021', po: 'PO-1021', supplier: 'Vinamilk', product: 'Milk', expectedQty: 120, status: 'Arrived' },
-  { id: 'PO-1022', po: 'PO-1022', supplier: 'Acecook', product: 'Noodle', expectedQty: 100, status: 'Waiting' },
-  { id: 'PO-1023', po: 'PO-1023', supplier: 'Masan', product: 'Beverage', expectedQty: 80, status: 'Waiting' },
-  { id: 'PO-1024', po: 'PO-1024', supplier: 'TH True Milk', product: 'Yogurt', expectedQty: 140, status: 'Arrived' },
-  { id: 'PO-1025', po: 'PO-1025', supplier: 'Chin-su', product: 'Rice', expectedQty: 60, status: 'Waiting' },
-]
-
-const DEMO_REQUESTS = [
-  { id: 'ADJ-009', request: 'ADJ-009', type: 'Adjustment', decision: 'Approved' },
-  { id: 'CNT-008', request: 'CNT-008', type: 'Count Diff', decision: 'Pending' },
-]
 
 const WORKBENCH_TASKS = [
   {
@@ -100,9 +79,9 @@ export default function WarehouseStaffDashboard() {
 
     ;(async () => {
       const [orderResult, countResult, adjustmentResult] = await Promise.all([
-        withFallback(() => purchaseOrderService.list(), mockPurchaseOrders),
-        withFallback(() => stockCountService.list(), mockStockCounts),
-        withFallback(() => stockAdjustmentService.list(), mockStockAdjustments),
+        withFallback(() => purchaseOrderService.list()),
+        withFallback(() => stockCountService.list()),
+        withFallback(() => stockAdjustmentService.list()),
       ])
 
       if (!alive) return
@@ -121,7 +100,6 @@ export default function WarehouseStaffDashboard() {
   }, [])
 
   const receivingRows = useMemo(() => {
-    if (sources.orders !== 'backend') return DEMO_RECEIVING
     return orders
       .filter((order) => ['Approved', 'Received'].includes(normalizedStatus(order.status)))
       .slice(0, 5)
@@ -136,7 +114,6 @@ export default function WarehouseStaffDashboard() {
   }, [orders, sources.orders])
 
   const requestRows = useMemo(() => {
-    if (sources.adjustments !== 'backend') return DEMO_REQUESTS
     const adjustmentRows = adjustments.slice(0, 2).map((item, index) => ({
       id: item.id || item.code || `ADJ-${String(index + 1).padStart(3, '0')}`,
       request: item.code || item.id || `ADJ-${String(index + 1).padStart(3, '0')}`,

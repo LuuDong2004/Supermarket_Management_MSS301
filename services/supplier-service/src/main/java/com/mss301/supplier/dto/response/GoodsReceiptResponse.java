@@ -14,6 +14,11 @@ public record GoodsReceiptResponse(
         Integer items,
         BigDecimal total,
         String status,
-        String note
+        String note,
+        String productCode,
+        String productName,
+        Integer quantity,
+        String productCondition,
+        LocalDate expiry
 ) {
 }

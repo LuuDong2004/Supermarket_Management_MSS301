@@ -7,25 +7,6 @@ import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { promotionService, withFallback, toList } from '../../services/index.js'
 import { BadgePercent, CheckCircle2, ClipboardCheck, History, Megaphone, TrendingUp, XCircle } from 'lucide-react'
 
-const DEMO_PROMOTIONS = [
-  {
-    id: 'APR-241', code: 'APR-241', name: 'Weekend Dairy Sale', requester: 'DongLV - Administrator', scope: 'Category: Dairy Products',
-    discount: 10, type: 'percent', fromDate: '2026-06-15', toDate: '2026-06-30', status: 'Pending', createdAt: '2026-06-13T09:20:00',
-  },
-  {
-    id: 'APR-242', code: 'APR-242', name: 'Member Voucher', requester: 'DongLV', scope: 'Active loyalty members',
-    discount: 50000, type: 'amount', fromDate: '2026-06-18', toDate: '2026-06-25', status: 'Pending', createdAt: '2026-06-13T10:10:00',
-  },
-  {
-    id: 'APR-243', code: 'APR-243', name: 'Rice Bundle', requester: 'DongLV', scope: 'Rice category',
-    discount: 12, type: 'percent', fromDate: '2026-06-20', toDate: '2026-06-30', status: 'Review', createdAt: '2026-06-13T11:05:00',
-  },
-  {
-    id: 'APR-244', code: 'APR-244', name: 'Back-to-school', requester: 'DongLV', scope: 'School supplies',
-    discount: 8, type: 'percent', fromDate: '2026-07-01', toDate: '2026-07-15', status: 'Pending', createdAt: '2026-06-13T13:40:00',
-  },
-]
-
 function statusLabel(status) {
   const value = String(status || '').toUpperCase()
   if (value.includes('APPROVED') || value.includes('ĐÃ DUYỆT')) return 'Approved'
@@ -76,9 +57,7 @@ export default function PromotionApprovals() {
   const load = async () => {
     setLoading(true)
     const result = await withFallback(() => promotionService.list())
-    const rows = result.source === 'backend'
-      ? toList(result.data).map((promotion) => ({ ...promotion, requester: promotion.requester || 'Administrator' }))
-      : DEMO_PROMOTIONS
+    const rows = toList(result.data).map((promotion) => ({ ...promotion, requester: promotion.requester || 'Administrator' }))
     setPromotions(rows)
     setSource(result.source)
     setSelected((current) => rows.find((promotion) => promotion.id === current?.id) || rows.find((promotion) => ['Pending', 'Review'].includes(statusLabel(promotion.status))) || rows[0] || null)

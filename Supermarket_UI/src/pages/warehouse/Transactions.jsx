@@ -5,7 +5,7 @@ import { DataTable } from '../../components/ui/DataTable.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { formatDate } from '../../lib/format.js'
-import { mockWarehouseTxns, toList, warehouseTxnService, withFallback } from '../../services/index.js'
+import { toList, warehouseTxnService, withFallback } from '../../services/index.js'
 import { ClipboardCheck, RotateCcw, Search } from 'lucide-react'
 
 const emptyFilters = { type: '', status: 'PENDING', dateFrom: '', dateTo: '', requester: '' }
@@ -28,7 +28,7 @@ export default function Transactions() {
 
   const load = async () => {
     setLoading(true)
-    const result = await withFallback(() => warehouseTxnService.list(), mockWarehouseTxns)
+    const result = await withFallback(() => warehouseTxnService.list())
     const rows = toList(result.data)
     setTransactions(rows)
     setSource(result.source)

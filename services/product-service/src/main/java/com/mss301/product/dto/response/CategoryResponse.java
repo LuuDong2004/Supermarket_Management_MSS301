@@ -6,6 +6,8 @@ public record CategoryResponse(
         UUID id,
         String name,
         String description,
-        boolean active
+        boolean active,
+        boolean requiresExpiry,
+        String taxGroup
 ) {
 }

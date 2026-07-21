@@ -4,12 +4,12 @@ import { Badge, Button, Card, CardBody, CardHeader, Field, Input, Select, Spinne
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { formatCurrency } from '../../lib/format.js'
-import { mockSales, saleService, toList, withFallback } from '../../services/index.js'
+import { saleService, toList, withFallback } from '../../services/index.js'
 import { ArrowLeft, History, RotateCcw, Search, XCircle } from 'lucide-react'
 
 export default function CancelSales() {
   const toast = useToast(); const [sales, setSales] = useState([]); const [query, setQuery] = useState(''); const [status, setStatus] = useState('PENDING'); const [selected, setSelected] = useState(null); const [reason, setReason] = useState('Customer changed purchase decision before payment confirmation.'); const [loading, setLoading] = useState(true); const [source, setSource] = useState('backend')
-  const load = async () => { const result = await withFallback(() => saleService.list(), mockSales); const rows = toList(result.data).map((row) => ({ ...row, status: row.status || 'PENDING' })); setSales(rows); setSelected(rows.find((row) => /pending|draft/i.test(row.status || '')) || rows[0] || null); setSource(result.source); setLoading(false) }
+  const load = async () => { const result = await withFallback(() => saleService.list()); const rows = toList(result.data).map((row) => ({ ...row, status: row.status || 'PENDING' })); setSales(rows); setSelected(rows.find((row) => /pending|draft/i.test(row.status || '')) || rows[0] || null); setSource(result.source); setLoading(false) }
   useEffect(() => { load() }, [])
   const rows = useMemo(() => { const term = query.trim().toLowerCase(); return sales.filter((row) => (!term || [row.code, row.id, row.customerName].some((value) => String(value || '').toLowerCase().includes(term))) && (!status || String(row.status || '').toUpperCase() === status)) }, [query, sales, status])
   const cancel = async () => { if (!selected || !reason.trim()) return toast.error('Select a pending order and enter a cancellation reason.'); if (!/pending|draft/i.test(selected.status || '')) return toast.error('Only pending sales orders can be cancelled.'); try { if (source === 'backend') await saleService.updateStatus(selected.id, 'CANCELLED'); const updated = { ...selected, status: 'CANCELLED', cancelReason: reason }; setSales((current) => current.map((row) => row.id === selected.id ? updated : row)); setSelected(updated); toast.success('Pending sales order cancelled.') } catch (error) { toast.error(error.message) } }

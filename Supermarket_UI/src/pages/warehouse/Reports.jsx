@@ -6,7 +6,7 @@ import { StatCard } from '../../components/ui/StatCard.jsx'
 import { Bars } from '../../components/ui/Charts.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { formatCurrency, formatDate, formatNumber } from '../../lib/format.js'
-import { mockProducts, mockWarehouseTxns, productService, toList, warehouseTxnService, withFallback } from '../../services/index.js'
+import { productService, toList, warehouseTxnService, withFallback } from '../../services/index.js'
 import { Boxes, FileBarChart, FileSpreadsheet, PackageCheck, RotateCcw, Wallet } from 'lucide-react'
 
 const initialFilters = { reportType: 'Inventory Movement', from: '', to: '', group: '', exportType: 'CSV' }
@@ -22,7 +22,7 @@ export default function Reports() {
 
   useEffect(() => { (async () => {
     setLoading(true)
-    const [productResult, transactionResult] = await Promise.all([withFallback(() => productService.list(), mockProducts), withFallback(() => warehouseTxnService.list(), mockWarehouseTxns)])
+    const [productResult, transactionResult] = await Promise.all([withFallback(() => productService.list()), withFallback(() => warehouseTxnService.list())])
     setProducts(toList(productResult.data)); setTransactions(toList(transactionResult.data)); setLoading(false)
   })() }, [])
 

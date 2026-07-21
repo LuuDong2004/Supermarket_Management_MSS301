@@ -16,6 +16,10 @@ public record ProductResponse(
         Integer stock,
         String unit,
         LocalDate expiry,
+        String supplier,
+        BigDecimal vat,
+        Integer threshold,
+        String status,
         String imageUrl,
         Instant createdAt,
         Instant updatedAt

@@ -6,17 +6,7 @@ import { Card, CardBody, CardHeader, Badge, Button, Spinner } from '../../compon
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { Bars } from '../../components/ui/Charts.jsx'
 import {
-  approvalRequestService,
-  mockApprovalRequests,
-  mockPolicies,
-  mockProducts,
-  mockSalesTrend,
-  policyService,
-  productService,
-  reportService,
-  toList,
-  withFallback,
-} from '../../services/index.js'
+  approvalRequestService, policyService, productService, reportService, toList, withFallback } from '../../services/index.js'
 import {
   AlertTriangle,
   ArrowRight,
@@ -28,14 +18,6 @@ import {
   PackageSearch,
   WalletCards,
 } from 'lucide-react'
-
-const DEMO_APPROVALS = [
-  { id: 'APR-101', requester: 'Admin', type: 'Role Change', priority: 'High', status: 'Pending' },
-  { id: 'APR-102', requester: 'Admin', type: 'VAT Config', priority: 'High', status: 'Pending' },
-  { id: 'APR-103', requester: 'Admin', type: 'Promotion', priority: 'Normal', status: 'Pending' },
-  { id: 'APR-104', requester: 'Admin', type: 'Permission', priority: 'High', status: 'Review' },
-  { id: 'APR-105', requester: 'Warehouse', type: 'Policy', priority: 'Normal', status: 'Pending' },
-]
 
 const TYPE_LABELS = {
   'Tạo tài khoản': 'Account',
@@ -110,10 +92,10 @@ export default function CEODashboard() {
 
     ;(async () => {
       const [trendResult, approvalResult, policyResult, stockResult, dashboardResult] = await Promise.all([
-        withFallback(() => reportService.salesTrend(), mockSalesTrend),
-        withFallback(() => approvalRequestService.list(), mockApprovalRequests),
-        withFallback(() => policyService.list(), mockPolicies),
-        withFallback(() => productService.lowStock(), mockProducts),
+        withFallback(() => reportService.salesTrend()),
+        withFallback(() => approvalRequestService.list()),
+        withFallback(() => policyService.list()),
+        withFallback(() => productService.lowStock()),
         withFallback(() => reportService.dashboard()),
       ])
 
@@ -150,7 +132,6 @@ export default function CEODashboard() {
   }, [trend])
 
   const approvalRows = useMemo(() => {
-    if (sources.approvals !== 'backend') return DEMO_APPROVALS
     return approvals.slice(0, 5).map(toApprovalRow)
   }, [approvals, sources.approvals])
 

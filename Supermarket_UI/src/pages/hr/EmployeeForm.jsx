@@ -5,7 +5,7 @@ import { Card, CardBody, Button, Field, Input, Select, Spinner } from '../../com
 import { useToast } from '../../components/ui/Toast.jsx'
 import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { roleLabel } from '../../lib/format.js'
-import { employeeService, withFallback, toList, mockEmployees } from '../../services/index.js'
+import { employeeService, withFallback, toList } from '../../services/index.js'
 import { ArrowLeft, Save } from 'lucide-react'
 
 const ROLES = ['ROLE_CASHIER', 'ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_STAFF', 'ROLE_STAFF_MANAGER', 'ROLE_ADMIN', 'ROLE_CEO']
@@ -26,7 +26,7 @@ export default function EmployeeForm() {
   useEffect(() => {
     if (!id) { setForm(emptyForm); setLoading(false); return }
     const load = async () => {
-      const r = await withFallback(() => employeeService.list({ size: 200 }), mockEmployees)
+      const r = await withFallback(() => employeeService.list({ size: 200 }))
       const e = toList(r.data).find((x) => String(x.id) === String(id) || x.code === id)
       if (!e) {
         toast.error('Không tìm thấy nhân viên.')

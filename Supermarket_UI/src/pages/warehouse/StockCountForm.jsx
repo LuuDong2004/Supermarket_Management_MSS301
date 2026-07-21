@@ -4,7 +4,7 @@ import { PageHeader } from '../../components/ui/PageHeader.jsx'
 import { Card, CardBody, Button, Field, Input, Select, Textarea, Spinner } from '../../components/ui/primitives.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { useConfirm } from '../../components/ui/Confirm.jsx'
-import { stockCountService, withFallback, toList, mockStockCounts } from '../../services/index.js'
+import { stockCountService, withFallback, toList } from '../../services/index.js'
 import { ArrowLeft, Save } from 'lucide-react'
 
 const STATUSES = ['Đang kiểm', 'Hoàn tất']
@@ -24,7 +24,7 @@ export default function StockCountForm() {
   useEffect(() => {
     if (!id) { setForm(emptyForm); setLoading(false); return }
     const load = async () => {
-      const r = await withFallback(() => stockCountService.list(), mockStockCounts)
+      const r = await withFallback(() => stockCountService.list())
       const c = toList(r.data).find((x) => String(x.id) === String(id) || x.code === id)
       if (!c) {
         toast.error('Không tìm thấy phiếu kiểm kê.')

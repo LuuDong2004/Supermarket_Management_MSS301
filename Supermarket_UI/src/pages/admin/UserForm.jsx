@@ -5,7 +5,7 @@ import { Card, CardBody, Button, Field, Input, Select, Spinner, Divider } from '
 import { useToast } from '../../components/ui/Toast.jsx'
 import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { roleLabel } from '../../lib/format.js'
-import { userService, withFallback, toList, mockUsers } from '../../services/index.js'
+import { userService, withFallback, toList } from '../../services/index.js'
 import { ArrowLeft, Save, Lock, Unlock, Ban, Trash2 } from 'lucide-react'
 
 const ROLES = ['ROLE_CASHIER', 'ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_STAFF', 'ROLE_STAFF_MANAGER', 'ROLE_ADMIN', 'ROLE_CEO']
@@ -33,7 +33,7 @@ export default function UserForm() {
   useEffect(() => {
     if (!id) { setForm(emptyForm); setLoading(false); return }
     const load = async () => {
-      const r = await withFallback(() => userService.list({ page: 0, size: 50 }), mockUsers)
+      const r = await withFallback(() => userService.list({ page: 0, size: 50 }))
       const u = toList(r.data).find((x) => String(x.id) === String(id))
       if (!u) {
         toast.error('Không tìm thấy tài khoản.')

@@ -3,7 +3,7 @@ import { PageHeader } from '../../components/ui/PageHeader.jsx'
 import { Badge, Button, Card, CardBody, CardHeader, Field, Input, Select, Spinner } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
-import { customerService, mockCustomers, mockSales, saleService, toList, withFallback } from '../../services/index.js'
+import { customerService, saleService, toList, withFallback } from '../../services/index.js'
 import { ArrowRightLeft, Coins, History, UserRound } from 'lucide-react'
 
 const POINT_VALUE = 100
@@ -18,7 +18,7 @@ export default function Loyalty() {
   const [loading, setLoading] = useState(true)
   const [source, setSource] = useState('backend')
 
-  useEffect(() => { const load = async () => { const [customerResult, salesResult] = await Promise.all([withFallback(() => customerService.list(), mockCustomers), withFallback(() => saleService.list(), mockSales)]); const customerRows = toList(customerResult.data); setCustomers(customerRows); setSales(toList(salesResult.data)); setBalances(Object.fromEntries(customerRows.map((row) => [row.id, Number(row.points || 0)]))); setMemberId(customerRows[0]?.id || ''); setSource(customerResult.source); setLoading(false) }; load() }, [])
+  useEffect(() => { const load = async () => { const [customerResult, salesResult] = await Promise.all([withFallback(() => customerService.list()), withFallback(() => saleService.list())]); const customerRows = toList(customerResult.data); setCustomers(customerRows); setSales(toList(salesResult.data)); setBalances(Object.fromEntries(customerRows.map((row) => [row.id, Number(row.points || 0)]))); setMemberId(customerRows[0]?.id || ''); setSource(customerResult.source); setLoading(false) }; load() }, [])
   const member = customers.find((customer) => customer.id === memberId)
   const balance = balances[memberId] || 0
   const redeemValue = Number(points || 0) * POINT_VALUE

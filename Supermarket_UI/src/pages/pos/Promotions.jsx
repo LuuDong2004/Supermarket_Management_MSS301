@@ -4,7 +4,7 @@ import { Badge, Button, Card, CardBody, CardHeader, Field, Input, Spinner, Statu
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { formatCurrency } from '../../lib/format.js'
-import { mockPromotions, mockVouchers, promotionService, toList, voucherService, withFallback } from '../../services/index.js'
+import { promotionService, toList, voucherService, withFallback } from '../../services/index.js'
 import { BadgePercent, Calculator, RotateCcw } from 'lucide-react'
 
 const SUBTOTAL = 650000
@@ -17,7 +17,7 @@ export default function Promotions() {
   const [code, setCode] = useState('')
   const [applied, setApplied] = useState(null)
   const [loading, setLoading] = useState(true)
-  useEffect(() => { const load = async () => { const [promotionResult, voucherResult] = await Promise.all([withFallback(() => promotionService.list(), mockPromotions), withFallback(() => voucherService.list(), mockVouchers)]); setPromotions(toList(promotionResult.data)); setVouchers(toList(voucherResult.data)); setLoading(false) }; load() }, [])
+  useEffect(() => { const load = async () => { const [promotionResult, voucherResult] = await Promise.all([withFallback(() => promotionService.list()), withFallback(() => voucherService.list())]); setPromotions(toList(promotionResult.data)); setVouchers(toList(voucherResult.data)); setLoading(false) }; load() }, [])
   const discount = useMemo(() => { if (!applied || SUBTOTAL < voucherMinimum(applied)) return 0; return applied.type === 'percent' ? Math.round(SUBTOTAL * Number(applied.value || applied.discount || 0) / 100) : Number(applied.value || applied.discount || 0) }, [applied])
   const apply = () => { const voucher = vouchers.find((item) => String(item.code || '').toLowerCase() === code.trim().toLowerCase()); if (!voucher) return toast.error('Promotion or voucher code is not valid.'); if (SUBTOTAL < voucherMinimum(voucher)) return toast.error('The cart does not meet the minimum spend.'); setApplied(voucher); toast.success(`${voucher.code} applied to the current cart.`) }
   const remove = () => { setApplied(null); setCode('') }

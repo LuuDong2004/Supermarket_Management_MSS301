@@ -13,6 +13,8 @@ public record SupplierRequest(
         @Size(max = 30) String phone,
         @DecimalMin("0.0") BigDecimal rating,
         @Size(max = 30) String status,
-        @Size(max = 30) String terms
+        @Size(max = 30) String terms,
+        @Size(max = 100) String email,
+        @Size(max = 255) String address
 ) {
 }

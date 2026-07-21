@@ -5,17 +5,7 @@ import { StatCard } from '../../components/ui/StatCard.jsx'
 import { Card, CardBody, CardHeader, Badge, Button, Field, Input, Spinner } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import {
-  customerService,
-  mockCustomers,
-  mockProducts,
-  mockSales,
-  mockShifts,
-  productService,
-  saleService,
-  shiftService,
-  toList,
-  withFallback,
-} from '../../services/index.js'
+  customerService, productService, saleService, shiftService, toList, withFallback } from '../../services/index.js'
 import {
   Banknote,
   Clock3,
@@ -26,22 +16,6 @@ import {
   UserRoundSearch,
   Users,
 } from 'lucide-react'
-
-const DEMO_SALES = [
-  { id: 'RC-3101', receipt: 'RC-3101', items: 5, payment: 'QR', amount: 428000, status: 'Paid' },
-  { id: 'RC-3102', receipt: 'RC-3102', items: 2, payment: 'Cash', amount: 106000, status: 'Paid' },
-  { id: 'RC-3103', receipt: 'RC-3103', items: 8, payment: 'QR', amount: 742000, status: 'Paid' },
-  { id: 'RC-3104', receipt: 'RC-3104', items: 1, payment: 'Cash', amount: 36000, status: 'Paid' },
-  { id: 'RC-3105', receipt: 'RC-3105', items: 4, payment: 'QR', amount: 210000, status: 'Paid' },
-]
-
-const DEMO_CART = {
-  id: 'P001',
-  product: 'Milk 1L',
-  qty: 2,
-  price: 32000,
-  subtotal: 64000,
-}
 
 function isClosed(status) {
   const value = String(status || '').toUpperCase()
@@ -88,17 +62,17 @@ export default function CashierDashboard() {
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
   const [quantity, setQuantity] = useState(1)
-  const [cartPreview, setCartPreview] = useState([DEMO_CART])
+  const [cartPreview, setCartPreview] = useState([])
 
   useEffect(() => {
     let alive = true
 
     ;(async () => {
       const [saleResult, shiftResult, customerResult, productResult] = await Promise.all([
-        withFallback(() => saleService.list(), mockSales),
-        withFallback(() => shiftService.list(), mockShifts),
-        withFallback(() => customerService.list({ size: 200 }), mockCustomers),
-        withFallback(() => productService.list({ size: 200 }), mockProducts),
+        withFallback(() => saleService.list()),
+        withFallback(() => shiftService.list()),
+        withFallback(() => customerService.list({ size: 200 })),
+        withFallback(() => productService.list({ size: 200 })),
       ])
 
       if (!alive) return
@@ -133,7 +107,6 @@ export default function CashierDashboard() {
   const currentShift = shifts.find((shift) => !isClosed(shift.status)) || shifts[0]
 
   const recentSales = useMemo(() => {
-    if (sources.sales !== 'backend') return DEMO_SALES
     return sales.slice(0, 5).map((sale, index) => ({
       ...sale,
       id: sale.id || sale.code || `RC-${3101 + index}`,
@@ -168,11 +141,9 @@ export default function CashierDashboard() {
   }
 
   const shiftIsOpen = currentShift ? !isClosed(currentShift.status) : false
-  const transactions = sources.sales === 'backend' ? sales.length : 38
-  const shiftRevenue = sources.sales === 'backend'
-    ? sales.reduce((sum, sale) => sum + Number(sale.total || sale.amount || 0), 0)
-    : 12_800_000
-  const loyaltyLookups = sources.customers === 'backend' ? customers.length : 21
+  const transactions = sales.length
+  const shiftRevenue = sales.reduce((sum, sale) => sum + Number(sale.total || sale.amount || 0), 0)
+  const loyaltyLookups = customers.length
 
   return (
     <div>

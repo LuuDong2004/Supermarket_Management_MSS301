@@ -3,7 +3,7 @@ import { PageHeader, FilterBar } from '../../components/ui/PageHeader.jsx'
 import { Badge, Button, Card, CardBody, CardHeader, Field, Input, Select, Spinner, StatusBadge } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
-import { goodsReceiptService, mockProducts, mockPurchaseOrders, productService, purchaseOrderService, toList, withFallback } from '../../services/index.js'
+import { goodsReceiptService, productService, purchaseOrderService, toList, withFallback } from '../../services/index.js'
 import { ClipboardCheck, RotateCcw, Search, Send, X } from 'lucide-react'
 
 const emptyFilters = { search: '', status: '', dateFrom: '', dateTo: '', type: '' }
@@ -27,8 +27,8 @@ export default function Receive() {
       setLoading(true)
       const [receiptResult, orderResult, productResult] = await Promise.all([
         withFallback(() => goodsReceiptService.list()),
-        withFallback(() => purchaseOrderService.list(), mockPurchaseOrders),
-        withFallback(() => productService.list(), mockProducts),
+        withFallback(() => purchaseOrderService.list()),
+        withFallback(() => productService.list()),
       ])
       const orderRows = toList(orderResult.data)
       const productRows = toList(productResult.data)
@@ -70,11 +70,12 @@ export default function Receive() {
     const payload = {
       code, poCode: selectedOrder.code, supplier: selectedOrder.supplier, receiveDate: today(), receivedBy: 'Warehouse Staff',
       items: Number(form.quantity), total: Number(selectedProduct.cost || selectedProduct.price || 0) * Number(form.quantity),
-      note: `Product: ${selectedProduct.name}; Condition: ${form.condition}; Expiry: ${form.expiry || 'N/A'}`,
+      productCode: selectedProduct.code, productName: selectedProduct.name, quantity: Number(form.quantity),
+      productCondition: form.condition, expiry: form.expiry || null, note: form.note || null,
     }
     setSaving(true)
     try {
-      const response = source === 'backend' ? await goodsReceiptService.create(payload) : { id: code, ...payload, status: 'Pending' }
+      const response = await goodsReceiptService.create(payload)
       setReceipts((current) => [{ ...response, product: selectedProduct.name, quantity: Number(form.quantity), condition: form.condition, expiry: form.expiry, status: response.status || 'Pending' }, ...current])
       setForm(emptyForm)
       toast.success('Goods receipt submitted for approval.')

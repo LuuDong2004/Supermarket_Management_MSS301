@@ -5,13 +5,7 @@ import { DataTable } from '../../components/ui/DataTable.jsx'
 import { StatCard } from '../../components/ui/StatCard.jsx'
 import { Bars } from '../../components/ui/Charts.jsx'
 import {
-  mockProducts,
-  mockSalesTrend,
-  productService,
-  reportService,
-  toList,
-  withFallback,
-} from '../../services/index.js'
+  productService, reportService, toList, withFallback } from '../../services/index.js'
 import {
   BarChart3,
   Boxes,
@@ -22,25 +16,6 @@ import {
   TableProperties,
   Wallet,
 } from 'lucide-react'
-
-const DEMO_TREND = [
-  { label: '06 Jun', revenue: 42 },
-  { label: '07 Jun', revenue: 58 },
-  { label: '08 Jun', revenue: 49 },
-  { label: '09 Jun', revenue: 73 },
-  { label: '10 Jun', revenue: 61 },
-  { label: '11 Jun', revenue: 82 },
-  { label: '12 Jun', revenue: 128.4 },
-]
-
-const DEMO_DETAILS = [
-  { id: 'R-01', date: '12/01/26', category: 'Milk', revenue: 120, cost: 'Milk', profit: 'Milk', status: 'Pending' },
-  { id: 'R-02', date: '12/02/26', category: 'Rice', revenue: 240, cost: 'Rice', profit: 'Rice', status: 'Approved' },
-  { id: 'R-03', date: '12/03/26', category: 'Staff A', revenue: 360, cost: 'Staff A', profit: 'Staff A', status: 'Active' },
-  { id: 'R-04', date: '12/04/26', category: 'Customer B', revenue: 480, cost: 'Customer B', profit: 'Customer B', status: 'Rejected' },
-  { id: 'R-05', date: '12/05/26', category: 'Supplier C', revenue: 600, cost: 'Supplier C', profit: 'Supplier C', status: 'Pending' },
-  { id: 'R-06', date: '12/06/26', category: 'Order D', revenue: 720, cost: 'Order D', profit: 'Order D', status: 'Approved' },
-]
 
 function millions(value) {
   const number = Number(value || 0)
@@ -69,9 +44,9 @@ export default function Reports() {
   const load = async () => {
     setLoading(true)
     const [trendResult, financialResult, productResult, dashboardResult] = await Promise.all([
-      withFallback(() => reportService.salesTrend(), mockSalesTrend),
+      withFallback(() => reportService.salesTrend()),
       withFallback(() => reportService.financial()),
-      withFallback(() => productService.list({ size: 200 }), mockProducts),
+      withFallback(() => productService.list({ size: 200 })),
       withFallback(() => reportService.dashboard()),
     ])
 
@@ -91,7 +66,6 @@ export default function Reports() {
   useEffect(() => { load() }, [])
 
   const trendRows = useMemo(() => {
-    if (sources.trend !== 'backend') return DEMO_TREND
     return trend.slice(-7).map((row, index) => ({
       ...row,
       label: row.label || row.day || row.date || `Day ${index + 1}`,
@@ -100,7 +74,6 @@ export default function Reports() {
   }, [sources.trend, trend])
 
   const reportDetails = useMemo(() => {
-    if (sources.financial !== 'backend' || financial.length === 0) return DEMO_DETAILS
     return financial.slice(-6).map((row, index) => ({
       id: row.id || row.month || `R-${index + 1}`,
       date: row.month || `Period ${index + 1}`,
@@ -120,16 +93,12 @@ export default function Reports() {
         .some((value) => String(value ?? '').toLowerCase().includes(query)))
   }, [appliedFilter, reportDetails])
 
-  const totalSales = sources.dashboard === 'backend' && Number(dashboard.todayRevenue) > 0
-    ? Number(dashboard.todayRevenue)
-    : 128_400_000
-  const transactions = sources.dashboard === 'backend' && Number.isFinite(Number(dashboard.todayOrders))
-    ? Number(dashboard.todayOrders)
-    : 1248
-  const grossProfit = sources.dashboard === 'backend' ? totalSales * 0.223 : 28_600_000
-  const inventoryValue = sources.products === 'backend'
-    ? products.reduce((sum, product) => sum + Number(product.cost || 0) * Number(product.stock || 0), 0)
-    : 412_000_000
+  const totalSales = Number(dashboard.todayRevenue || 0)
+  const transactions = Number(dashboard.todayOrders || 0)
+  const grossProfit = financial.length
+    ? Number(financial.at(-1)?.grossProfit || 0) * 1_000_000
+    : 0
+  const inventoryValue = products.reduce((sum, product) => sum + Number(product.cost || 0) * Number(product.stock || 0), 0)
 
   const resetFilters = () => {
     setReportType('management')

@@ -2,22 +2,12 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PageHeader, FilterBar } from '../../components/ui/PageHeader.jsx'
 import {
-  Badge,
-  Button,
-  Card,
-  CardBody,
-  CardHeader,
-  Field,
-  Input,
-  Select,
-  Spinner,
-  StatusBadge,
-} from '../../components/ui/primitives.jsx'
+  Badge, Button, Card, CardBody, CardHeader, Field, Input, Select, Spinner, StatusBadge, } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { isoDate, roleLabel } from '../../lib/format.js'
-import { employeeService, mockEmployees, toList, withFallback } from '../../services/index.js'
+import { employeeService, toList, withFallback } from '../../services/index.js'
 import { Eye, RotateCcw, Search, Send, UserRound, X } from 'lucide-react'
 
 const POSITIONS = [
@@ -92,7 +82,7 @@ export default function Employees() {
 
   const load = async () => {
     setLoading(true)
-    const result = await withFallback(() => employeeService.list({ size: 200 }), mockEmployees)
+    const result = await withFallback(() => employeeService.list({ size: 200 }))
     setEmployees(toList(result.data))
     setSource(result.source)
     setLoading(false)

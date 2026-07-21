@@ -24,9 +24,9 @@ import java.util.UUID;
 @Transactional
 public class StockAdjustmentServiceImpl implements StockAdjustmentService {
 
-    private static final String STATUS_PENDING = "Chờ duyệt";
-    private static final String STATUS_APPROVED = "Đã duyệt";
-    private static final String STATUS_REJECTED = "Từ chối";
+    private static final String STATUS_PENDING = "PENDING";
+    private static final String STATUS_APPROVED = "APPROVED";
+    private static final String STATUS_REJECTED = "REJECTED";
 
     private final StockAdjustmentRepository stockAdjustmentRepository;
     private final InventoryItemRepository inventoryItemRepository;
@@ -83,6 +83,7 @@ public class StockAdjustmentServiceImpl implements StockAdjustmentService {
         inventoryItemRepository.findFirstByNameIgnoreCase(adjustment.getProduct())
                 .ifPresent(item -> item.setOnHand(adjustment.getCountedQty()));
         adjustment.setStatus(STATUS_APPROVED);
+        adjustment.setDecisionComment("Approved by warehouse manager; inventory quantity updated.");
         return inventoryMapper.toResponse(adjustment);
     }
 
@@ -93,6 +94,7 @@ public class StockAdjustmentServiceImpl implements StockAdjustmentService {
             throw new BadRequestException(ErrorCode.BAD_REQUEST, "Only pending stock adjustments can be rejected.");
         }
         adjustment.setStatus(STATUS_REJECTED);
+        adjustment.setDecisionComment("Rejected by warehouse manager.");
         return inventoryMapper.toResponse(adjustment);
     }
 

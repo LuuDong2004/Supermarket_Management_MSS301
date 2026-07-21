@@ -4,7 +4,7 @@ import { Badge, Button, Card, CardBody, CardHeader, Field, Input, Select, Spinne
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { StatCard } from '../../components/ui/StatCard.jsx'
 import { formatDate, formatNumber } from '../../lib/format.js'
-import { inventoryService, mockInventory, mockProducts, mockStockAdjustments, productService, stockAdjustmentService, toList, withFallback } from '../../services/index.js'
+import { inventoryService, productService, stockAdjustmentService, toList, withFallback } from '../../services/index.js'
 import { AlertTriangle, Boxes, Clock, ClipboardList, RotateCcw, Search } from 'lucide-react'
 
 const emptyFilters = { search: '', category: '', risk: '', location: '' }
@@ -29,9 +29,9 @@ export default function Monitor() {
     const load = async () => {
       setLoading(true)
       const [inventoryResult, productResult, adjustmentResult] = await Promise.all([
-        withFallback(() => inventoryService.list(), mockInventory),
-        withFallback(() => productService.list(), mockProducts),
-        withFallback(() => stockAdjustmentService.list(), mockStockAdjustments),
+        withFallback(() => inventoryService.list()),
+        withFallback(() => productService.list()),
+        withFallback(() => stockAdjustmentService.list()),
       ])
       const products = toList(productResult.data)
       const rows = toList(inventoryResult.data).map((item) => {

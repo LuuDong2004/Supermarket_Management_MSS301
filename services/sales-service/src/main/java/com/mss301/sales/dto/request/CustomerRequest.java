@@ -13,9 +13,12 @@ public record CustomerRequest(
         @NotBlank @Size(max = 30) String code,
         @NotBlank @Size(max = 150) String name,
         @Size(max = 20) String phone,
+        @Size(max = 150) String email,
         @Size(max = 20) String tier,
         @NotNull @PositiveOrZero Integer points,
         LocalDate joined,
-        @DecimalMin("0.0") BigDecimal spent
+        @DecimalMin("0.0") BigDecimal spent,
+        @Size(max = 20) String membershipStatus,
+        LocalDate lastPurchase
 ) {
 }

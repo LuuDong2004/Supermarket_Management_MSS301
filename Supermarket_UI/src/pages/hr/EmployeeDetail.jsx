@@ -5,7 +5,7 @@ import { Card, CardBody, Button, Badge, StatusBadge, Spinner } from '../../compo
 import { useToast } from '../../components/ui/Toast.jsx'
 import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { formatCurrency, formatDate, roleLabel, initials } from '../../lib/format.js'
-import { employeeService, withFallback, toList, mockEmployees } from '../../services/index.js'
+import { employeeService, withFallback, toList } from '../../services/index.js'
 import { ArrowLeft, Pencil, Trash2, UserCheck, UserX, Building2, Calendar, Phone, BadgeDollarSign } from 'lucide-react'
 
 const isInactive = (status) => (status || '').toLowerCase().includes('nghỉ')
@@ -21,7 +21,7 @@ export default function EmployeeDetail() {
 
   const load = async () => {
     setLoading(true)
-    const r = await withFallback(() => employeeService.list({ size: 200 }), mockEmployees)
+    const r = await withFallback(() => employeeService.list({ size: 200 }))
     const e = toList(r.data).find((x) => String(x.id) === String(id) || x.code === id)
     if (!e) {
       toast.error('Không tìm thấy nhân viên.')

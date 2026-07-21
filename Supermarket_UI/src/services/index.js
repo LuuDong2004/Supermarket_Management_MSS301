@@ -2,9 +2,8 @@
 // Every backend response is already unwrapped from the ApiResponse<T> envelope by api.js.
 // Paths here are gateway-relative (api.js prepends the /api base).
 //
-// Pages should read/write through these services and use `withFallback` so the
-// UI still renders demo data (src/mock/db.js via ./fallback.js) when the backend
-// is offline. This replaces the old pattern of importing mock data as the source.
+// Pages read and write through these services. Backend APIs are the only data
+// source; a failed request is never replaced with UI demo data.
 
 import { api } from '../lib/api.js'
 
@@ -16,18 +15,14 @@ export function toList(res) {
 }
 
 // Backend-only fetch. Demo/mock fallbacks were removed — on error the caller
-// gets an empty result (never fake data). Returns { data, source } where
-// source is 'backend' on success or 'error' on failure.
-export async function withFallback(call, fallback) {
-  if (import.meta.env.VITE_USE_MOCK === 'true' && fallback) {
-    return { data: typeof fallback === 'function' ? fallback() : fallback, source: 'mock' }
-  }
+// gets an empty result and an `error` property. `source` identifies the sole
+// configured provider rather than the request success state.
+export async function withFallback(call) {
   try {
     return { data: await call(), source: 'backend' }
   } catch (err) {
     console.error('[api] request failed:', err?.message || err)
-    if (fallback) return { data: typeof fallback === 'function' ? fallback() : fallback, source: 'mock', error: err }
-    return { data: [], source: 'error', error: err }
+    return { data: [], source: 'backend', error: err }
   }
 }
 
@@ -298,7 +293,3 @@ export const settingService = {
   create: (body) => api.post('/settings', body),
   update: (key, body) => api.put(`/settings/${key}`, body),
 }
-
-// Legacy no-op mock symbols kept only so existing pages' imports resolve.
-// They are never invoked (withFallback no longer takes a fallback argument).
-export * from './fallback.js'

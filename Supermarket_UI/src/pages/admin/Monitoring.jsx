@@ -1,24 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { PageHeader, FilterBar } from '../../components/ui/PageHeader.jsx'
 import {
-  Badge,
-  Button,
-  Card,
-  CardBody,
-  CardHeader,
-  Field,
-  Input,
-  Select,
-  Spinner,
-} from '../../components/ui/primitives.jsx'
+  Badge, Button, Card, CardBody, CardHeader, Field, Input, Select, Spinner, } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import {
-  mockServices,
-  mockSystemLogs,
-  monitoringService,
-  toList,
-  withFallback,
-} from '../../services/index.js'
+  monitoringService, toList, withFallback } from '../../services/index.js'
 import { Activity, Filter, RotateCcw, Search, Server, X } from 'lucide-react'
 
 const LEVELS = ['INFO', 'WARN', 'ERROR']
@@ -63,8 +49,8 @@ export default function Monitoring() {
     const load = async () => {
       setLoading(true)
       const [serviceResult, logResult] = await Promise.all([
-        withFallback(() => monitoringService.services(), mockServices),
-        withFallback(() => monitoringService.logs(), mockSystemLogs),
+        withFallback(() => monitoringService.services()),
+        withFallback(() => monitoringService.logs()),
       ])
       setServices(toList(serviceResult.data))
       setSystemLogs(toList(logResult.data))

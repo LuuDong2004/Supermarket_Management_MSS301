@@ -50,6 +50,9 @@ public class Customer {
     @Column(length = 20)
     private String phone;
 
+    @Column(length = 150)
+    private String email;
+
     @Column(length = 20)
     private String tier;
 
@@ -60,6 +63,12 @@ public class Customer {
 
     @Column(precision = 14, scale = 2)
     private BigDecimal spent;
+
+    @Column(name = "membership_status", nullable = false, length = 20)
+    private String membershipStatus;
+
+    @Column(name = "last_purchase")
+    private LocalDate lastPurchase;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -76,6 +85,9 @@ public class Customer {
     void ensureId() {
         if (id == null) {
             id = UUID.randomUUID();
+        }
+        if (membershipStatus == null || membershipStatus.isBlank()) {
+            membershipStatus = "ACTIVE";
         }
     }
 }

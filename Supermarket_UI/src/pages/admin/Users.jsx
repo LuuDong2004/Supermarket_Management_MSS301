@@ -2,28 +2,13 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PageHeader, FilterBar } from '../../components/ui/PageHeader.jsx'
 import {
-  Badge,
-  Button,
-  Card,
-  CardBody,
-  CardHeader,
-  Field,
-  Input,
-  Select,
-  Spinner,
-  StatusBadge,
-} from '../../components/ui/primitives.jsx'
+  Badge, Button, Card, CardBody, CardHeader, Field, Input, Select, Spinner, StatusBadge, } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { isoDate, roleLabel } from '../../lib/format.js'
 import {
-  approvalRequestService,
-  mockUsers,
-  toList,
-  userService,
-  withFallback,
-} from '../../services/index.js'
+  approvalRequestService, toList, userService, withFallback } from '../../services/index.js'
 import { Edit3, Info, Lock, RotateCcw, Search, Unlock, UserPlus } from 'lucide-react'
 
 const ROLES = [
@@ -92,7 +77,7 @@ export default function Users() {
 
   const load = async () => {
     setLoading(true)
-    const result = await withFallback(() => userService.list({ page: 0, size: 50 }), mockUsers)
+    const result = await withFallback(() => userService.list({ page: 0, size: 50 }))
     const nextUsers = toList(result.data).map(normalizeUser)
     setUsers(nextUsers)
     setSource(result.source)

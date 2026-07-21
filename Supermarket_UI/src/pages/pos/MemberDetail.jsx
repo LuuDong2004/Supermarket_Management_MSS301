@@ -4,7 +4,7 @@ import { PageHeader } from '../../components/ui/PageHeader.jsx'
 import { Card, CardBody, Button, Badge, Spinner } from '../../components/ui/primitives.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { formatCurrency, formatNumber, formatDate, initials } from '../../lib/format.js'
-import { customerService, withFallback, toList, mockCustomers } from '../../services/index.js'
+import { customerService, withFallback, toList } from '../../services/index.js'
 import { ArrowLeft, Mail, Phone, Crown, Star, Gift, Calendar } from 'lucide-react'
 
 const TIER_TONE = { Platinum: 'violet', Gold: 'amber', Silver: 'slate', Member: 'blue' }
@@ -19,7 +19,7 @@ export default function MemberDetail() {
 
   useEffect(() => {
     const load = async () => {
-      const r = await withFallback(() => customerService.list(), mockCustomers)
+      const r = await withFallback(() => customerService.list())
       const c = toList(r.data).find((x) => String(x.id) === String(id) || x.code === id)
       if (!c) {
         toast.error('Không tìm thấy thành viên.')

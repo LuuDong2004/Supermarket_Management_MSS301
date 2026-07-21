@@ -4,7 +4,7 @@ import { Badge, Button, Card, CardBody, CardHeader, Field, Input, Select, Spinne
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { useConfirm } from '../../components/ui/Confirm.jsx'
-import { mockSuppliers, supplierService, toList, withFallback } from '../../services/index.js'
+import { supplierService, toList, withFallback } from '../../services/index.js'
 import { Info, RotateCcw, Search, Truck } from 'lucide-react'
 
 const emptyForm = { code: '', name: '', phone: '', email: '', address: '', status: 'ACTIVE' }
@@ -13,20 +13,20 @@ export default function Suppliers() {
   const toast = useToast(); const confirm = useConfirm()
   const [suppliers, setSuppliers] = useState([]); const [selected, setSelected] = useState(null); const [form, setForm] = useState(emptyForm)
   const [search, setSearch] = useState(''); const [status, setStatus] = useState(''); const [applied, setApplied] = useState({ search: '', status: '' }); const [loading, setLoading] = useState(true); const [saving, setSaving] = useState(false); const [source, setSource] = useState('backend')
-  const load = async () => { setLoading(true); const result = await withFallback(() => supplierService.list({ page: 0, size: 100 }), mockSuppliers); setSuppliers(toList(result.data)); setSource(result.source); setLoading(false) }
+  const load = async () => { setLoading(true); const result = await withFallback(() => supplierService.list({ page: 0, size: 100 })); setSuppliers(toList(result.data)); setSource(result.source); setLoading(false) }
   useEffect(() => { load() }, [])
   const rows = useMemo(() => { const query = applied.search.trim().toLowerCase(); return suppliers.filter((row) => (!query || [row.code, row.name, row.phone, row.email].some((value) => String(value || '').toLowerCase().includes(query))) && (!applied.status || row.status === applied.status)) }, [applied, suppliers])
   const selectSupplier = (row) => { setSelected(row); setForm({ code: row.code || '', name: row.name || '', phone: row.phone || '', email: row.email || '', address: row.address || row.terms || '', status: row.status || 'ACTIVE' }) }
   const resetForm = () => { setSelected(null); setForm(emptyForm) }
-  const body = (nextStatus = form.status) => ({ code: form.code.trim(), name: form.name.trim(), contact: selected?.contact || '', phone: form.phone.trim(), rating: selected?.rating ?? null, status: nextStatus, terms: selected?.terms || '' })
+  const body = (nextStatus = form.status) => ({ code: form.code.trim(), name: form.name.trim(), contact: selected?.contact || '', phone: form.phone.trim(), email: form.email.trim() || null, address: form.address.trim() || null, rating: selected?.rating ?? null, status: nextStatus, terms: selected?.terms || '' })
   const save = async () => {
     if (!form.code.trim() || !form.name.trim()) return toast.error('Supplier code and name are required.')
     if (suppliers.some((row) => row.id !== selected?.id && row.code === form.code.trim())) return toast.error('Supplier code must be unique.')
     const accepted = await confirm({ title: selected ? 'Update supplier?' : 'Create supplier?', message: `${selected ? 'Update' : 'Create'} ${form.name}?`, confirmLabel: 'Create/Update' }); if (!accepted) return
     setSaving(true)
-    try { let saved = source === 'backend' ? (selected ? await supplierService.update(selected.id, body()) : await supplierService.create(body())) : { id: selected?.id || form.code, ...body() }; saved = { ...saved, email: form.email, address: form.address }; setSuppliers((current) => selected ? current.map((row) => row.id === selected.id ? saved : row) : [saved, ...current]); resetForm(); toast.success(selected ? 'Supplier updated.' : 'Supplier created.') } catch (error) { toast.error(error.message) } finally { setSaving(false) }
+    try { const saved = selected ? await supplierService.update(selected.id, body()) : await supplierService.create(body()); setSuppliers((current) => selected ? current.map((row) => row.id === selected.id ? saved : row) : [saved, ...current]); resetForm(); toast.success(selected ? 'Supplier updated.' : 'Supplier created.') } catch (error) { toast.error(error.message) } finally { setSaving(false) }
   }
-  const deactivate = async () => { if (!selected) return toast.error('Select a supplier first.'); const accepted = await confirm({ title: 'Deactivate supplier?', message: `${selected.name} cannot be selected for new purchase orders.`, confirmLabel: 'Deactivate', danger: true }); if (!accepted) return; try { const saved = source === 'backend' ? await supplierService.update(selected.id, body('INACTIVE')) : { ...selected, status: 'INACTIVE' }; setSuppliers((current) => current.map((row) => row.id === selected.id ? { ...row, ...saved } : row)); resetForm(); toast.success('Supplier deactivated.') } catch (error) { toast.error(error.message) } }
+  const deactivate = async () => { if (!selected) return toast.error('Select a supplier first.'); const accepted = await confirm({ title: 'Deactivate supplier?', message: `${selected.name} cannot be selected for new purchase orders.`, confirmLabel: 'Deactivate', danger: true }); if (!accepted) return; try { const saved = await supplierService.update(selected.id, body('INACTIVE')); setSuppliers((current) => current.map((row) => row.id === selected.id ? { ...row, ...saved } : row)); resetForm(); toast.success('Supplier deactivated.') } catch (error) { toast.error(error.message) } }
   return <div>
     <PageHeader breadcrumb="Warehouse Management · 3.6.7" title="Supplier Management" subtitle="Maintain supplier master data for purchase orders and goods receiving." />
     <FilterBar className="mb-6"><Field label="Supplier Search" className="grow"><div className="relative"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" /><Input className="pl-9" placeholder="Code, name, phone, email" value={search} onChange={(event) => setSearch(event.target.value)} /></div></Field><Field label="Status"><Select value={status} onChange={(event) => setStatus(event.target.value)}><option value="">All</option><option value="ACTIVE">Active</option><option value="INACTIVE">Inactive</option><option value="SUSPENDED">Suspended</option></Select></Field><div className="flex !basis-auto !grow-0 gap-2"><Button variant="secondary" onClick={() => setApplied({ search, status })}>Filter</Button><Button onClick={resetForm}>New Supplier</Button></div></FilterBar>

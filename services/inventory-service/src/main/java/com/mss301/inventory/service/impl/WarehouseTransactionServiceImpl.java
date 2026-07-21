@@ -23,9 +23,9 @@ import java.util.UUID;
 @Transactional
 public class WarehouseTransactionServiceImpl implements WarehouseTransactionService {
 
-    private static final String STATUS_PENDING = "Chờ duyệt";
-    private static final String STATUS_APPROVED = "Đã duyệt";
-    private static final String STATUS_REJECTED = "Từ chối";
+    private static final String STATUS_PENDING = "PENDING";
+    private static final String STATUS_APPROVED = "APPROVED";
+    private static final String STATUS_REJECTED = "REJECTED";
 
     private final WarehouseTransactionRepository warehouseTransactionRepository;
     private final InventoryItemRepository inventoryItemRepository;
@@ -90,7 +90,8 @@ public class WarehouseTransactionServiceImpl implements WarehouseTransactionServ
 
     // Inbound transactions add to on-hand; outbound subtract (never below zero).
     private void applyToStock(WarehouseTransaction transaction) {
-        boolean outbound = transaction.getType() != null && transaction.getType().contains("Xuất");
+        String type = transaction.getType() == null ? "" : transaction.getType().toUpperCase();
+        boolean outbound = type.contains("XUẤT") || type.contains("OUTBOUND") || type.contains("ISSUE");
         int delta = outbound ? -transaction.getQty() : transaction.getQty();
         inventoryItemRepository.findFirstByNameIgnoreCase(transaction.getProduct())
                 .ifPresent(item -> item.setOnHand(Math.max(0, item.getOnHand() + delta)));

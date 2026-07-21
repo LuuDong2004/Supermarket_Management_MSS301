@@ -20,9 +20,9 @@ import java.util.UUID;
 @Transactional
 public class GoodsReceiptServiceImpl implements GoodsReceiptService {
 
-    private static final String STATUS_PENDING = "Chờ duyệt";
-    private static final String STATUS_APPROVED = "Đã duyệt";
-    private static final String STATUS_REJECTED = "Từ chối";
+    private static final String STATUS_PENDING = "PENDING";
+    private static final String STATUS_APPROVED = "APPROVED";
+    private static final String STATUS_REJECTED = "REJECTED";
 
     private final GoodsReceiptRepository goodsReceiptRepository;
 
@@ -54,6 +54,11 @@ public class GoodsReceiptServiceImpl implements GoodsReceiptService {
                 .items(request.items())
                 .total(request.total())
                 .note(request.note())
+                .productCode(request.productCode())
+                .productName(request.productName())
+                .quantity(request.quantity())
+                .productCondition(request.productCondition())
+                .expiry(request.expiry())
                 .status(STATUS_PENDING)
                 .build();
         return toResponse(goodsReceiptRepository.save(receipt));
@@ -72,6 +77,11 @@ public class GoodsReceiptServiceImpl implements GoodsReceiptService {
         receipt.setItems(request.items());
         receipt.setTotal(request.total());
         receipt.setNote(request.note());
+        receipt.setProductCode(request.productCode());
+        receipt.setProductName(request.productName());
+        receipt.setQuantity(request.quantity());
+        receipt.setProductCondition(request.productCondition());
+        receipt.setExpiry(request.expiry());
         return toResponse(receipt);
     }
 
@@ -102,6 +112,7 @@ public class GoodsReceiptServiceImpl implements GoodsReceiptService {
     private GoodsReceiptResponse toResponse(GoodsReceipt r) {
         return new GoodsReceiptResponse(
                 r.getId(), r.getCode(), r.getPoCode(), r.getSupplier(), r.getReceiveDate(),
-                r.getReceivedBy(), r.getItems(), r.getTotal(), r.getStatus(), r.getNote());
+                r.getReceivedBy(), r.getItems(), r.getTotal(), r.getStatus(), r.getNote(),
+                r.getProductCode(), r.getProductName(), r.getQuantity(), r.getProductCondition(), r.getExpiry());
     }
 }

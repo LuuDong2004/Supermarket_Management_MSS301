@@ -1,22 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { PageHeader, FilterBar } from '../../components/ui/PageHeader.jsx'
 import {
-  Badge,
-  Button,
-  Card,
-  CardBody,
-  CardHeader,
-  Field,
-  Input,
-  Select,
-  Spinner,
-  StatusBadge,
-} from '../../components/ui/primitives.jsx'
+  Badge, Button, Card, CardBody, CardHeader, Field, Input, Select, Spinner, StatusBadge, } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { formatDate, isoDate } from '../../lib/format.js'
-import { attendanceService, mockAttendance, toList, withFallback } from '../../services/index.js'
+import { attendanceService, toList, withFallback } from '../../services/index.js'
 import { CalendarCheck, RotateCcw, Search, Send, X } from 'lucide-react'
 
 const emptyForm = {
@@ -91,7 +81,7 @@ export default function Attendance() {
 
   const load = async () => {
     setLoading(true)
-    const result = await withFallback(() => attendanceService.list(), mockAttendance)
+    const result = await withFallback(() => attendanceService.list())
     setRecords(toList(result.data))
     setSource(result.source)
     setLoading(false)

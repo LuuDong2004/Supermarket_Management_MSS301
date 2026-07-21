@@ -6,17 +6,7 @@ import { Card, CardBody, CardHeader, Button, Badge, StatusBadge, Spinner } from 
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { roleLabel } from '../../lib/format.js'
 import {
-  approvalRequestService,
-  monitoringService,
-  securityAlertService,
-  userService,
-  withFallback,
-  toList,
-  mockApprovalRequests,
-  mockServices,
-  mockSystemLogs,
-  mockUsers,
-} from '../../services/index.js'
+  approvalRequestService, monitoringService, securityAlertService, userService, withFallback, toList } from '../../services/index.js'
 import {
   Activity,
   AlertTriangle,
@@ -86,10 +76,10 @@ export default function AdminDashboard() {
 
     ;(async () => {
       const [userResult, requestResult, serviceResult, logResult, alertResult] = await Promise.all([
-        withFallback(() => userService.list({ page: 0, size: 50 }), mockUsers),
-        withFallback(() => approvalRequestService.list(), mockApprovalRequests),
-        withFallback(() => monitoringService.services(), mockServices),
-        withFallback(() => monitoringService.logs(), mockSystemLogs),
+        withFallback(() => userService.list({ page: 0, size: 50 })),
+        withFallback(() => approvalRequestService.list()),
+        withFallback(() => monitoringService.services()),
+        withFallback(() => monitoringService.logs()),
         withFallback(() => securityAlertService.list()),
       ])
 

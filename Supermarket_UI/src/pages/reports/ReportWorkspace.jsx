@@ -6,7 +6,7 @@ import { StatCard } from '../../components/ui/StatCard.jsx'
 import { Bars } from '../../components/ui/Charts.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { formatCurrency, formatNumber } from '../../lib/format.js'
-import { employeeService, inventoryService, mockEmployees, mockInventory, mockSales, saleService, toList, withFallback } from '../../services/index.js'
+import { employeeService, inventoryService, saleService, toList, withFallback } from '../../services/index.js'
 import { BarChart3, Boxes, Download, RotateCcw, ShoppingCart, TrendingUp, Wallet } from 'lucide-react'
 
 const config = {
@@ -23,7 +23,7 @@ const normalize = (source, kind) => toList(source).slice(0, 8).map((row, index) 
 export default function ReportWorkspace({ kind }) {
   const toast = useToast(); const meta = config[kind]
   const [rows, setRows] = useState([]); const [reportType, setReportType] = useState(meta.types[0]); const [from, setFrom] = useState('2026-06-01'); const [to, setTo] = useState('2026-06-30'); const [filter, setFilter] = useState(''); const [exportType, setExportType] = useState('PDF'); const [loading, setLoading] = useState(true)
-  useEffect(() => { const load = async () => { let result; if (kind === 'sales') result = await withFallback(() => saleService.list(), mockSales); else if (kind === 'inventory') result = await withFallback(() => inventoryService.list(), mockInventory); else result = await withFallback(() => employeeService.list(), mockEmployees); const normalized = normalize(result.data, kind); setRows(normalized); setLoading(false) }; load() }, [kind])
+  useEffect(() => { const load = async () => { let result; if (kind === 'sales') result = await withFallback(() => saleService.list()); else if (kind === 'inventory') result = await withFallback(() => inventoryService.list()); else result = await withFallback(() => employeeService.list()); const normalized = normalize(result.data, kind); setRows(normalized); setLoading(false) }; load() }, [kind])
   const filtered = useMemo(() => { const query = filter.trim().toLowerCase(); return rows.filter((row) => (!query || String(row.category).toLowerCase().includes(query)) && (!from || row.date >= from) && (!to || row.date <= to)) }, [filter, from, rows, to])
   const totals = filtered.reduce((summary, row) => ({ sales: summary.sales + row.revenue, transactions: summary.transactions + 1, profit: summary.profit + row.profit, inventory: summary.inventory + row.cost }), { sales: 0, transactions: 0, profit: 0, inventory: 0 })
   const trend = filtered.slice(0, 7).map((row, index) => ({ label: `D${index + 1}`, value: Math.max(1, row.revenue) }))

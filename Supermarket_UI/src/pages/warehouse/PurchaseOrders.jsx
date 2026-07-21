@@ -5,7 +5,7 @@ import { DataTable } from '../../components/ui/DataTable.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { formatCurrency, formatDate, isoDate } from '../../lib/format.js'
-import { mockPurchaseOrders, mockSuppliers, purchaseOrderService, supplierService, toList, withFallback } from '../../services/index.js'
+import { purchaseOrderService, supplierService, toList, withFallback } from '../../services/index.js'
 import { ClipboardList, RotateCcw, Search, Send, X } from 'lucide-react'
 
 const emptyFilters = { search: '', status: '', type: '', dateFrom: '', dateTo: '' }
@@ -27,8 +27,8 @@ export default function PurchaseOrders() {
   const load = async () => {
     setLoading(true)
     const [ordersResult, suppliersResult] = await Promise.all([
-      withFallback(() => purchaseOrderService.list(), mockPurchaseOrders),
-      withFallback(() => supplierService.list(), mockSuppliers),
+      withFallback(() => purchaseOrderService.list()),
+      withFallback(() => supplierService.list()),
     ])
     setOrders(toList(ordersResult.data))
     setSuppliers(toList(suppliersResult.data))

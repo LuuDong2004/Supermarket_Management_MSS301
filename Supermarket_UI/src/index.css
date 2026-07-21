@@ -254,13 +254,12 @@ input[type='radio'] {
   border-color: var(--sms-line);
 }
 
-/* Login: a real product entry screen, still following the original split layout. */
+/* Login: centered system entry matching the design document layout. */
 .sms-login {
   position: relative;
-  overflow: hidden;
   background:
-    radial-gradient(circle at 78% 15%, rgba(16, 185, 129, .10), transparent 24rem),
-    #f7faf8;
+    radial-gradient(circle at 75% 12%, rgba(16, 185, 129, .08), transparent 26rem),
+    linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
 }
 
 .sms-login::before,
@@ -294,10 +293,6 @@ input[type='radio'] {
   z-index: 1;
 }
 
-.sms-login > div:first-child {
-  background: linear-gradient(155deg, rgba(236, 253, 245, .92), rgba(248, 250, 252, .78));
-}
-
 /* Portals and floating controls should always feel layered above the page. */
 [role='dialog'] {
   backdrop-filter: blur(3px);
@@ -313,9 +308,6 @@ input[type='radio'] {
     min-width: 76px;
   }
 
-  .sms-login > div:first-child {
-    border-right: 1px solid rgba(226, 232, 240, .85);
-  }
 }
 
 @media (max-width: 1023px) {

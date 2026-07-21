@@ -7,17 +7,6 @@ import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { approvalRequestService, withFallback, toList } from '../../services/index.js'
 import { CheckCircle2, ClipboardCheck, FileSearch, ShieldCheck, XCircle } from 'lucide-react'
 
-const DEMO_REQUESTS = [
-  { id: '001', code: '001', type: 'Milk', requester: 'Milk', reqDate: '2026-01-12', status: 'Pending', oldValue: 'Cashier', newValue: 'Warehouse Staff', reason: 'Operational transfer', note: 'Audit snapshot is preserved.' },
-  { id: '002', code: '002', type: 'Rice', requester: 'Rice', reqDate: '2026-02-12', status: 'Approved', target: 'Pricing policy update', note: 'Approved by CEO.' },
-  { id: '003', code: '003', type: 'Staff A', requester: 'Staff A', reqDate: '2026-03-12', status: 'Active', target: 'Role assignment', note: 'Currently active.' },
-  { id: '004', code: '004', type: 'Customer B', requester: 'Customer B', reqDate: '2026-04-12', status: 'Rejected', target: 'Loyalty adjustment', note: 'Rejected after review.' },
-  { id: '005', code: '005', type: 'Supplier C', requester: 'Supplier C', reqDate: '2026-05-12', status: 'Pending', target: 'Supplier terms', note: 'Waiting for CEO decision.' },
-  { id: '006', code: '006', type: 'Order D', requester: 'Order D', reqDate: '2026-06-12', status: 'Approved', target: 'Order threshold', note: 'Approved by CEO.' },
-  { id: '007', code: '007', type: 'Milk', requester: 'Milk', reqDate: '2026-07-12', status: 'Active', target: 'Category policy', note: 'Currently active.' },
-  { id: '008', code: '008', type: 'Rice', requester: 'Rice', reqDate: '2026-08-12', status: 'Rejected', target: 'Stock policy', note: 'Rejected after review.' },
-]
-
 function statusLabel(status) {
   const value = String(status || '').toUpperCase()
   if (value.includes('APPROVED') || value.includes('ĐÃ DUYỆT')) return 'Approved'
@@ -69,7 +58,7 @@ export default function Approvals() {
   const load = async () => {
     setLoading(true)
     const result = await withFallback(() => approvalRequestService.list())
-    const rows = result.source === 'backend' ? toList(result.data) : DEMO_REQUESTS
+    const rows = toList(result.data)
     setRequests(rows)
     setSource(result.source)
     setSelected((current) => rows.find((row) => row.id === current?.id) || rows[0] || null)

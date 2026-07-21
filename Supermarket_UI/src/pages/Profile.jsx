@@ -10,7 +10,7 @@ import { api } from '../lib/api.js'
 import { UserCircle, KeyRound } from 'lucide-react'
 
 export default function Profile() {
-  const { user, mockMode } = useAuth()
+  const { user } = useAuth()
   const toast = useToast()
   const confirm = useConfirm()
   const [form, setForm] = useState({ fullName: user?.fullName || '', email: user?.email || '', phone: user?.phone || '' })
@@ -19,7 +19,6 @@ export default function Profile() {
 
   const saveProfile = async (e) => {
     e.preventDefault()
-    if (mockMode) return toast.info('Chế độ demo: thay đổi không lưu lên backend.')
     if (!(await confirm({ title: 'Cập nhật hồ sơ?', message: 'Thông tin cá nhân của bạn sẽ được cập nhật.', confirmLabel: 'Lưu' }))) return
     try {
       await api.put('/users/me', form)
@@ -31,7 +30,6 @@ export default function Profile() {
 
   const changePassword = async (e) => {
     e.preventDefault()
-    if (mockMode) return toast.info('Chế độ demo: không đổi mật khẩu thật.')
     if (!(await confirm({ title: 'Đổi mật khẩu?', message: 'Mật khẩu đăng nhập của bạn sẽ được thay đổi.', confirmLabel: 'Đổi mật khẩu' }))) return
     try {
       await api.put('/users/me/password', pwd)

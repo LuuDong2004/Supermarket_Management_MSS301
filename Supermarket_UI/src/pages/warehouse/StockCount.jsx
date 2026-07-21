@@ -3,7 +3,7 @@ import { PageHeader, FilterBar } from '../../components/ui/PageHeader.jsx'
 import { Badge, Button, Card, CardBody, CardHeader, Field, Input, Select, Spinner, StatusBadge } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
-import { inventoryService, mockInventory, mockProducts, mockStockCounts, productService, stockCountService, toList, withFallback } from '../../services/index.js'
+import { inventoryService, productService, stockCountService, toList, withFallback } from '../../services/index.js'
 import { ClipboardList, RotateCcw, Search, Send, X } from 'lucide-react'
 
 const emptyFilters = { search: '', status: '', dateFrom: '', dateTo: '', type: '' }
@@ -25,18 +25,15 @@ export default function StockCount() {
     const load = async () => {
       setLoading(true)
       const [countResult, inventoryResult, productResult] = await Promise.all([
-        withFallback(() => stockCountService.list(), mockStockCounts), withFallback(() => inventoryService.list(), mockInventory), withFallback(() => productService.list(), mockProducts),
+        withFallback(() => stockCountService.list()), withFallback(() => inventoryService.list()), withFallback(() => productService.list()),
       ])
       const products = toList(productResult.data)
       const inventoryRows = toList(inventoryResult.data).map((item) => {
         const product = products.find((candidate) => candidate.id === item.id || candidate.code === item.productCode || candidate.barcode === item.sku || candidate.name === item.product) || {}
         return { ...product, ...item, code: item.productCode || item.code || item.sku || product.code || product.barcode, name: item.name || item.product || product.name, onHand: Number(item.onHand ?? item.stock ?? product.stock ?? 0), location: item.location || 'Main Warehouse' }
       })
-      const saved = toList(countResult.data).flatMap((count) => {
-        try { const detail = JSON.parse(count.note || '{}'); return detail.product ? [{ ...count, ...detail, session: count.code }] : [] } catch { return [] }
-      })
-      const draftRows = inventoryRows.slice(0, 8).map((item, index) => ({ id: `draft-${item.id || index}`, session: `SC-${String(index + 1).padStart(3, '0')}`, product: item.name, productCode: item.code, systemQty: item.onHand, physicalQty: '', difference: '', status: 'Pending', countDate: today(), type: item.category || 'General' }))
-      setInventory(inventoryRows); setSessions(saved.length ? saved : draftRows); setSource(countResult.source); setLoading(false)
+      const saved = toList(countResult.data).map((count) => ({ ...count, session: count.code, product: count.productName, type: count.category }))
+      setInventory(inventoryRows); setSessions(saved); setSource(countResult.source); setLoading(false)
     }
     load()
   }, [])
@@ -55,10 +52,10 @@ export default function StockCount() {
     if (difference !== 0 && !form.reason.trim()) return toast.error('Discrepancy reason is required when quantities do not match.')
     const code = `SC-${Date.now().toString().slice(-7)}`
     const detail = { product: selectedProduct.name, productCode: selectedProduct.code, systemQty, physicalQty: Number(form.physicalQty), difference, reason: form.reason, type: selectedProduct.category || 'General' }
-    const payload = { code, location: selectedProduct.location || 'Main Warehouse', status: difference === 0 ? 'Completed' : 'Pending Adjustment', countDate: today(), note: JSON.stringify(detail) }
+    const payload = { code, location: selectedProduct.location || 'Main Warehouse', status: difference === 0 ? 'COMPLETED' : 'PENDING_ADJUSTMENT', countDate: today(), note: form.reason || null, productCode: selectedProduct.code, productName: selectedProduct.name, systemQty, physicalQty: Number(form.physicalQty), difference, reason: form.reason || null, category: selectedProduct.category || 'General' }
     setSaving(true)
     try {
-      const response = source === 'backend' ? await stockCountService.create(payload) : { id: code, ...payload }
+      const response = await stockCountService.create(payload)
       setSessions((current) => [{ ...response, ...detail, session: code }, ...current])
       setForm(emptyForm)
       toast.success(difference === 0 ? 'Stock count completed.' : 'Stock discrepancy submitted for adjustment.')

@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -329,6 +330,7 @@ public class SaleServiceImpl implements SaleService {
             BigDecimal spent = customer.getSpent() == null ? BigDecimal.ZERO : customer.getSpent();
             customer.setSpent(spent.add(sale.getTotal()));
         }
+        customer.setLastPurchase(LocalDate.now());
         customerRepository.save(customer);
     }
 

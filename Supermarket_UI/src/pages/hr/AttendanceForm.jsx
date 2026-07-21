@@ -5,7 +5,7 @@ import { Card, CardBody, Button, Field, Input, Select, Spinner } from '../../com
 import { useToast } from '../../components/ui/Toast.jsx'
 import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { isoDate } from '../../lib/format.js'
-import { attendanceService, withFallback, toList, mockAttendance } from '../../services/index.js'
+import { attendanceService, withFallback, toList } from '../../services/index.js'
 import { ArrowLeft, Save } from 'lucide-react'
 
 const STATUSES = ['Đúng giờ', 'Đi muộn', 'Vắng']
@@ -26,7 +26,7 @@ export default function AttendanceForm() {
   useEffect(() => {
     if (!id) { setForm(emptyForm); setLoading(false); return }
     const load = async () => {
-      const r = await withFallback(() => attendanceService.list(), mockAttendance)
+      const r = await withFallback(() => attendanceService.list())
       const a = toList(r.data).find((x) => String(x.id) === String(id) || x.code === id)
       if (!a) {
         toast.error('Không tìm thấy bản ghi chấm công.')
