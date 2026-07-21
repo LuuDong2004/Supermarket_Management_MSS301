@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
+import AdminDashboard from './admin/AdminDashboard.jsx'
 import { PageHeader } from '../components/ui/PageHeader.jsx'
 import { StatCard } from '../components/ui/StatCard.jsx'
 import { Card, CardHeader, CardBody, Button, Badge } from '../components/ui/primitives.jsx'
@@ -16,6 +17,14 @@ import {
 } from 'lucide-react'
 
 export default function Dashboard() {
+  const { user } = useAuth()
+
+  if (user?.role === 'ROLE_ADMIN') return <AdminDashboard />
+
+  return <BusinessDashboard />
+}
+
+function BusinessDashboard() {
   const { user } = useAuth()
   const role = user?.role
   const canViewReports = ['ROLE_ADMIN', 'ROLE_CEO'].includes(role)
