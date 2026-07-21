@@ -29,6 +29,7 @@ export const NAV = [
       { to: '/app/pos/sale', label: 'Bán hàng / Thanh toán', icon: ShoppingCart, roles: ['ROLE_CASHIER'], code: '3.8.1' },
       { to: '/app/pos/payment', label: 'Thanh toán', icon: Wallet, roles: ['ROLE_CASHIER'], code: '3.8.2' },
       { to: '/app/pos/returns', label: 'Trả hàng / Hoàn tiền', icon: Undo2, roles: ['ROLE_CASHIER'], code: '3.8.4' },
+      { to: '/app/pos/cancel-sales', label: 'Cancel Sales Order', icon: Undo2, roles: ['ROLE_CASHIER'], code: '3.8.5' },
       { to: '/app/pos/shift', label: 'Ca thu ngân', icon: Receipt, roles: ['ROLE_CASHIER'], code: '3.8.3' },
       { to: '/app/pos/members', label: 'Khách hàng thành viên', icon: Users, roles: ['ROLE_CASHIER'], code: '3.9.1' },
       { to: '/app/pos/loyalty', label: 'Điểm thưởng', icon: Gift, roles: ['ROLE_CASHIER'], code: '3.9.2' },
@@ -43,6 +44,7 @@ export const NAV = [
       { to: '/app/warehouse/monitor', label: 'Giám sát tồn kho', icon: AlertTriangle, roles: WH_MANAGER, code: '3.6.3' },
       { to: '/app/warehouse/reports', label: 'Báo cáo kho', icon: Warehouse, roles: WH_MANAGER, code: '3.6.4' },
       { to: '/app/warehouse/products', label: 'Quản lý sản phẩm', icon: PackageSearch, roles: WH_MANAGER, code: '3.6.5' },
+      { to: '/app/warehouse/categories', label: 'Category Management', icon: Boxes, roles: WH_MANAGER, code: '3.6.6' },
       { to: '/app/warehouse/suppliers', label: 'Nhà cung cấp', icon: Truck, roles: WH_MANAGER, code: '3.6.6' },
     ],
   },
@@ -73,6 +75,7 @@ export const NAV = [
     items: [
       { to: '/app/admin/users', label: 'Tài khoản người dùng', icon: UserCog, roles: ['ROLE_ADMIN'], code: '3.4.1' },
       { to: '/app/admin/approval-requests', label: 'Yêu cầu phê duyệt', icon: FileCheck2, roles: ['ROLE_ADMIN'], code: '3.4.2' },
+      { to: '/app/admin/promotion-campaigns', label: 'Promotion Campaign', icon: BadgePercent, roles: ['ROLE_ADMIN'], code: '3.4.4' },
       { to: '/app/admin/monitoring', label: 'Giám sát hệ thống', icon: Activity, roles: ['ROLE_ADMIN'], code: '3.4.3' },
       { to: '/app/admin/permissions', label: 'Phân quyền', icon: KeyRound, roles: ['ROLE_ADMIN'], code: '3.4.4' },
       { to: '/app/admin/security-alerts', label: 'Cảnh báo bảo mật', icon: ShieldAlert, roles: ['ROLE_ADMIN'], code: '3.4.5' },
@@ -102,8 +105,8 @@ export const NAV = [
   {
     section: 'Hệ thống',
     items: [
-      { to: '/app/settings/system', label: 'Cấu hình hệ thống', icon: Settings, roles: ['ROLE_ADMIN'], code: '3.11.1' },
-      { to: '/app/settings/rules', label: 'Quy tắc & Nhật ký kiểm toán', icon: ScrollText, roles: ['ROLE_ADMIN'], code: '3.11.2' },
+      { to: '/app/settings/system', label: 'Cấu hình hệ thống', icon: Settings, roles: ['ROLE_CEO', 'ROLE_ADMIN'], code: '3.11.1' },
+      { to: '/app/settings/rules', label: 'Quy tắc & Nhật ký kiểm toán', icon: ScrollText, roles: ['ROLE_CEO', 'ROLE_ADMIN'], code: '3.11.2' },
     ],
   },
 ]
@@ -117,12 +120,12 @@ export const ROUTE_ROLES = NAV.flatMap((g) => g.items).reduce((acc, it) => {
 // Compact role rails used by the realistic screen captures. The full NAV
 // model remains above for route authorization and deep links.
 const REFERENCE_NAV = {
-  ROLE_CEO: [['/app/dashboard', 'CEO Dashboard'], ['/app/ceo/reports', 'Reports'], ['/app/ceo/approvals', 'Approvals'], ['/app/ceo/policies', 'Business Policies'], ['/app/ceo/promotions', 'Notifications']],
-  ROLE_ADMIN: [['/app/dashboard', 'Dashboard'], ['/app/admin/users', 'User Accounts'], ['/app/admin/approval-requests', 'Approval Requests'], ['/app/admin/monitoring', 'System Monitoring'], ['/app/settings/rules', 'Audit Logs']],
-  ROLE_STAFF_MANAGER: [['/app/dashboard', 'Staff Dashboard'], ['/app/hr/employees', 'Employees'], ['/app/hr/attendance', 'Attendance'], ['/app/hr/performance', 'Performance'], ['/app/reports/employees', 'Reports']],
-  ROLE_WAREHOUSE_MANAGER: [['/app/dashboard', 'WM Dashboard'], ['/app/warehouse/purchase-orders', 'Purchase Orders'], ['/app/warehouse/transactions', 'Approvals'], ['/app/warehouse/products', 'Inventory'], ['/app/warehouse/reports', 'Warehouse Reports'], ['/app/warehouse/monitor', 'Stock Monitoring']],
+  ROLE_CEO: [['/app/dashboard', 'CEO Dashboard'], ['/app/ceo/reports', 'Reports'], ['/app/reports/sales', 'Sales Reports'], ['/app/reports/inventory', 'Inventory Reports'], ['/app/reports/employees', 'Employee Reports'], ['/app/ceo/approvals', 'Approvals'], ['/app/ceo/policies', 'Business Policies'], ['/app/settings/system', 'Configuration'], ['/app/settings/rules', 'Audit Logs']],
+  ROLE_ADMIN: [['/app/dashboard', 'Admin Dashboard'], ['/app/admin/users', 'User Accounts'], ['/app/admin/approval-requests', 'Approval Requests'], ['/app/admin/promotion-campaigns', 'Promotion Campaign'], ['/app/admin/monitoring', 'System Monitoring'], ['/app/settings/system', 'Configuration'], ['/app/settings/rules', 'Audit Logs']],
+  ROLE_STAFF_MANAGER: [['/app/dashboard', 'Staff Dashboard'], ['/app/hr/employees', 'Employees'], ['/app/hr/attendance', 'Attendance'], ['/app/hr/performance', 'Performance'], ['/app/reports/sales', 'Sales Reports'], ['/app/reports/employees', 'Employee Reports']],
+  ROLE_WAREHOUSE_MANAGER: [['/app/dashboard', 'WM Dashboard'], ['/app/warehouse/purchase-orders', 'Purchase Orders'], ['/app/warehouse/transactions', 'Transaction Approval'], ['/app/warehouse/products', 'Product Management'], ['/app/warehouse/categories', 'Category Management'], ['/app/warehouse/suppliers', 'Supplier Management'], ['/app/warehouse/reports', 'Warehouse Reports'], ['/app/warehouse/monitor', 'Stock Monitoring'], ['/app/reports/sales', 'Sales Reports'], ['/app/reports/inventory', 'Inventory Reports']],
   ROLE_WAREHOUSE_STAFF: [['/app/dashboard', 'WS Dashboard'], ['/app/warehouse/receive', 'Receive Goods'], ['/app/warehouse/inventory', 'Inventory'], ['/app/warehouse/stock-count', 'Stock Count'], ['/app/warehouse/adjustments', 'Adjustment Request'], ['/app/warehouse/approval-status', 'Approval Status']],
-  ROLE_CASHIER: [['/app/dashboard', 'Cashier Dashboard'], ['/app/pos/sale', 'Sales / Checkout'], ['/app/pos/members', 'Membership'], ['/app/pos/payment', 'Payments'], ['/app/pos/shift', 'Shift']],
+  ROLE_CASHIER: [['/app/dashboard', 'Cashier Dashboard'], ['/app/pos/sale', 'Sales / Checkout'], ['/app/pos/returns', 'Return / Refund'], ['/app/pos/cancel-sales', 'Cancel Sales Order'], ['/app/pos/members', 'Membership'], ['/app/pos/payment', 'Payments'], ['/app/pos/shift', 'Shift']],
 }
 
 export function navForRole(role) {

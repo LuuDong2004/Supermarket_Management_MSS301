@@ -1,120 +1,21 @@
-import { useMemo, useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { PageHeader } from '../../components/ui/PageHeader.jsx'
-import { Button, Badge, StatusBadge, Spinner } from '../../components/ui/primitives.jsx'
+import { useEffect, useMemo, useState } from 'react'
+import { PageHeader, FilterBar } from '../../components/ui/PageHeader.jsx'
+import { Badge, Button, Card, CardBody, CardHeader, Field, Input, Select, Spinner, StatusBadge } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
-import { Tabs } from '../../components/ui/Tabs.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
-import { useConfirm } from '../../components/ui/Confirm.jsx'
-import { useAuth } from '../../context/AuthContext.jsx'
-import { formatDate } from '../../lib/format.js'
-import { stockAdjustmentService, withFallback, toList, mockStockAdjustments } from '../../services/index.js'
-import { Plus, Check, X } from 'lucide-react'
+import { inventoryService, mockInventory, mockProducts, mockStockAdjustments, productService, stockAdjustmentService, toList, withFallback } from '../../services/index.js'
+import { ClipboardEdit, RotateCcw, Search, Send, X } from 'lucide-react'
 
-const REASON_TONE = { 'Hư hỏng': 'amber', 'Vỡ': 'red', 'Thất thoát': 'violet', 'Hết hạn': 'slate' }
-const MANAGER = ['ROLE_WAREHOUSE_MANAGER', 'ROLE_ADMIN']
+const emptyFilters = { search: '', status: '', dateFrom: '', dateTo: '', type: '' }
+const emptyForm = { productCode: '', type: '', quantity: '', reason: '', evidence: '' }
+const today = () => new Date().toISOString().slice(0, 10)
 
 export default function Adjustments() {
-  const toast = useToast()
-  const confirm = useConfirm()
-  const navigate = useNavigate()
-  const { user } = useAuth()
-  const isManager = MANAGER.includes(user?.role)
-  const [list, setList] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [source, setSource] = useState('backend')
-  const [tab, setTab] = useState('all')
-
-  const load = async () => {
-    setLoading(true)
-    const adj = await withFallback(() => stockAdjustmentService.list(), mockStockAdjustments)
-    setList(toList(adj.data))
-    setSource(adj.source)
-    setLoading(false)
-  }
-  useEffect(() => { load() }, [])
-
-  const counts = useMemo(() => ({
-    pending: list.filter((a) => a.status === 'Chờ duyệt').length,
-    approved: list.filter((a) => a.status === 'Đã duyệt').length,
-    rejected: list.filter((a) => a.status === 'Từ chối').length,
-    all: list.length,
-  }), [list])
-
-  const rows = useMemo(() => (tab === 'all' ? list : list.filter((a) => a.status === tab)), [list, tab])
-
-  const decide = async (row, approved) => {
-    const ok = approved
-      ? await confirm({ title: 'Duyệt điều chỉnh?', message: `Duyệt yêu cầu điều chỉnh ${row.code} — tồn kho của ${row.product} sẽ được cập nhật.`, confirmLabel: 'Duyệt' })
-      : await confirm({ title: 'Từ chối điều chỉnh?', message: `Từ chối yêu cầu điều chỉnh ${row.code}.`, confirmLabel: 'Từ chối', danger: true })
-    if (!ok) return
-    try {
-      if (approved) await stockAdjustmentService.approve(row.id)
-      else await stockAdjustmentService.reject(row.id)
-      toast[approved ? 'success' : 'info'](`${approved ? 'Đã duyệt' : 'Đã từ chối'} yêu cầu ${row.code}.`)
-      await load()
-    } catch (e) {
-      toast.error(e.message)
-    }
-  }
-
-  return (
-    <div>
-      <PageHeader
-        breadcrumb="Kho · 3.7.4"
-        title="Điều chỉnh tồn kho"
-        subtitle="Tạo và theo dõi các yêu cầu điều chỉnh số lượng tồn kho."
-        actions={
-          <div className="flex items-center gap-3">
-            <Button icon={Plus} onClick={() => navigate('/app/warehouse/adjustments/new')}>Tạo yêu cầu điều chỉnh</Button>
-          </div>
-        }
-      />
-
-      <Tabs
-        className="mb-5"
-        value={tab}
-        onChange={setTab}
-        tabs={[
-          { value: 'all', label: 'Tất cả', count: counts.all },
-          { value: 'Chờ duyệt', label: 'Chờ duyệt', count: counts.pending },
-          { value: 'Đã duyệt', label: 'Đã duyệt', count: counts.approved },
-          { value: 'Từ chối', label: 'Từ chối', count: counts.rejected },
-        ]}
-      />
-
-      {loading ? (
-        <div className="flex items-center justify-center rounded-xl border border-slate-200 bg-white py-16">
-          <Spinner className="h-7 w-7" />
-        </div>
-      ) : (
-        <DataTable
-          rows={rows}
-          empty={{ title: 'Không có yêu cầu', subtitle: 'Chưa có yêu cầu điều chỉnh nào ở trạng thái này.' }}
-          columns={[
-            { key: 'code', header: 'Mã', render: (r) => <span className="font-mono text-xs">{r.code}</span> },
-            { key: 'product', header: 'Sản phẩm' },
-            { key: 'systemQty', header: 'Hệ thống', align: 'center' },
-            { key: 'countedQty', header: 'Thực đếm', align: 'center' },
-            { key: 'diff', header: 'Chênh lệch', align: 'center', render: (r) => (
-              <Badge tone={r.diff > 0 ? 'green' : r.diff < 0 ? 'red' : 'slate'}>{r.diff > 0 ? `+${r.diff}` : r.diff}</Badge>
-            ) },
-            { key: 'reason', header: 'Lý do', render: (r) => <Badge tone={REASON_TONE[r.reason] || 'slate'}>{r.reason}</Badge> },
-            { key: 'adjDate', header: 'Ngày', render: (r) => formatDate(r.adjDate) },
-            { key: 'status', header: 'Trạng thái', render: (r) => <StatusBadge status={r.status} /> },
-          ]}
-          actions={(r) =>
-            r.status === 'Chờ duyệt' && isManager ? (
-              <>
-                <Button variant="success" size="sm" icon={Check} onClick={() => decide(r, true)}>Duyệt</Button>
-                <Button variant="danger" size="sm" icon={X} onClick={() => decide(r, false)}>Từ chối</Button>
-              </>
-            ) : (
-              <span className="text-xs text-slate-400">—</span>
-            )
-          }
-        />
-      )}
-    </div>
-  )
+  const toast = useToast(); const [requests, setRequests] = useState([]); const [products, setProducts] = useState([]); const [inventory, setInventory] = useState([]); const [filters, setFilters] = useState(emptyFilters); const [applied, setApplied] = useState(emptyFilters); const [form, setForm] = useState(emptyForm); const [loading, setLoading] = useState(true); const [saving, setSaving] = useState(false); const [source, setSource] = useState('backend')
+  useEffect(() => { const load = async () => { const [requestResult, productResult, inventoryResult] = await Promise.all([withFallback(() => stockAdjustmentService.list(), mockStockAdjustments), withFallback(() => productService.list(), mockProducts), withFallback(() => inventoryService.list(), mockInventory)]); setRequests(toList(requestResult.data)); setProducts(toList(productResult.data)); setInventory(toList(inventoryResult.data)); setSource(requestResult.source); setLoading(false) }; load() }, [])
+  const rows = useMemo(() => { const query = applied.search.trim().toLowerCase(); return requests.filter((row) => (!query || [row.code, row.product, row.reason].some((value) => String(value || '').toLowerCase().includes(query))) && (!applied.status || row.status === applied.status) && (!applied.type || row.reason === applied.type) && (!applied.dateFrom || (row.adjDate || '') >= applied.dateFrom) && (!applied.dateTo || (row.adjDate || '') <= applied.dateTo)) }, [applied, requests])
+  const product = products.find((item) => String(item.code || item.id) === form.productCode); const stockRow = inventory.find((item) => item.productCode === product?.code || item.code === product?.code || item.id === product?.id); const systemQty = Number(stockRow?.onHand ?? stockRow?.stock ?? product?.stock ?? 0); const signedQty = (form.type === 'Decrease' ? -1 : 1) * Number(form.quantity || 0)
+  const setFilter = (key, value) => setFilters((current) => ({ ...current, [key]: value })); const reset = () => { setFilters(emptyFilters); setApplied(emptyFilters) }
+  const submit = async () => { if (!product || !form.type || Number(form.quantity) <= 0 || !form.reason.trim()) return toast.error('Product, adjustment type, quantity, and reason are required.'); const payload = { code: `ADJ-${Date.now().toString().slice(-7)}`, product: product.name, systemQty, countedQty: systemQty + signedQty, diff: signedQty, reason: form.reason, adjDate: today(), status: 'Pending' }; setSaving(true); try { const response = source === 'backend' ? await stockAdjustmentService.create(payload) : { id: payload.code, ...payload }; setRequests((current) => [response, ...current]); setForm(emptyForm); toast.success('Stock adjustment request submitted.') } catch (error) { toast.error(error.message) } finally { setSaving(false) } }
+  return <div><PageHeader breadcrumb="Warehouse Operations · 3.7.4" title="Submit Stock Adjustment Request" subtitle="Request an inventory correction and attach the supporting reason or evidence." /><FilterBar className="mb-6"><Field label="Search" className="grow"><div className="relative"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" /><Input className="pl-9" placeholder="Keyword" value={filters.search} onChange={(event) => setFilter('search', event.target.value)} /></div></Field><Field label="Status"><Select value={filters.status} onChange={(event) => setFilter('status', event.target.value)}><option value="">All</option><option>Pending</option><option>Approved</option><option>Rejected</option></Select></Field><Field label="Date" className="grow"><div className="grid grid-cols-2 gap-2"><Input type="date" value={filters.dateFrom} onChange={(event) => setFilter('dateFrom', event.target.value)} /><Input type="date" value={filters.dateTo} onChange={(event) => setFilter('dateTo', event.target.value)} /></div></Field><Field label="Type"><Select value={filters.type} onChange={(event) => setFilter('type', event.target.value)}><option value="">All</option><option>Damage</option><option>Loss</option><option>Stock count mismatch</option></Select></Field><div className="flex !basis-auto !grow-0 gap-2"><Button onClick={() => setApplied(filters)}>Apply</Button><Button variant="secondary" icon={RotateCcw} onClick={reset}>Reset</Button></div></FilterBar>{loading ? <div className="flex justify-center rounded-2xl border bg-white py-20"><Spinner className="h-7 w-7" /></div> : <div className="grid items-start gap-6 xl:grid-cols-5"><section className="min-w-0 xl:col-span-3"><div className="mb-3 flex justify-between"><div><h2 className="font-bold text-slate-900">Adjustment Requests</h2><p className="text-xs text-slate-500">Submitted inventory correction requests.</p></div><Badge tone="slate">{rows.length} requests</Badge></div><DataTable dense rows={rows} empty={{ title: 'No adjustment requests found' }} columns={[{ key: 'code', header: 'Request ID', render: (row) => <span className="font-mono text-xs">{row.code}</span> }, { key: 'product', header: 'Product' }, { key: 'reason', header: 'Type' }, { key: 'diff', header: 'Qty', render: (row) => <Badge tone={Number(row.diff) < 0 ? 'red' : 'green'}>{Number(row.diff) > 0 ? '+' : ''}{row.diff}</Badge> }, { key: 'status', header: 'Status', render: (row) => <StatusBadge status={row.status} /> }]} /></section><Card className="xl:col-span-2"><CardHeader title="Adjustment Request Form" icon={ClipboardEdit} /><CardBody className="flex min-h-[23rem] flex-col"><div className="grid gap-4 sm:grid-cols-2"><Field label="Product" required><Select value={form.productCode} onChange={(event) => setForm({ ...form, productCode: event.target.value })}><option value="">Search</option>{products.map((item) => <option key={item.id || item.code} value={item.code || item.id}>{item.name}</option>)}</Select></Field><Field label="Adjustment Type" required><Select value={form.type} onChange={(event) => setForm({ ...form, type: event.target.value })}><option value="">Select</option><option>Increase</option><option>Decrease</option></Select></Field><Field label="Adjustment Quantity" required><Input type="number" min="1" value={form.quantity} onChange={(event) => setForm({ ...form, quantity: event.target.value })} placeholder="Number" /></Field><Field label="Reason" required><Input value={form.reason} onChange={(event) => setForm({ ...form, reason: event.target.value })} placeholder="Required" /></Field><Field label="Evidence Attachment" className="sm:col-span-2"><Input type="file" onChange={(event) => setForm({ ...form, evidence: event.target.files?.[0]?.name || '' })} /></Field></div><div className="mt-auto flex gap-2 border-t border-slate-100 pt-5"><Button icon={Send} onClick={submit} loading={saving}>Submit</Button><Button variant="secondary" icon={X} onClick={() => setForm(emptyForm)}>Cancel</Button></div></CardBody></Card></div>}<div className="mt-6 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500 shadow-card">3.7.4 Submit Stock Adjustment Request · evidence name remains visible while the current API stores the adjustment reason and quantities</div></div>
 }

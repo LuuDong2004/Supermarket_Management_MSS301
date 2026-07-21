@@ -2,6 +2,11 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 import AdminDashboard from './admin/AdminDashboard.jsx'
+import CEODashboard from './ceo/CEODashboard.jsx'
+import StaffManagerDashboard from './hr/StaffManagerDashboard.jsx'
+import WarehouseManagerDashboard from './warehouse/WarehouseManagerDashboard.jsx'
+import WarehouseStaffDashboard from './warehouse/WarehouseStaffDashboard.jsx'
+import CashierDashboard from './pos/CashierDashboard.jsx'
 import { PageHeader } from '../components/ui/PageHeader.jsx'
 import { StatCard } from '../components/ui/StatCard.jsx'
 import { Card, CardHeader, CardBody, Button, Badge } from '../components/ui/primitives.jsx'
@@ -20,6 +25,11 @@ export default function Dashboard() {
   const { user } = useAuth()
 
   if (user?.role === 'ROLE_ADMIN') return <AdminDashboard />
+  if (user?.role === 'ROLE_CEO') return <CEODashboard />
+  if (user?.role === 'ROLE_STAFF_MANAGER') return <StaffManagerDashboard />
+  if (user?.role === 'ROLE_WAREHOUSE_MANAGER') return <WarehouseManagerDashboard />
+  if (user?.role === 'ROLE_WAREHOUSE_STAFF') return <WarehouseStaffDashboard />
+  if (user?.role === 'ROLE_CASHIER') return <CashierDashboard />
 
   return <BusinessDashboard />
 }

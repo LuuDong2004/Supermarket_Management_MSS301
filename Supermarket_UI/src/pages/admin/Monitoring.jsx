@@ -1,164 +1,291 @@
-import { useState, useEffect, useMemo } from 'react'
-import { PageHeader } from '../../components/ui/PageHeader.jsx'
-import { Card, CardHeader, CardBody, Button, Badge, Spinner } from '../../components/ui/primitives.jsx'
+import { useEffect, useMemo, useState } from 'react'
+import { PageHeader, FilterBar } from '../../components/ui/PageHeader.jsx'
+import {
+  Badge,
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+  Field,
+  Input,
+  Select,
+  Spinner,
+} from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
-import { StatCard } from '../../components/ui/StatCard.jsx'
-import { Tabs } from '../../components/ui/Tabs.jsx'
-import { formatNumber } from '../../lib/format.js'
-import { monitoringService, withFallback, toList, mockServices, mockSystemLogs } from '../../services/index.js'
-import { Server, ServerCrash, Activity, AlertTriangle, Cpu, MemoryStick } from 'lucide-react'
+import {
+  mockServices,
+  mockSystemLogs,
+  monitoringService,
+  toList,
+  withFallback,
+} from '../../services/index.js'
+import { Activity, Filter, RotateCcw, Search, Server, X } from 'lucide-react'
 
-const LEVELS = ['ALL', 'INFO', 'WARN', 'ERROR']
+const LEVELS = ['INFO', 'WARN', 'ERROR']
 
-function levelTone(level) {
-  if (level === 'ERROR') return 'red'
-  if (level === 'WARN') return 'amber'
+const emptyFilters = {
+  search: '',
+  level: '',
+  type: '',
+  dateFrom: '',
+  dateTo: '',
+}
+
+const emptyStatusQuery = {
+  logType: '',
+  dateFrom: '',
+  dateTo: '',
+  severity: '',
+  keyword: '',
+}
+
+const levelTone = (level = '') => {
+  if (level.toUpperCase() === 'ERROR') return 'red'
+  if (level.toUpperCase() === 'WARN') return 'amber'
   return 'blue'
 }
 
-function MeterBar({ label, value, icon: Icon }) {
-  const tone = value >= 75 ? 'bg-rose-500' : value >= 50 ? 'bg-amber-500' : 'bg-emerald-500'
-  return (
-    <div>
-      <div className="mb-1 flex items-center justify-between text-xs text-slate-500">
-        <span className="inline-flex items-center gap-1"><Icon size={12} /> {label}</span>
-        <span className="font-medium text-slate-600">{value}%</span>
-      </div>
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
-        <div className={`h-full rounded-full ${tone}`} style={{ width: `${value}%` }} />
-      </div>
-    </div>
-  )
-}
+const actorOf = (log) => log.actor || log.user || 'system'
+const typeOf = (log) => log.logType || log.service || 'System'
+const dateOf = (log) => String(log.time || log.timestamp || '').slice(0, 10)
 
 export default function Monitoring() {
   const [services, setServices] = useState([])
   const [systemLogs, setSystemLogs] = useState([])
   const [loading, setLoading] = useState(true)
-  const [source, setSource] = useState('backend')
-  const [tab, setTab] = useState('logs')
-  const [level, setLevel] = useState('ALL')
+
+  const [filters, setFilters] = useState(emptyFilters)
+  const [applied, setApplied] = useState(emptyFilters)
+  const [statusQuery, setStatusQuery] = useState(emptyStatusQuery)
+  const [appliedStatusQuery, setAppliedStatusQuery] = useState(emptyStatusQuery)
 
   useEffect(() => {
-    (async () => {
+    const load = async () => {
       setLoading(true)
-      const [svc, lg] = await Promise.all([
+      const [serviceResult, logResult] = await Promise.all([
         withFallback(() => monitoringService.services(), mockServices),
         withFallback(() => monitoringService.logs(), mockSystemLogs),
       ])
-      setServices(toList(svc.data))
-      setSystemLogs(toList(lg.data))
-      setSource(svc.source === 'backend' && lg.source === 'backend' ? 'backend' : 'mock')
+      setServices(toList(serviceResult.data))
+      setSystemLogs(toList(logResult.data))
       setLoading(false)
-    })()
+    }
+    load()
   }, [])
 
-  const up = services.filter((s) => s.status === 'UP').length
-  const down = services.filter((s) => s.status === 'DOWN').length
-  const errors = systemLogs.filter((l) => l.level === 'ERROR').length
+  const logTypes = useMemo(() => {
+    const names = [
+      ...services.map((service) => service.name),
+      ...systemLogs.map(typeOf),
+    ].filter(Boolean)
+    return [...new Set(names)].sort()
+  }, [services, systemLogs])
 
-  const logs = useMemo(
-    () => (level === 'ALL' ? systemLogs : systemLogs.filter((l) => l.level === level)),
-    [level, systemLogs],
-  )
+  const rows = useMemo(() => systemLogs.filter((log) => {
+    const haystack = [log.code, log.time, actorOf(log), typeOf(log), log.level, log.message]
+      .join(' ')
+      .toLowerCase()
+    const logDate = dateOf(log)
+    const logLevel = String(log.level || '').toUpperCase()
 
-  const actorOf = (l) => l.actor ?? l.user
+    const topMatch = (!applied.search || haystack.includes(applied.search.trim().toLowerCase()))
+      && (!applied.level || logLevel === applied.level)
+      && (!applied.type || typeOf(log) === applied.type)
+      && (!applied.dateFrom || logDate >= applied.dateFrom)
+      && (!applied.dateTo || logDate <= applied.dateTo)
+
+    const queryMatch = (!appliedStatusQuery.keyword || haystack.includes(appliedStatusQuery.keyword.trim().toLowerCase()))
+      && (!appliedStatusQuery.logType || typeOf(log) === appliedStatusQuery.logType)
+      && (!appliedStatusQuery.severity || logLevel === appliedStatusQuery.severity)
+      && (!appliedStatusQuery.dateFrom || logDate >= appliedStatusQuery.dateFrom)
+      && (!appliedStatusQuery.dateTo || logDate <= appliedStatusQuery.dateTo)
+
+    return topMatch && queryMatch
+  }), [applied, appliedStatusQuery, systemLogs])
+
+  const upCount = services.filter((service) => service.status === 'UP').length
+  const downCount = services.filter((service) => service.status === 'DOWN').length
+
+  const setFilter = (key, value) => setFilters((current) => ({ ...current, [key]: value }))
+  const setQueryField = (key, value) => setStatusQuery((current) => ({ ...current, [key]: value }))
+
+  const applyFilters = () => setApplied(filters)
+
+  const resetFilters = () => {
+    setFilters(emptyFilters)
+    setApplied(emptyFilters)
+  }
+
+  const submitStatusQuery = () => setAppliedStatusQuery(statusQuery)
+
+  const cancelStatusQuery = () => {
+    setStatusQuery(emptyStatusQuery)
+    setAppliedStatusQuery(emptyStatusQuery)
+  }
 
   return (
     <div>
       <PageHeader
-        breadcrumb="Quản trị · 3.4.3"
-        title="Giám sát hệ thống"
-        subtitle="Trạng thái microservices, tài nguyên và nhật ký hệ thống."
+        breadcrumb="Administration · 3.4.3"
+        title="Monitor System Logs and Status"
+        subtitle="Review system activity, service health, severity, and operational events."
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Service hoạt động" value={formatNumber(up)} icon={Server} tone="green" hint="đang chạy" />
-        <StatCard label="Service ngừng" value={formatNumber(down)} icon={ServerCrash} tone="red" hint="cần khởi động" />
-        <StatCard label="Requests / phút" value={formatNumber(1284)} icon={Activity} tone="brand" hint="trung bình" />
-        <StatCard label="Lỗi gần đây" value={formatNumber(errors)} icon={AlertTriangle} tone="amber" hint="trong nhật ký" />
-      </div>
+      <FilterBar className="mb-6">
+        <Field label="Search" className="grow">
+          <div className="relative">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Input
+              className="pl-9"
+              placeholder="Keyword"
+              value={filters.search}
+              onChange={(event) => setFilter('search', event.target.value)}
+              onKeyDown={(event) => event.key === 'Enter' && applyFilters()}
+            />
+          </div>
+        </Field>
+        <Field label="Status">
+          <Select value={filters.level} onChange={(event) => setFilter('level', event.target.value)}>
+            <option value="">All</option>
+            {LEVELS.map((level) => <option key={level} value={level}>{level}</option>)}
+          </Select>
+        </Field>
+        <Field label="Date" className="grow">
+          <div className="grid grid-cols-2 gap-2">
+            <Input type="date" value={filters.dateFrom} onChange={(event) => setFilter('dateFrom', event.target.value)} placeholder="From" />
+            <Input type="date" value={filters.dateTo} onChange={(event) => setFilter('dateTo', event.target.value)} placeholder="To" min={filters.dateFrom || undefined} />
+          </div>
+        </Field>
+        <Field label="Type">
+          <Select value={filters.type} onChange={(event) => setFilter('type', event.target.value)}>
+            <option value="">All</option>
+            {logTypes.map((type) => <option key={type} value={type}>{type}</option>)}
+          </Select>
+        </Field>
+        <div className="flex !basis-auto !grow-0 gap-2">
+          <Button onClick={applyFilters}>Apply</Button>
+          <Button variant="secondary" icon={RotateCcw} onClick={resetFilters}>Reset</Button>
+        </div>
+      </FilterBar>
 
       {loading ? (
-        <div className="mt-6 flex items-center justify-center rounded-xl border border-slate-200 bg-white py-16">
+        <div className="flex items-center justify-center rounded-2xl border border-slate-200 bg-white py-20 shadow-card">
           <Spinner className="h-7 w-7" />
         </div>
       ) : (
-        <>
-          {/* Service health grid */}
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {services.map((s) => {
-              const upState = s.status === 'UP'
-              return (
-                <Card key={s.name} className={upState ? '' : 'border-rose-200'}>
-                  <CardBody className="space-y-3">
-                    <div className="flex items-start justify-between">
-                      <div className="min-w-0">
-                        <p className="truncate font-semibold text-slate-800">{s.name}</p>
-                        <p className="font-mono text-xs text-slate-400">:{s.port} · {s.uptime}</p>
-                      </div>
-                      <Badge tone={upState ? 'green' : 'red'} dot>{s.status}</Badge>
-                    </div>
-                    <MeterBar label="CPU" value={s.cpu} icon={Cpu} />
-                    <MeterBar label="RAM" value={s.mem} icon={MemoryStick} />
-                  </CardBody>
-                </Card>
-              )
-            })}
-          </div>
+        <div className="grid items-start gap-6 xl:grid-cols-5">
+          <section className="min-w-0 xl:col-span-3">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-base font-bold text-slate-900">System Log List</h2>
+                <p className="mt-0.5 text-xs text-slate-500">Operational and audit events from connected services.</p>
+              </div>
+              <Badge tone="slate">{rows.length} logs</Badge>
+            </div>
+            <DataTable
+              dense
+              rows={rows}
+              empty={{ title: 'No system logs found', subtitle: 'Try changing the filters or status query.' }}
+              columns={[
+                {
+                  key: 'time',
+                  header: 'Time',
+                  render: (log) => <span className="whitespace-nowrap font-mono text-xs">{log.time || log.timestamp || '—'}</span>,
+                },
+                {
+                  key: 'actor',
+                  header: 'Actor',
+                  render: (log) => <span className="font-medium text-slate-700">{actorOf(log)}</span>,
+                },
+                {
+                  key: 'logType',
+                  header: 'Log Type',
+                  render: (log) => <Badge tone="slate">{typeOf(log)}</Badge>,
+                },
+                {
+                  key: 'severity',
+                  header: 'Severity',
+                  render: (log) => <Badge tone={levelTone(log.level)} dot>{log.level || 'INFO'}</Badge>,
+                },
+                {
+                  key: 'message',
+                  header: 'Message',
+                  render: (log) => <span className="block max-w-sm truncate text-slate-600" title={log.message}>{log.message || '—'}</span>,
+                },
+              ]}
+            />
+          </section>
 
-          <Card className="mt-6">
+          <Card className="xl:col-span-2">
             <CardHeader
-              title="Nhật ký hệ thống"
-              icon={Activity}
-              subtitle="Logs và audit trail từ các service"
+              title="System Status"
+              subtitle={`${upCount} services online · ${downCount} offline`}
+              icon={Server}
               action={
                 <div className="flex gap-1.5">
-                  {LEVELS.map((l) => (
-                    <Button key={l} size="sm" variant={level === l ? 'primary' : 'secondary'} onClick={() => setLevel(l)}>{l}</Button>
-                  ))}
+                  <Badge tone="green" dot>{upCount} UP</Badge>
+                  {downCount > 0 && <Badge tone="red" dot>{downCount} DOWN</Badge>}
                 </div>
               }
             />
-            <CardBody>
-              <Tabs
-                className="mb-4"
-                value={tab}
-                onChange={setTab}
-                tabs={[
-                  { value: 'logs', label: 'Logs', count: logs.length },
-                  { value: 'audit', label: 'Audit' },
-                ]}
-              />
-              {tab === 'logs' ? (
-                <DataTable
-                  className="border-0 shadow-none"
-                  rows={logs}
-                  empty={{ title: 'Không có log', subtitle: 'Không có bản ghi phù hợp mức lọc.' }}
-                  columns={[
-                    { key: 'time', header: 'Thời gian', render: (l) => <span className="font-mono text-xs">{l.time}</span> },
-                    { key: 'level', header: 'Mức', render: (l) => <Badge tone={levelTone(l.level)}>{l.level}</Badge> },
-                    { key: 'service', header: 'Service', render: (l) => <span className="font-medium text-slate-700">{l.service}</span> },
-                    { key: 'message', header: 'Nội dung' },
-                    { key: 'actor', header: 'Người dùng', render: (l) => <span className="font-mono text-xs">{actorOf(l)}</span> },
-                  ]}
-                />
-              ) : (
-                <DataTable
-                  className="border-0 shadow-none"
-                  rows={systemLogs.filter((l) => actorOf(l) !== 'system')}
-                  empty={{ title: 'Không có bản ghi audit' }}
-                  columns={[
-                    { key: 'time', header: 'Thời gian', render: (l) => <span className="font-mono text-xs">{l.time}</span> },
-                    { key: 'actor', header: 'Người dùng', render: (l) => <Badge tone="slate">{actorOf(l)}</Badge> },
-                    { key: 'service', header: 'Service' },
-                    { key: 'message', header: 'Hành động' },
-                  ]}
-                />
-              )}
+            <CardBody className="flex min-h-[22rem] flex-col">
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-2">
+                <Field label="Log Type">
+                  <Select value={statusQuery.logType} onChange={(event) => setQueryField('logType', event.target.value)}>
+                    <option value="">All</option>
+                    {logTypes.map((type) => <option key={type} value={type}>{type}</option>)}
+                  </Select>
+                </Field>
+                <Field label="Date Range">
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input type="date" value={statusQuery.dateFrom} onChange={(event) => setQueryField('dateFrom', event.target.value)} placeholder="From" />
+                    <Input type="date" value={statusQuery.dateTo} onChange={(event) => setQueryField('dateTo', event.target.value)} placeholder="To" min={statusQuery.dateFrom || undefined} />
+                  </div>
+                </Field>
+                <Field label="Severity">
+                  <Select value={statusQuery.severity} onChange={(event) => setQueryField('severity', event.target.value)}>
+                    <option value="">Info/Error</option>
+                    {LEVELS.map((level) => <option key={level} value={level}>{level}</option>)}
+                  </Select>
+                </Field>
+                <Field label="Search Keyword">
+                  <Input
+                    placeholder="Actor/module"
+                    value={statusQuery.keyword}
+                    onChange={(event) => setQueryField('keyword', event.target.value)}
+                    onKeyDown={(event) => event.key === 'Enter' && submitStatusQuery()}
+                  />
+                </Field>
+              </div>
+
+              <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+                <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                  <Activity size={16} className="text-brand-600" />
+                  Live service overview
+                </div>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  {services.slice(0, 6).map((service) => (
+                    <div key={service.name} className="flex items-center justify-between gap-2 rounded-lg bg-white px-3 py-2 text-xs shadow-sm">
+                      <span className="truncate font-medium text-slate-600">{service.name}</span>
+                      <Badge tone={service.status === 'UP' ? 'green' : 'red'}>{service.status}</Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-auto flex flex-wrap gap-2 border-t border-slate-100 pt-5">
+                <Button icon={Filter} onClick={submitStatusQuery}>Submit</Button>
+                <Button variant="secondary" icon={X} onClick={cancelStatusQuery}>Cancel</Button>
+              </div>
             </CardBody>
           </Card>
-        </>
+        </div>
+      )}
+
+      {!loading && (
+        <div className="mt-6 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500 shadow-card">
+          System activity is collected from reporting and monitoring services for administrator review.
+        </div>
       )}
     </div>
   )

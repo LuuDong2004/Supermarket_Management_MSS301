@@ -24,7 +24,7 @@ export default function ProcessPayment() {
       <PageHeader
         breadcrumb="Bán hàng · 3.8.2"
         title="Process Payment"
-        subtitle="Xác nhận phương thức và trạng thái thanh toán cho hóa đơn hiện tại."
+        subtitle="Select a payment method and confirm the current sale payment status."
       />
 
       <div className="grid gap-6 lg:grid-cols-2">

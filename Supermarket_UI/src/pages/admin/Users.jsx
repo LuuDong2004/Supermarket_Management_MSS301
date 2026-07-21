@@ -1,22 +1,77 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PageHeader, FilterBar } from '../../components/ui/PageHeader.jsx'
-import { Card, CardBody, Button, Badge, StatusBadge, Field, Input, Select, Spinner } from '../../components/ui/primitives.jsx'
+import {
+  Badge,
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+  Field,
+  Input,
+  Select,
+  Spinner,
+  StatusBadge,
+} from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { useConfirm } from '../../components/ui/Confirm.jsx'
-import { roleLabel } from '../../lib/format.js'
-import { userService, withFallback, toList, mockUsers } from '../../services/index.js'
-import { Search, UserPlus, Info, RotateCcw, Trash2, Pencil } from 'lucide-react'
+import { isoDate, roleLabel } from '../../lib/format.js'
+import {
+  approvalRequestService,
+  mockUsers,
+  toList,
+  userService,
+  withFallback,
+} from '../../services/index.js'
+import { Edit3, Info, Lock, RotateCcw, Search, Unlock, UserPlus } from 'lucide-react'
 
-const ROLES = ['ROLE_CASHIER', 'ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_STAFF', 'ROLE_STAFF_MANAGER', 'ROLE_ADMIN', 'ROLE_CEO']
+const ROLES = [
+  'ROLE_CASHIER',
+  'ROLE_WAREHOUSE_MANAGER',
+  'ROLE_WAREHOUSE_STAFF',
+  'ROLE_STAFF_MANAGER',
+  'ROLE_ADMIN',
+  'ROLE_CEO',
+]
+
+const emptyForm = {
+  fullName: '',
+  role: 'ROLE_CASHIER',
+  status: 'ACTIVE',
+  approval: 'PENDING',
+}
+
+const normalizeRole = (role) => {
+  if (!role) return 'ROLE_CASHIER'
+  return role.startsWith('ROLE_') ? role : `ROLE_${role}`
+}
+
+const toBackendRole = (role) => (role || '').replace(/^ROLE_/, '')
+
+const normalizeUser = (user) => ({
+  ...user,
+  role: normalizeRole(user.role),
+  status: user.status || 'ACTIVE',
+  approval: user.approval || 'APPROVED',
+})
+
+const approvalTone = (status) => {
+  if (status === 'APPROVED') return 'green'
+  if (status === 'REJECTED') return 'red'
+  return 'amber'
+}
 
 export default function Users() {
+  const navigate = useNavigate()
   const toast = useToast()
   const confirm = useConfirm()
-  const navigate = useNavigate()
+
   const [users, setUsers] = useState([])
+  const [selected, setSelected] = useState(null)
+  const [form, setForm] = useState(emptyForm)
   const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [source, setSource] = useState('backend')
 
   const [search, setSearch] = useState('')
@@ -25,28 +80,47 @@ export default function Users() {
   const [approval, setApproval] = useState('')
   const [applied, setApplied] = useState({ search: '', role: '', status: '', approval: '' })
 
+  const selectUser = (user) => {
+    setSelected(user)
+    setForm({
+      fullName: user.fullName || '',
+      role: normalizeRole(user.role),
+      status: user.status || 'ACTIVE',
+      approval: user.approval || 'APPROVED',
+    })
+  }
+
   const load = async () => {
     setLoading(true)
-    const r = await withFallback(() => userService.list({ page: 0, size: 50 }), mockUsers)
-    setUsers(toList(r.data))
-    setSource(r.source)
+    const result = await withFallback(() => userService.list({ page: 0, size: 50 }), mockUsers)
+    const nextUsers = toList(result.data).map(normalizeUser)
+    setUsers(nextUsers)
+    setSource(result.source)
+    if (nextUsers.length) selectUser(nextUsers[0])
     setLoading(false)
   }
+
   useEffect(() => { load() }, [])
 
   const rows = useMemo(() => {
-    const q = applied.search.trim().toLowerCase()
-    return users.filter((u) => {
-      if (q && !(u.username || '').toLowerCase().includes(q) && !(u.fullName || '').toLowerCase().includes(q)) return false
-      if (applied.role && u.role !== applied.role) return false
-      if (applied.status && u.status !== applied.status) return false
-      if (applied.approval && u.approval !== applied.approval) return false
-      return true
+    const query = applied.search.trim().toLowerCase()
+    return users.filter((user) => {
+      const matchesSearch = !query
+        || (user.username || '').toLowerCase().includes(query)
+        || (user.fullName || '').toLowerCase().includes(query)
+        || String(user.id || '').toLowerCase().includes(query)
+      return matchesSearch
+        && (!applied.role || normalizeRole(user.role) === applied.role)
+        && (!applied.status || user.status === applied.status)
+        && (!applied.approval || user.approval === applied.approval)
     })
-  }, [users, applied])
+  }, [applied, users])
 
-  const apply = () => setApplied({ search, role, status, approval })
-  const reset = () => {
+  const setField = (key, value) => setForm((current) => ({ ...current, [key]: value }))
+
+  const applyFilters = () => setApplied({ search, role, status, approval })
+
+  const resetFilters = () => {
     setSearch('')
     setRole('')
     setStatus('')
@@ -54,106 +128,268 @@ export default function Users() {
     setApplied({ search: '', role: '', status: '', approval: '' })
   }
 
-  // Create/edit live on their own page: /app/admin/users/new, /:id/edit.
-  const openEditUser = (u) => navigate(`/app/admin/users/${u.id}/edit`)
-  const openNewUser = () => navigate('/app/admin/users/new')
+  const updateLocalUser = (id, changes) => {
+    setUsers((current) => current.map((user) => (
+      String(user.id) === String(id) ? { ...user, ...changes } : user
+    )))
+    setSelected((current) => (current && String(current.id) === String(id)
+      ? { ...current, ...changes }
+      : current))
+  }
 
-  const remove = async (u) => {
-    if (!(await confirm({ title: 'Xóa tài khoản?', message: `Tài khoản ${u.fullName || u.username} sẽ bị xóa vĩnh viễn.`, confirmLabel: 'Xóa', danger: true }))) return
+  const submitRoleApproval = async () => {
+    const code = `AR-${Date.now().toString().slice(-10)}`
+    await approvalRequestService.create({
+      code,
+      type: 'Role Change',
+      requester: 'Administrator',
+      target: `${selected.username || selected.fullName}: ${roleLabel(selected.role)} → ${roleLabel(form.role)}`,
+      reqDate: isoDate(),
+      status: 'Pending',
+      note: 'Role/permission change submitted from Manage User Accounts.',
+    })
+  }
+
+  const editAccount = async () => {
+    if (!selected) {
+      toast.error('Select an account from the list first.')
+      return
+    }
+    if (!form.fullName.trim()) {
+      toast.error('Full name is required.')
+      return
+    }
+
+    const roleChanged = normalizeRole(selected.role) !== form.role
+    const accepted = await confirm({
+      title: roleChanged ? 'Submit account changes?' : 'Update account?',
+      message: roleChanged
+        ? `The role change for ${selected.username} will be sent to the CEO for approval.`
+        : `Save the account information for ${selected.username}?`,
+      confirmLabel: roleChanged ? 'Submit' : 'Save',
+    })
+    if (!accepted) return
+
+    setSaving(true)
     try {
-      await userService.remove(u.id)
-      toast.success(`Đã xóa tài khoản ${u.fullName || u.username}.`)
-      await load()
-    } catch (e) {
-      toast.error(e.message)
+      if (source === 'backend') {
+        await userService.update(selected.id, {
+          fullName: form.fullName.trim(),
+          phone: selected.phone || '',
+          role: toBackendRole(roleChanged ? selected.role : form.role),
+          status: form.status,
+        })
+        if (roleChanged) await submitRoleApproval()
+      }
+
+      const changes = {
+        fullName: form.fullName.trim(),
+        status: form.status,
+        approval: roleChanged ? 'PENDING' : form.approval,
+        ...(roleChanged ? {} : { role: form.role }),
+      }
+      updateLocalUser(selected.id, changes)
+      setForm((current) => ({ ...current, ...changes }))
+      toast.success(roleChanged
+        ? 'Account updated and the role change was sent to the CEO.'
+        : 'Account information updated successfully.')
+    } catch (error) {
+      toast.error(error.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const toggleLock = async () => {
+    if (!selected) {
+      toast.error('Select an account from the list first.')
+      return
+    }
+    const isLocked = selected.status === 'LOCKED'
+    const accepted = await confirm({
+      title: isLocked ? 'Unlock account?' : 'Lock account?',
+      message: `${selected.fullName || selected.username} will be ${isLocked ? 'allowed to sign in again' : 'blocked from signing in'}.`,
+      confirmLabel: isLocked ? 'Unlock' : 'Lock',
+      danger: !isLocked,
+    })
+    if (!accepted) return
+
+    setSaving(true)
+    try {
+      if (source === 'backend') {
+        await (isLocked ? userService.unlock(selected.id) : userService.lock(selected.id))
+      }
+      const nextStatus = isLocked ? 'ACTIVE' : 'LOCKED'
+      updateLocalUser(selected.id, { status: nextStatus })
+      setForm((current) => ({ ...current, status: nextStatus }))
+      toast.success(`Account ${isLocked ? 'unlocked' : 'locked'} successfully.`)
+    } catch (error) {
+      toast.error(error.message)
+    } finally {
+      setSaving(false)
     }
   }
 
   return (
     <div>
       <PageHeader
-        breadcrumb="Quản trị · 3.4.1"
-        title="Tài khoản người dùng"
-        subtitle="Quản lý tài khoản, vai trò và trạng thái phê duyệt."
-        actions={
-          <div className="flex flex-wrap items-center gap-3">
-            <Button icon={UserPlus} onClick={openNewUser}>Tạo tài khoản</Button>
-          </div>
-        }
+        breadcrumb="Administration · 3.4.1"
+        title="Manage User Accounts"
+        subtitle="Search accounts, maintain account status, and submit role changes for CEO approval."
       />
 
-      <div className="space-y-6">
-        <FilterBar>
-          <Field label="Tìm kiếm" className="grow">
-            <div className="relative">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <Input className="pl-9" placeholder="Username / họ tên..." value={search} onChange={(e) => setSearch(e.target.value)} />
-            </div>
-          </Field>
-          <Field label="Vai trò">
-            <Select value={role} onChange={(e) => setRole(e.target.value)}>
-              <option value="">Tất cả</option>
-              {ROLES.map((r) => <option key={r} value={r}>{roleLabel(r)}</option>)}
-            </Select>
-          </Field>
-          <Field label="Trạng thái">
-            <Select value={status} onChange={(e) => setStatus(e.target.value)}>
-              <option value="">Tất cả</option>
-              <option value="ACTIVE">ACTIVE</option>
-              <option value="LOCKED">LOCKED</option>
-            </Select>
-          </Field>
-          <Field label="Phê duyệt">
-            <Select value={approval} onChange={(e) => setApproval(e.target.value)}>
-              <option value="">Tất cả</option>
-              <option value="APPROVED">APPROVED</option>
-              <option value="PENDING">PENDING</option>
-            </Select>
-          </Field>
-          <div className="flex gap-2 !grow-0 !basis-auto">
-            <Button onClick={apply}>Áp dụng</Button>
-            <Button variant="secondary" icon={RotateCcw} onClick={reset}>Đặt lại</Button>
+      <FilterBar className="mb-6">
+        <Field label="Search User" className="grow">
+          <div className="relative">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Input
+              className="pl-9"
+              placeholder="Name / username"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              onKeyDown={(event) => event.key === 'Enter' && applyFilters()}
+            />
           </div>
-        </FilterBar>
+        </Field>
+        <Field label="Role">
+          <Select value={role} onChange={(event) => setRole(event.target.value)}>
+            <option value="">Select</option>
+            {ROLES.map((item) => <option key={item} value={item}>{roleLabel(item)}</option>)}
+          </Select>
+        </Field>
+        <Field label="Status">
+          <Select value={status} onChange={(event) => setStatus(event.target.value)}>
+            <option value="">All</option>
+            <option value="ACTIVE">Active</option>
+            <option value="LOCKED">Locked</option>
+            <option value="INACTIVE">Inactive</option>
+            <option value="PENDING">Pending</option>
+          </Select>
+        </Field>
+        <Field label="Approval">
+          <Select value={approval} onChange={(event) => setApproval(event.target.value)}>
+            <option value="">Required?</option>
+            <option value="PENDING">Pending</option>
+            <option value="APPROVED">Approved</option>
+            <option value="REJECTED">Rejected</option>
+          </Select>
+        </Field>
+        <div className="flex !basis-auto !grow-0 gap-2">
+          <Button onClick={applyFilters}>Apply</Button>
+          <Button variant="secondary" icon={RotateCcw} onClick={resetFilters}>Reset</Button>
+        </div>
+      </FilterBar>
 
-        {loading ? (
-          <div className="flex items-center justify-center rounded-xl border border-slate-200 bg-white py-16">
-            <Spinner className="h-7 w-7" />
-          </div>
-        ) : (
-          <DataTable
-            rows={rows}
-            onRowClick={openEditUser}
-            empty={{ title: 'Không có tài khoản', subtitle: 'Thử đổi bộ lọc.' }}
-            columns={[
-              { key: 'username', header: 'Username', render: (u) => <span className="font-medium text-slate-700">{u.username}</span> },
-              { key: 'fullName', header: 'Họ tên' },
-              { key: 'role', header: 'Vai trò', render: (u) => <Badge tone="brand">{roleLabel(u.role)}</Badge> },
-              { key: 'status', header: 'Trạng thái', render: (u) => <StatusBadge status={u.status} /> },
-              { key: 'approval', header: 'Phê duyệt', render: (u) => <Badge tone={u.approval === 'APPROVED' ? 'green' : 'amber'}>{u.approval || '—'}</Badge> },
-            ]}
-            actions={(u) => (
-              <>
-                <Button size="sm" variant="secondary" icon={Pencil} onClick={() => openEditUser(u)}>Sửa</Button>
-                <Button size="sm" variant="danger" icon={Trash2} onClick={() => remove(u)}>Xóa</Button>
-              </>
-            )}
-          />
-        )}
-
-        <Card className="border-amber-200 bg-amber-50/60">
-          <CardBody className="flex gap-3">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-600">
-              <Info size={18} />
-            </span>
-            <div>
-              <p className="text-sm font-semibold text-amber-800">Lưu ý</p>
-              <p className="mt-0.5 text-sm text-amber-700">Thay đổi vai trò/quyền cần CEO phê duyệt.</p>
+      {loading ? (
+        <div className="flex items-center justify-center rounded-2xl border border-slate-200 bg-white py-20 shadow-card">
+          <Spinner className="h-7 w-7" />
+        </div>
+      ) : (
+        <div className="grid items-start gap-6 xl:grid-cols-5">
+          <section className="min-w-0 xl:col-span-3">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-base font-bold text-slate-900">User Account List</h2>
+                <p className="mt-0.5 text-xs text-slate-500">Select a row to load it into the account form.</p>
+              </div>
+              <Badge tone="slate">{rows.length} accounts</Badge>
             </div>
-          </CardBody>
-        </Card>
-      </div>
+            <DataTable
+              dense
+              rows={rows}
+              onRowClick={selectUser}
+              empty={{ title: 'No accounts found', subtitle: 'Try changing the filters above.' }}
+              columns={[
+                {
+                  key: 'id',
+                  header: 'User ID',
+                  render: (user, index) => (
+                    <span className="inline-flex items-center gap-2 font-semibold text-slate-700">
+                      <span className={`h-2 w-2 rounded-full ${String(selected?.id) === String(user.id) ? 'bg-brand-500' : 'bg-slate-200'}`} />
+                      {String(user.id || index + 1).slice(0, 8)}
+                    </span>
+                  ),
+                },
+                { key: 'fullName', header: 'Full Name' },
+                { key: 'role', header: 'Role', render: (user) => roleLabel(normalizeRole(user.role)) },
+                { key: 'status', header: 'Status', render: (user) => <StatusBadge status={user.status} /> },
+                {
+                  key: 'approval',
+                  header: 'Approval',
+                  render: (user) => <Badge tone={approvalTone(user.approval)}>{user.approval}</Badge>,
+                },
+              ]}
+            />
+          </section>
 
+          <Card className="xl:col-span-2">
+            <CardHeader
+              title="Account Form"
+              subtitle={selected ? `Selected: ${selected.username || selected.id}` : 'Select an account to edit'}
+              icon={Edit3}
+            />
+            <CardBody className="space-y-5">
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-2">
+                <Field label="Full Name" required>
+                  <Input
+                    placeholder="Employee name"
+                    value={form.fullName}
+                    onChange={(event) => setField('fullName', event.target.value)}
+                    disabled={!selected}
+                  />
+                </Field>
+                <Field label="Role">
+                  <Select value={form.role} onChange={(event) => setField('role', event.target.value)} disabled={!selected}>
+                    {ROLES.map((item) => <option key={item} value={item}>{roleLabel(item)}</option>)}
+                  </Select>
+                </Field>
+                <Field label="Account Status">
+                  <Select value={form.status} onChange={(event) => setField('status', event.target.value)} disabled={!selected}>
+                    <option value="ACTIVE">Active</option>
+                    <option value="LOCKED">Locked</option>
+                    <option value="INACTIVE">Inactive</option>
+                    <option value="PENDING">Pending</option>
+                  </Select>
+                </Field>
+                <Field label="Approval Status">
+                  <Select value={form.approval} onChange={(event) => setField('approval', event.target.value)} disabled={!selected}>
+                    <option value="PENDING">Pending</option>
+                    <option value="APPROVED">Approved</option>
+                    <option value="REJECTED">Rejected</option>
+                  </Select>
+                </Field>
+              </div>
+
+              <div>
+                <h3 className="mb-2 text-sm font-bold text-slate-800">CEO Approval Notice</h3>
+                <div className="flex gap-3 rounded-xl border border-amber-200 bg-amber-50/70 p-4">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
+                    <Info size={18} />
+                  </span>
+                  <div>
+                    <p className="text-sm font-semibold text-amber-900">Role/permission changes require approval</p>
+                    <p className="mt-1 text-xs leading-5 text-amber-700">Changes are submitted to the CEO and only take effect after approval.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-5">
+                <Button icon={UserPlus} onClick={() => navigate('/app/admin/users/new')}>Create</Button>
+                <Button variant="secondary" icon={Edit3} onClick={editAccount} loading={saving} disabled={!selected}>Edit</Button>
+                <Button
+                  variant={selected?.status === 'LOCKED' ? 'success' : 'secondary'}
+                  icon={selected?.status === 'LOCKED' ? Unlock : Lock}
+                  onClick={toggleLock}
+                  loading={saving}
+                  disabled={!selected}
+                >
+                  {selected?.status === 'LOCKED' ? 'Unlock' : 'Lock/Unlock'}
+                </Button>
+              </div>
+            </CardBody>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }

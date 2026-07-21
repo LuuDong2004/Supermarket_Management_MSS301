@@ -1,186 +1,292 @@
-import { useState, useEffect, useMemo } from 'react'
-import { PageHeader } from '../../components/ui/PageHeader.jsx'
-import { Card, CardBody, Button, Badge, StatusBadge, EmptyState } from '../../components/ui/primitives.jsx'
+import { useEffect, useMemo, useState } from 'react'
+import { PageHeader, FilterBar } from '../../components/ui/PageHeader.jsx'
+import { Card, CardBody, CardHeader, Button, Badge, Field, Input, Select, Spinner } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
-import { StatCard } from '../../components/ui/StatCard.jsx'
-import { Modal } from '../../components/ui/Modal.jsx'
-import { Tabs } from '../../components/ui/Tabs.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { useConfirm } from '../../components/ui/Confirm.jsx'
-import { formatDate } from '../../lib/format.js'
-import { approvalRequestService, withFallback, toList, mockApprovalRequests } from '../../services/index.js'
-import { CheckCircle2, XCircle, Clock, Inbox, FileCheck2, Eye } from 'lucide-react'
+import { approvalRequestService, withFallback, toList } from '../../services/index.js'
+import { CheckCircle2, ClipboardCheck, FileSearch, ShieldCheck, XCircle } from 'lucide-react'
 
-function typeTone(type) {
-  if (type === 'Tạo tài khoản') return 'blue'
-  if (type === 'Thay đổi quyền') return 'violet'
-  if (type === 'Điều chỉnh kho') return 'amber'
-  return 'brand'
+const DEMO_REQUESTS = [
+  { id: '001', code: '001', type: 'Milk', requester: 'Milk', reqDate: '2026-01-12', status: 'Pending', oldValue: 'Cashier', newValue: 'Warehouse Staff', reason: 'Operational transfer', note: 'Audit snapshot is preserved.' },
+  { id: '002', code: '002', type: 'Rice', requester: 'Rice', reqDate: '2026-02-12', status: 'Approved', target: 'Pricing policy update', note: 'Approved by CEO.' },
+  { id: '003', code: '003', type: 'Staff A', requester: 'Staff A', reqDate: '2026-03-12', status: 'Active', target: 'Role assignment', note: 'Currently active.' },
+  { id: '004', code: '004', type: 'Customer B', requester: 'Customer B', reqDate: '2026-04-12', status: 'Rejected', target: 'Loyalty adjustment', note: 'Rejected after review.' },
+  { id: '005', code: '005', type: 'Supplier C', requester: 'Supplier C', reqDate: '2026-05-12', status: 'Pending', target: 'Supplier terms', note: 'Waiting for CEO decision.' },
+  { id: '006', code: '006', type: 'Order D', requester: 'Order D', reqDate: '2026-06-12', status: 'Approved', target: 'Order threshold', note: 'Approved by CEO.' },
+  { id: '007', code: '007', type: 'Milk', requester: 'Milk', reqDate: '2026-07-12', status: 'Active', target: 'Category policy', note: 'Currently active.' },
+  { id: '008', code: '008', type: 'Rice', requester: 'Rice', reqDate: '2026-08-12', status: 'Rejected', target: 'Stock policy', note: 'Rejected after review.' },
+]
+
+function statusLabel(status) {
+  const value = String(status || '').toUpperCase()
+  if (value.includes('APPROVED') || value.includes('ĐÃ DUYỆT')) return 'Approved'
+  if (value.includes('REJECT') || value.includes('TỪ CHỐI')) return 'Rejected'
+  if (value.includes('ACTIVE') || value.includes('ĐANG')) return 'Active'
+  if (value.includes('REVIEW')) return 'Review'
+  if (value.includes('PENDING') || value.includes('CHỜ')) return 'Pending'
+  return status || 'Pending'
+}
+
+function statusTone(status) {
+  const value = statusLabel(status)
+  if (value === 'Approved' || value === 'Active') return 'green'
+  if (value === 'Rejected') return 'red'
+  if (value === 'Review') return 'blue'
+  return 'amber'
+}
+
+function shortDate(value) {
+  if (!value) return '—'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' })
+}
+
+function backendDate(value) {
+  if (!value) return new Date().toISOString().slice(0, 10)
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? new Date().toISOString().slice(0, 10) : date.toISOString().slice(0, 10)
 }
 
 export default function Approvals() {
   const toast = useToast()
   const confirm = useConfirm()
-  const [tab, setTab] = useState('pending')
   const [requests, setRequests] = useState([])
   const [source, setSource] = useState('backend')
+  const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState(null)
+  const [requestType, setRequestType] = useState('all')
+  const [status, setStatus] = useState('Pending')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  const [requester, setRequester] = useState('')
+  const [applied, setApplied] = useState({ requestType: 'all', status: '', dateFrom: '', dateTo: '', requester: '' })
+  const [decision, setDecision] = useState('approve')
+  const [comment, setComment] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
   const load = async () => {
-    const res = await withFallback(() => approvalRequestService.list(), mockApprovalRequests)
-    setRequests(toList(res.data))
-    setSource(res.source)
+    setLoading(true)
+    const result = await withFallback(() => approvalRequestService.list())
+    const rows = result.source === 'backend' ? toList(result.data) : DEMO_REQUESTS
+    setRequests(rows)
+    setSource(result.source)
+    setSelected((current) => rows.find((row) => row.id === current?.id) || rows[0] || null)
+    setLoading(false)
   }
+
   useEffect(() => { load() }, [])
 
-  const pending = useMemo(() => requests.filter((r) => r.status === 'Chờ duyệt'), [requests])
-  const processed = useMemo(() => requests.filter((r) => r.status !== 'Chờ duyệt'), [requests])
+  const types = useMemo(() => [...new Set(requests.map((request) => request.type).filter(Boolean))], [requests])
 
-  const decide = async (req, approve) => {
-    const ok = approve
-      ? await confirm({ title: 'Phê duyệt yêu cầu?', message: `Phê duyệt yêu cầu ${req.code} (${req.type}) của ${req.requester}?`, confirmLabel: 'Phê duyệt' })
-      : await confirm({ title: 'Từ chối yêu cầu?', message: `Từ chối yêu cầu ${req.code} (${req.type}) của ${req.requester}?`, confirmLabel: 'Từ chối', danger: true })
+  const filteredRequests = useMemo(() => requests.filter((request) => {
+    if (applied.requestType !== 'all' && request.type !== applied.requestType) return false
+    if (applied.status && statusLabel(request.status) !== applied.status) return false
+    if (applied.requester && !String(request.requester || '').toLowerCase().includes(applied.requester.toLowerCase())) return false
+    const requestDate = backendDate(request.reqDate || request.date)
+    if (applied.dateFrom && requestDate < applied.dateFrom) return false
+    if (applied.dateTo && requestDate > applied.dateTo) return false
+    return true
+  }), [applied, requests])
+
+  useEffect(() => {
+    if (!filteredRequests.length) {
+      setSelected(null)
+      return
+    }
+    if (!selected || !filteredRequests.some((request) => request.id === selected.id)) {
+      setSelected(filteredRequests[0])
+    }
+  }, [filteredRequests, selected])
+
+  useEffect(() => {
+    setDecision('approve')
+    setComment('')
+  }, [selected?.id])
+
+  const applyFilters = () => setApplied({ requestType, status, dateFrom, dateTo, requester: requester.trim() })
+
+  const resetFilters = () => {
+    setRequestType('all')
+    setStatus('Pending')
+    setDateFrom('')
+    setDateTo('')
+    setRequester('')
+    setApplied({ requestType: 'all', status: '', dateFrom: '', dateTo: '', requester: '' })
+  }
+
+  const confirmDecision = async () => {
+    if (!selected) return
+    const currentStatus = statusLabel(selected.status)
+    if (!['Pending', 'Review'].includes(currentStatus)) {
+      toast.info(`Request ${selected.code || selected.id} has already been processed.`)
+      return
+    }
+    if (decision === 'reject' && !comment.trim()) {
+      toast.error('A decision comment is required for rejection.')
+      return
+    }
+
+    const approve = decision === 'approve'
+    const ok = await confirm({
+      title: approve ? 'Approve request?' : 'Reject request?',
+      message: `${approve ? 'Approve' : 'Reject'} request ${selected.code || selected.id} from ${selected.requester}?`,
+      confirmLabel: 'Confirm',
+      danger: !approve,
+    })
     if (!ok) return
-    const status = approve ? 'Đã duyệt' : 'Từ chối'
-    setSelected(null)
-    if (source === 'backend' && req.id) {
+
+    setSubmitting(true)
+    const nextStatus = approve ? 'Approved' : 'Rejected'
+
+    if (source === 'backend' && selected.id) {
       try {
-        await approvalRequestService.update(req.id, {
-          code: req.code,
-          type: req.type,
-          requester: req.requester,
-          target: req.target,
-          reqDate: req.reqDate,
-          status,
-          note: req.note || '',
-        })
-        toast.success(approve ? `Đã phê duyệt ${req.code}.` : `Đã từ chối ${req.code}.`)
+        if (comment.trim()) {
+          await approvalRequestService.update(selected.id, {
+            code: selected.code || String(selected.id),
+            type: selected.type || 'Approval Request',
+            requester: selected.requester || 'System',
+            target: selected.target || selected.newValue || 'Requested change',
+            reqDate: backendDate(selected.reqDate || selected.date),
+            status: selected.status || 'Pending',
+            note: [selected.note, `CEO decision comment: ${comment.trim()}`].filter(Boolean).join('\n'),
+          })
+        }
+        if (approve) await approvalRequestService.approve(selected.id)
+        else await approvalRequestService.reject(selected.id)
+        toast.success(`Request ${selected.code || selected.id} was ${nextStatus.toLowerCase()}.`)
         await load()
+        setSubmitting(false)
         return
-      } catch {
-        toast.error('Không thể cập nhật yêu cầu. Đang cập nhật tạm thời.')
+      } catch (error) {
+        toast.error(error.message || 'The request could not be updated.')
+        setSubmitting(false)
+        return
       }
     }
-    // Offline / demo fallback: update local state only.
-    setRequests((rs) => rs.map((r) => (r.code === req.code ? { ...r, status } : r)))
-    toast.success(approve ? `Đã phê duyệt ${req.code}.` : `Đã từ chối ${req.code}.`)
+
+    setRequests((rows) => rows.map((row) => row.id === selected.id
+      ? { ...row, status: nextStatus, note: comment.trim() || row.note }
+      : row))
+    setSelected((request) => ({ ...request, status: nextStatus, note: comment.trim() || request.note }))
+    toast.success(`Request ${selected.code || selected.id} was ${nextStatus.toLowerCase()}.`)
+    setSubmitting(false)
   }
 
   return (
     <div>
       <PageHeader
-        breadcrumb="Điều hành · 3.3.2"
-        title="Phê duyệt"
-        subtitle="Hàng đợi phê duyệt của CEO — duyệt hoặc từ chối các yêu cầu."
+        breadcrumb="Executive · 3.3.2"
+        title="Process Approval Request"
+        subtitle="Review request details, preserve the audit trail, and record the CEO decision."
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Chờ duyệt" value={pending.length} icon={Clock} tone="amber" hint="cần xử lý" />
-        <StatCard label="Đã xử lý" value={processed.length} icon={FileCheck2} tone="green" hint="lịch sử" />
-        <StatCard label="Đã duyệt" value={processed.filter((r) => r.status === 'Đã duyệt').length} icon={CheckCircle2} tone="brand" hint="tổng" />
-        <StatCard label="Từ chối" value={processed.filter((r) => r.status === 'Từ chối').length} icon={XCircle} tone="red" hint="tổng" />
-      </div>
+      <FilterBar>
+        <Field label="Request Type">
+          <Select value={requestType} onChange={(event) => setRequestType(event.target.value)}>
+            <option value="all">All</option>
+            {types.map((type) => <option key={type} value={type}>{type}</option>)}
+          </Select>
+        </Field>
+        <Field label="Status">
+          <Select value={status} onChange={(event) => setStatus(event.target.value)}>
+            <option value="">All statuses</option>
+            {['Pending', 'Review', 'Approved', 'Active', 'Rejected'].map((value) => <option key={value} value={value}>{value}</option>)}
+          </Select>
+        </Field>
+        <Field label="Date Range" className="sm:min-w-[19rem]">
+          <div className="grid grid-cols-2 gap-2">
+            <Input aria-label="From date" type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} />
+            <Input aria-label="To date" type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} />
+          </div>
+        </Field>
+        <Field label="Requester" className="grow">
+          <Input value={requester} onChange={(event) => setRequester(event.target.value)} placeholder="Search requester" />
+        </Field>
+        <div className="flex gap-2">
+          <Button onClick={applyFilters}>Apply</Button>
+          <Button variant="secondary" onClick={resetFilters}>Reset</Button>
+        </div>
+      </FilterBar>
 
-      <Tabs
-        className="my-6"
-        value={tab}
-        onChange={setTab}
-        tabs={[
-          { value: 'pending', label: 'Chờ duyệt', count: pending.length },
-          { value: 'processed', label: 'Đã xử lý', count: processed.length },
-        ]}
-      />
-
-      {tab === 'pending' ? (
-        pending.length === 0 ? (
-          <Card>
-            <CardBody>
-              <EmptyState icon={Inbox} title="Không còn yêu cầu chờ duyệt" subtitle="Tất cả yêu cầu đã được xử lý." />
+      {loading ? (
+        <div className="flex items-center justify-center rounded-2xl border border-slate-200 bg-white py-20 shadow-card">
+          <Spinner className="h-7 w-7" />
+        </div>
+      ) : (
+        <div className="grid gap-6 xl:grid-cols-5">
+          <Card className="min-w-0 xl:col-span-3">
+            <CardHeader title="Pending Request List" subtitle={`${filteredRequests.length} requests in the current view`} icon={FileSearch} />
+            <CardBody className="p-0">
+              <DataTable
+                className="rounded-none border-0 shadow-none"
+                dense
+                rows={filteredRequests}
+                rowKey="id"
+                onRowClick={setSelected}
+                empty={{ title: 'No approval requests found', subtitle: 'Reset the filters to view all requests.' }}
+                columns={[
+                  { key: 'code', header: 'Req ID', render: (row) => <span className="font-mono text-xs font-semibold text-slate-700">{row.code || row.id}</span> },
+                  { key: 'type', header: 'Type' },
+                  { key: 'requester', header: 'Requester' },
+                  { key: 'date', header: 'Date', render: (row) => shortDate(row.reqDate || row.date) },
+                  { key: 'status', header: 'Status', render: (row) => <Badge tone={statusTone(row.status)} dot>{statusLabel(row.status)}</Badge> },
+                ]}
+              />
             </CardBody>
           </Card>
-        ) : (
-          <div className="grid gap-4 lg:grid-cols-2">
-            {pending.map((req) => (
-              <Card key={req.code}>
-                <CardBody className="space-y-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <Badge tone={typeTone(req.type)}>{req.type}</Badge>
-                        <span className="font-mono text-xs text-slate-400">{req.code}</span>
-                      </div>
-                      <p className="mt-2 font-semibold text-slate-800">{req.target}</p>
-                      <p className="text-sm text-slate-500">{req.requester} · {formatDate(req.reqDate)}</p>
-                    </div>
-                    <StatusBadge status={req.status} />
-                  </div>
-                  {req.note && <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">{req.note}</p>}
-                  <div className="flex gap-2 pt-1">
-                    <Button variant="success" icon={CheckCircle2} onClick={() => decide(req, true)}>Phê duyệt</Button>
-                    <Button variant="danger" icon={XCircle} onClick={() => decide(req, false)}>Từ chối</Button>
-                    <Button variant="ghost" onClick={() => setSelected(req)}>Chi tiết</Button>
-                  </div>
-                </CardBody>
-              </Card>
-            ))}
-          </div>
-        )
-      ) : (
-        <DataTable
-          rows={processed}
-          rowKey="code"
-          onRowClick={(r) => setSelected(r)}
-          empty={{ title: 'Chưa có yêu cầu nào được xử lý' }}
-          columns={[
-            { key: 'code', header: 'Mã', render: (r) => <span className="font-mono text-xs">{r.code}</span> },
-            { key: 'type', header: 'Loại', render: (r) => <Badge tone={typeTone(r.type)}>{r.type}</Badge> },
-            { key: 'requester', header: 'Người yêu cầu' },
-            { key: 'target', header: 'Đối tượng' },
-            { key: 'reqDate', header: 'Ngày', render: (r) => formatDate(r.reqDate) },
-            { key: 'status', header: 'Kết quả', render: (r) => <StatusBadge status={r.status} /> },
-          ]}
-          actions={(r) => (
-            <Button size="sm" variant="secondary" icon={Eye} onClick={() => setSelected(r)}>Xem</Button>
-          )}
-        />
-      )}
 
-      <Modal
-        open={!!selected}
-        onClose={() => setSelected(null)}
-        title={selected ? `Yêu cầu ${selected.code}` : ''}
-        subtitle={selected?.type}
-        footer={
-          selected?.status === 'Chờ duyệt' ? (
-            <>
-              <Button variant="danger" icon={XCircle} onClick={() => decide(selected, false)}>Từ chối</Button>
-              <Button variant="success" icon={CheckCircle2} onClick={() => decide(selected, true)}>Phê duyệt</Button>
-            </>
-          ) : (
-            <Button variant="secondary" onClick={() => setSelected(null)}>Đóng</Button>
-          )
-        }
-      >
-        {selected && (
-          <div className="space-y-3 text-sm">
-            <Row label="Người yêu cầu" value={selected.requester} />
-            <Row label="Đối tượng" value={selected.target} />
-            <Row label="Ngày tạo" value={formatDate(selected.reqDate)} />
-            <Row label="Trạng thái" value={<StatusBadge status={selected.status} />} />
-            <div>
-              <p className="text-slate-500">Ghi chú</p>
-              <p className="mt-1 rounded-lg bg-slate-50 px-3 py-2 text-slate-700">{selected.note || 'Không có ghi chú.'}</p>
-            </div>
+          <div className="space-y-6 xl:col-span-2">
+            <Card className="min-h-52">
+              <CardHeader title="Request Detail" subtitle={selected ? `Request ${selected.code || selected.id}` : 'Select a request'} icon={ClipboardCheck} />
+              <CardBody>
+                {selected ? (
+                  <div className="space-y-3 text-sm">
+                    <DetailRow label="Old value" value={selected.oldValue || 'Current configuration'} />
+                    <DetailRow label="New value" value={selected.newValue || selected.target || 'Requested change'} />
+                    <DetailRow label="Reason" value={selected.reason || selected.note || 'Operational update'} />
+                    <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 px-3.5 py-3 text-xs font-medium text-emerald-700">
+                      Audit snapshot is preserved.
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-400">Choose a request from the list to see its details.</p>
+                )}
+              </CardBody>
+            </Card>
+
+            <Card>
+              <CardHeader title="Decision" subtitle="Record the executive outcome" icon={ShieldCheck} />
+              <CardBody className="space-y-4">
+                <div className="flex flex-wrap gap-5 text-sm font-medium text-slate-700">
+                  <label className="inline-flex cursor-pointer items-center gap-2">
+                    <input type="radio" name="decision" value="approve" checked={decision === 'approve'} onChange={() => setDecision('approve')} />
+                    <CheckCircle2 size={16} className="text-emerald-600" /> Approve
+                  </label>
+                  <label className="inline-flex cursor-pointer items-center gap-2">
+                    <input type="radio" name="decision" value="reject" checked={decision === 'reject'} onChange={() => setDecision('reject')} />
+                    <XCircle size={16} className="text-rose-600" /> Reject
+                  </label>
+                </div>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                  <Field label="Decision Comment" className="flex-1" required={decision === 'reject'}>
+                    <Input value={comment} onChange={(event) => setComment(event.target.value)} placeholder={decision === 'reject' ? 'Required for rejection' : 'Optional approval note'} />
+                  </Field>
+                  <Button loading={submitting} disabled={!selected} onClick={confirmDecision}>Confirm</Button>
+                </div>
+              </CardBody>
+            </Card>
           </div>
-        )}
-      </Modal>
+        </div>
+      )}
     </div>
   )
 }
 
-function Row({ label, value }) {
+function DetailRow({ label, value }) {
   return (
-    <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+    <div className="grid grid-cols-[6rem_minmax(0,1fr)] gap-3 border-b border-slate-100 pb-2.5 last:border-0">
       <span className="text-slate-500">{label}</span>
       <span className="font-medium text-slate-700">{value}</span>
     </div>

@@ -1,154 +1,347 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PageHeader, FilterBar } from '../../components/ui/PageHeader.jsx'
-import { Button, Badge, StatusBadge, Field, Input, Select, Spinner } from '../../components/ui/primitives.jsx'
+import {
+  Badge,
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+  Field,
+  Input,
+  Select,
+  Spinner,
+  StatusBadge,
+} from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
-import { StatCard } from '../../components/ui/StatCard.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { useConfirm } from '../../components/ui/Confirm.jsx'
-import { formatCurrency, formatNumber, formatDate, roleLabel, initials, isoDate } from '../../lib/format.js'
-import { employeeService, staffShiftService, withFallback, toList, mockEmployees } from '../../services/index.js'
-import { Users, UserCheck, Building2, Plus, Search, Trash2, Pencil, Eye } from 'lucide-react'
+import { isoDate, roleLabel } from '../../lib/format.js'
+import { employeeService, mockEmployees, toList, withFallback } from '../../services/index.js'
+import { Eye, RotateCcw, Search, Send, UserRound, X } from 'lucide-react'
 
-const todayIso = () => isoDate()
+const POSITIONS = [
+  'ROLE_CASHIER',
+  'ROLE_WAREHOUSE_MANAGER',
+  'ROLE_WAREHOUSE_STAFF',
+  'ROLE_STAFF_MANAGER',
+]
 
-const ROLES = ['ROLE_CASHIER', 'ROLE_WAREHOUSE_MANAGER', 'ROLE_WAREHOUSE_STAFF', 'ROLE_STAFF_MANAGER', 'ROLE_ADMIN', 'ROLE_CEO']
+const emptyForm = {
+  code: '',
+  name: '',
+  role: 'ROLE_CASHIER',
+  status: 'ACTIVE',
+}
+
+const emptyFilters = {
+  search: '',
+  status: '',
+  role: '',
+  dateFrom: '',
+  dateTo: '',
+}
+
+const normalizeRole = (role) => {
+  if (!role) return 'ROLE_CASHIER'
+  return role.startsWith('ROLE_') ? role : `ROLE_${role}`
+}
+
+const statusKey = (status = '') => {
+  const value = status.toLowerCase()
+  if (value.includes('inactive') || value.includes('nghỉ việc')) return 'INACTIVE'
+  if (value.includes('leave') || value.includes('tạm nghỉ')) return 'ON_LEAVE'
+  if (value.includes('pending') || value.includes('chờ')) return 'PENDING'
+  return 'ACTIVE'
+}
+
+const statusLabel = (status) => ({
+  ACTIVE: 'Active',
+  ON_LEAVE: 'On Leave',
+  INACTIVE: 'Inactive',
+  PENDING: 'Pending',
+}[statusKey(status)] || status || 'Active')
+
+const toBackendStatus = (status) => ({
+  ACTIVE: 'Đang làm',
+  ON_LEAVE: 'Tạm nghỉ',
+  INACTIVE: 'Nghỉ việc',
+  PENDING: 'Chờ duyệt',
+}[status] || status)
+
+const departmentForRole = (role) => ({
+  ROLE_CASHIER: 'Sales / POS',
+  ROLE_WAREHOUSE_MANAGER: 'Warehouse',
+  ROLE_WAREHOUSE_STAFF: 'Warehouse',
+  ROLE_STAFF_MANAGER: 'Human Resources',
+}[role] || 'Operations')
 
 export default function Employees() {
+  const navigate = useNavigate()
   const toast = useToast()
   const confirm = useConfirm()
-  const navigate = useNavigate()
-  const [rows, setRows] = useState([])
+
+  const [employees, setEmployees] = useState([])
+  const [selected, setSelected] = useState(null)
+  const [form, setForm] = useState(emptyForm)
+  const [filters, setFilters] = useState(emptyFilters)
+  const [applied, setApplied] = useState(emptyFilters)
   const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [source, setSource] = useState('backend')
-
-  const [search, setSearch] = useState('')
-  const [dept, setDept] = useState('')
-  const [role, setRole] = useState('')
-
-  const [todayShifts, setTodayShifts] = useState([])
 
   const load = async () => {
     setLoading(true)
-    const [r, rs] = await Promise.all([
-      withFallback(() => employeeService.list({ size: 200 }), mockEmployees),
-      withFallback(() => staffShiftService.list({ from: todayIso(), to: todayIso() })),
-    ])
-    setRows(toList(r.data))
-    setTodayShifts(toList(rs.data))
-    setSource(r.source)
+    const result = await withFallback(() => employeeService.list({ size: 200 }), mockEmployees)
+    setEmployees(toList(result.data))
+    setSource(result.source)
     setLoading(false)
   }
+
   useEffect(() => { load() }, [])
 
-  // Today's shift per employee name, for the "Ca hôm nay" column.
-  const shiftByName = useMemo(() => {
-    const m = {}
-    todayShifts.forEach((s) => { if (s.employeeName) m[s.employeeName] = s.shiftType })
-    return m
-  }, [todayShifts])
-
-  const depts = useMemo(() => [...new Set(rows.map((e) => e.dept).filter(Boolean))], [rows])
-
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase()
-    return rows.filter((e) => {
-      if (q && !(e.name || '').toLowerCase().includes(q) && !((e.code || e.id) || '').toLowerCase().includes(q)) return false
-      if (dept && e.dept !== dept) return false
-      if (role && e.role !== role) return false
-      return true
+  const rows = useMemo(() => {
+    const query = applied.search.trim().toLowerCase()
+    return employees.filter((employee) => {
+      const employeeDate = employee.joined || ''
+      const matchesSearch = !query || [employee.code, employee.id, employee.name, employee.dept]
+        .some((value) => String(value || '').toLowerCase().includes(query))
+      return matchesSearch
+        && (!applied.status || statusKey(employee.status) === applied.status)
+        && (!applied.role || normalizeRole(employee.role) === applied.role)
+        && (!applied.dateFrom || employeeDate >= applied.dateFrom)
+        && (!applied.dateTo || employeeDate <= applied.dateTo)
     })
-  }, [rows, search, dept, role])
+  }, [applied, employees])
 
-  const active = rows.filter((e) => e.status === 'Đang làm').length
+  const setFilter = (key, value) => setFilters((current) => ({ ...current, [key]: value }))
+  const setField = (key, value) => setForm((current) => ({ ...current, [key]: value }))
 
-  const remove = async (row) => {
-    if (!(await confirm({ title: 'Xóa nhân viên?', message: `Hồ sơ của ${row.name} sẽ bị xóa vĩnh viễn.`, confirmLabel: 'Xóa', danger: true }))) return
+  const selectEmployee = (employee) => {
+    setSelected(employee)
+    setForm({
+      code: employee.code || employee.id || '',
+      name: employee.name || '',
+      role: normalizeRole(employee.role),
+      status: statusKey(employee.status),
+    })
+  }
+
+  const resetFilters = () => {
+    setFilters(emptyFilters)
+    setApplied(emptyFilters)
+  }
+
+  const cancelForm = () => {
+    setSelected(null)
+    setForm(emptyForm)
+  }
+
+  const saveEmployee = async () => {
+    if (!form.code.trim() || !form.name.trim()) {
+      toast.error('Employee code and full name are required.')
+      return
+    }
+
+    const accepted = await confirm({
+      title: selected ? 'Update employee profile?' : 'Create employee profile?',
+      message: selected
+        ? `Save changes to ${form.name}?`
+        : `Create a new employee profile for ${form.name}?`,
+      confirmLabel: 'Submit',
+    })
+    if (!accepted) return
+
+    const payload = {
+      code: form.code.trim(),
+      name: form.name.trim(),
+      role: form.role,
+      dept: selected?.dept || departmentForRole(form.role),
+      joined: selected?.joined || isoDate(),
+      phone: selected?.phone || '',
+      status: toBackendStatus(form.status),
+      salary: selected?.salary ?? null,
+    }
+
+    setSaving(true)
     try {
-      await employeeService.remove(row.id)
-      toast.success('Đã xóa nhân viên.')
-      await load()
-    } catch (e) {
-      toast.error(e.message)
+      if (source === 'backend') {
+        const saved = selected
+          ? await employeeService.update(selected.id, payload)
+          : await employeeService.create(payload)
+        setEmployees((current) => selected
+          ? current.map((employee) => employee.id === selected.id ? saved : employee)
+          : [saved, ...current])
+        setSelected(saved)
+      } else if (selected) {
+        const saved = { ...selected, ...payload }
+        setEmployees((current) => current.map((employee) => employee.id === selected.id ? saved : employee))
+        setSelected(saved)
+      } else {
+        const saved = { id: form.code.trim(), ...payload }
+        setEmployees((current) => [saved, ...current])
+        setSelected(saved)
+      }
+      setForm(emptyForm)
+      setSelected(null)
+      toast.success(selected ? 'Employee profile updated.' : 'Employee profile created.')
+    } catch (error) {
+      toast.error(error.message)
+    } finally {
+      setSaving(false)
     }
   }
 
   return (
     <div>
       <PageHeader
-        breadcrumb="Nhân sự · 3.5.1"
-        title="Hồ sơ nhân viên"
-        subtitle="Quản lý thông tin, phòng ban và lương của nhân viên."
-        actions={
-          <div className="flex items-center gap-3">
-            <Button icon={Plus} onClick={() => navigate('/app/hr/employees/new')}>Thêm nhân viên</Button>
-          </div>
-        }
+        breadcrumb="Staff Management · 3.5.1"
+        title="Manage Employee Profile and Work History"
+        subtitle="Maintain employee profiles and review employment records."
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        <StatCard label="Tổng nhân viên" value={formatNumber(rows.length)} icon={Users} tone="brand" hint="toàn hệ thống" />
-        <StatCard label="Đang làm việc" value={formatNumber(active)} icon={UserCheck} tone="green" hint="trạng thái hoạt động" />
-        <StatCard label="Số phòng ban" value={formatNumber(depts.length)} icon={Building2} tone="blue" hint="đơn vị tổ chức" />
-      </div>
-
-      <FilterBar className="mt-6">
-        <Field label="Tìm kiếm" className="grow">
+      <FilterBar className="mb-6">
+        <Field label="Search" className="grow">
           <div className="relative">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <Input className="pl-9" placeholder="Tên hoặc mã nhân viên..." value={search} onChange={(e) => setSearch(e.target.value)} />
+            <Input
+              className="pl-9"
+              placeholder="Keyword"
+              value={filters.search}
+              onChange={(event) => setFilter('search', event.target.value)}
+              onKeyDown={(event) => event.key === 'Enter' && setApplied(filters)}
+            />
           </div>
         </Field>
-        <Field label="Phòng ban">
-          <Select value={dept} onChange={(e) => setDept(e.target.value)}>
-            <option value="">Tất cả</option>
-            {depts.map((d) => <option key={d} value={d}>{d}</option>)}
+        <Field label="Status">
+          <Select value={filters.status} onChange={(event) => setFilter('status', event.target.value)}>
+            <option value="">All</option>
+            <option value="ACTIVE">Active</option>
+            <option value="ON_LEAVE">On Leave</option>
+            <option value="INACTIVE">Inactive</option>
+            <option value="PENDING">Pending</option>
           </Select>
         </Field>
-        <Field label="Vai trò">
-          <Select value={role} onChange={(e) => setRole(e.target.value)}>
-            <option value="">Tất cả</option>
-            {ROLES.map((r) => <option key={r} value={r}>{roleLabel(r)}</option>)}
+        <Field label="Date" className="grow">
+          <div className="grid grid-cols-2 gap-2">
+            <Input type="date" value={filters.dateFrom} onChange={(event) => setFilter('dateFrom', event.target.value)} placeholder="From" />
+            <Input type="date" value={filters.dateTo} onChange={(event) => setFilter('dateTo', event.target.value)} placeholder="To" min={filters.dateFrom || undefined} />
+          </div>
+        </Field>
+        <Field label="Type">
+          <Select value={filters.role} onChange={(event) => setFilter('role', event.target.value)}>
+            <option value="">All</option>
+            {POSITIONS.map((position) => <option key={position} value={position}>{roleLabel(position)}</option>)}
           </Select>
         </Field>
+        <div className="flex !basis-auto !grow-0 gap-2">
+          <Button onClick={() => setApplied(filters)}>Apply</Button>
+          <Button variant="secondary" icon={RotateCcw} onClick={resetFilters}>Reset</Button>
+        </div>
       </FilterBar>
 
       {loading ? (
-        <div className="flex items-center justify-center rounded-xl border border-slate-200 bg-white py-16">
+        <div className="flex items-center justify-center rounded-2xl border border-slate-200 bg-white py-20 shadow-card">
           <Spinner className="h-7 w-7" />
         </div>
       ) : (
-        <DataTable
-          rows={filtered}
-          onRowClick={(r) => navigate(`/app/hr/employees/${r.id}`)}
-          empty={{ title: 'Không có nhân viên', subtitle: 'Thử đổi bộ lọc hoặc thêm nhân viên mới.' }}
-          columns={[
-            { key: 'code', header: 'Mã', render: (r) => <span className="font-mono text-xs">{r.code || r.id}</span> },
-            {
-              key: 'name', header: 'Nhân viên', render: (r) => (
-                <div className="flex items-center gap-3">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-50 text-xs font-semibold text-brand-700">{initials(r.name)}</span>
-                  <span className="font-medium text-slate-700">{r.name}</span>
-                </div>
-              ),
-            },
-            { key: 'role', header: 'Vai trò', render: (r) => <Badge tone="brand">{roleLabel(r.role)}</Badge> },
-            { key: 'dept', header: 'Phòng ban' },
-            { key: 'shift', header: 'Ca hôm nay', render: (r) => (
-              shiftByName[r.name] ? <Badge tone="violet">{shiftByName[r.name]}</Badge> : <span className="text-xs text-slate-300">—</span>
-            ) },
-            { key: 'joined', header: 'Ngày vào', render: (r) => formatDate(r.joined) },
-            { key: 'status', header: 'Trạng thái', render: (r) => <StatusBadge status={r.status} /> },
-            { key: 'salary', header: 'Lương', align: 'right', render: (r) => <span className="font-semibold">{formatCurrency(r.salary)}</span> },
-          ]}
-          actions={(r) => (
-            <>
-              <Button size="sm" variant="secondary" icon={Eye} onClick={() => navigate(`/app/hr/employees/${r.id}`)}>Xem</Button>
-              <Button size="sm" variant="secondary" icon={Pencil} onClick={() => navigate(`/app/hr/employees/${r.id}/edit`)}>Sửa</Button>
-              <Button size="sm" variant="danger" icon={Trash2} onClick={() => remove(r)}>Xóa</Button>
-            </>
-          )}
-        />
+        <div className="grid items-start gap-6 xl:grid-cols-5">
+          <section className="min-w-0 xl:col-span-3">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-base font-bold text-slate-900">Employee List</h2>
+                <p className="mt-0.5 text-xs text-slate-500">Select an employee to edit the profile.</p>
+              </div>
+              <Badge tone="slate">{rows.length} employees</Badge>
+            </div>
+            <DataTable
+              dense
+              rows={rows}
+              onRowClick={selectEmployee}
+              empty={{ title: 'No employees found', subtitle: 'Try changing the filters or create a new profile.' }}
+              columns={[
+                {
+                  key: 'code',
+                  header: 'Emp Code',
+                  render: (employee) => (
+                    <span className="inline-flex items-center gap-2 font-mono text-xs font-semibold text-slate-700">
+                      <span className={`h-2 w-2 rounded-full ${selected?.id === employee.id ? 'bg-brand-500' : 'bg-slate-200'}`} />
+                      {employee.code || String(employee.id).slice(0, 8)}
+                    </span>
+                  ),
+                },
+                { key: 'name', header: 'Full Name', render: (employee) => <span className="font-semibold text-slate-700">{employee.name}</span> },
+                { key: 'role', header: 'Position', render: (employee) => roleLabel(normalizeRole(employee.role)) },
+                { key: 'status', header: 'Status', render: (employee) => <StatusBadge status={statusLabel(employee.status)} /> },
+                {
+                  key: 'history',
+                  header: 'Work History',
+                  render: (employee) => (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      icon={Eye}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        navigate(`/app/hr/employees/${employee.id}`)
+                      }}
+                    >
+                      View
+                    </Button>
+                  ),
+                },
+              ]}
+            />
+          </section>
+
+          <Card className="xl:col-span-2">
+            <CardHeader
+              title="Employee Profile"
+              subtitle={selected ? `Editing ${selected.code || selected.id}` : 'Create a new employee profile'}
+              icon={UserRound}
+            />
+            <CardBody className="flex min-h-[22rem] flex-col">
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-2">
+                <Field label="Employee Code" required>
+                  <Input
+                    placeholder="Required"
+                    value={form.code}
+                    onChange={(event) => setField('code', event.target.value)}
+                    disabled={!!selected}
+                    maxLength={50}
+                  />
+                </Field>
+                <Field label="Full Name" required>
+                  <Input placeholder="Required" value={form.name} onChange={(event) => setField('name', event.target.value)} maxLength={150} />
+                </Field>
+                <Field label="Position">
+                  <Select value={form.role} onChange={(event) => setField('role', event.target.value)}>
+                    {POSITIONS.map((position) => <option key={position} value={position}>{roleLabel(position)}</option>)}
+                  </Select>
+                </Field>
+                <Field label="Employment Status">
+                  <Select value={form.status} onChange={(event) => setField('status', event.target.value)}>
+                    <option value="ACTIVE">Active</option>
+                    <option value="ON_LEAVE">On Leave</option>
+                    <option value="INACTIVE">Inactive</option>
+                    <option value="PENDING">Pending</option>
+                  </Select>
+                </Field>
+              </div>
+
+              <div className="mt-auto flex flex-wrap gap-2 border-t border-slate-100 pt-5">
+                <Button icon={Send} onClick={saveEmployee} loading={saving}>Submit</Button>
+                <Button variant="secondary" icon={X} onClick={cancelForm} disabled={saving}>Cancel</Button>
+              </div>
+            </CardBody>
+          </Card>
+        </div>
+      )}
+
+      {!loading && (
+        <div className="mt-6 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500 shadow-card">
+          3.5.1 Employee Profile and Work History · profile changes are retained in the employee record
+        </div>
       )}
     </div>
   )

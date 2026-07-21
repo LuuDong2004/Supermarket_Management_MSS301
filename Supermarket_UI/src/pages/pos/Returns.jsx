@@ -1,98 +1,23 @@
-import { useState, useEffect, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useMemo, useState } from 'react'
 import { PageHeader } from '../../components/ui/PageHeader.jsx'
-import { Card, CardBody, Button, Badge, StatusBadge } from '../../components/ui/primitives.jsx'
+import { Badge, Button, Card, CardBody, CardHeader, Field, Input, Select } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
-import { StatCard } from '../../components/ui/StatCard.jsx'
-import { formatCurrency, formatDate, isoDate } from '../../lib/format.js'
-import { escapeHtml } from '../../lib/escapeHtml.js'
-import { returnService, withFallback, toList } from '../../services/index.js'
-import { Plus, Printer, Undo2, RotateCcw, Coins } from 'lucide-react'
+import { useToast } from '../../components/ui/Toast.jsx'
+import { useAuth } from '../../context/AuthContext.jsx'
+import { formatCurrency, isoDate } from '../../lib/format.js'
+import { returnService } from '../../services/index.js'
+import { Calculator, Printer, RotateCcw, Search, Undo2 } from 'lucide-react'
 
-export const REASONS = ['Khách đổi ý', 'Hàng lỗi / hư hỏng', 'Sai sản phẩm', 'Hết hạn sử dụng', 'Lý do khác']
-const STORE = { name: 'Siêu thị MSS301', address: '123 Đường Trần Phú, Hà Nội' }
-
-export function printReturn(r) {
-  if (!r) return
-  const rows = (r.lineItems || []).map((x) => `
-    <tr><td>${escapeHtml(x.productName || x.productCode || '')}</td><td style="text-align:center">${escapeHtml(x.quantity)}</td>
-    <td style="text-align:right">${new Intl.NumberFormat('vi-VN').format(x.lineTotal || 0)} ₫</td></tr>`).join('')
-  const html = `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(r.code)}</title>
-    <style>*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#0f172a;padding:16px;max-width:360px;margin:0 auto}
-    h1{font-size:17px;text-align:center;margin:0}.muted{color:#64748b;font-size:12px;text-align:center;margin:2px 0}
-    table{width:100%;border-collapse:collapse;margin-top:10px;font-size:12px}th{border-bottom:1px dashed #cbd5e1;padding:4px 2px;text-align:left;color:#64748b;font-size:11px}
-    td{padding:4px 2px}.total{display:flex;justify-content:space-between;font-weight:800;font-size:15px;border-top:1px dashed #cbd5e1;margin-top:8px;padding-top:8px}
-    .center{text-align:center;margin-top:14px;font-size:12px;color:#334155}</style></head><body>
-    <h1>${escapeHtml(STORE.name)}</h1><div class="muted">${escapeHtml(STORE.address)}</div>
-    <div class="muted" style="margin-top:8px;font-weight:700;color:#0f172a">PHIẾU TRẢ HÀNG / HOÀN TIỀN</div>
-    <div class="muted">Số phiếu: ${escapeHtml(r.code)} · HĐ gốc: ${escapeHtml(r.saleCode || '—')}</div>
-    <div class="muted">${escapeHtml(r.returnDate || '')} · Thu ngân: ${escapeHtml(r.cashier || '')}</div>
-    <div class="muted">Lý do: ${escapeHtml(r.reason || '—')}</div>
-    <table><thead><tr><th>Sản phẩm</th><th style="text-align:center">SL</th><th style="text-align:right">Hoàn</th></tr></thead><tbody>${rows}</tbody></table>
-    <div class="total"><span>Tổng hoàn</span><span>${new Intl.NumberFormat('vi-VN').format(r.refundAmount || 0)} ₫</span></div>
-    <div class="center">Cảm ơn quý khách.</div></body></html>`
-  const w = window.open('', '_blank', 'width=420,height=640')
-  if (!w) return
-  w.document.write(html); w.document.close(); w.focus(); w.print()
-}
+export const REASONS = ['Damaged product', 'Wrong item', 'Expired product', 'Customer changed mind', 'Other']
+export function printReturn(record) { if (!record) return; const popup = window.open('', '_blank', 'width=560,height=640'); if (!popup) return; popup.document.write(`<html><head><title>${record.code || 'Refund receipt'}</title></head><body style="font-family:Arial;padding:28px"><h2>RETURN / REFUND RECEIPT</h2><p>Return: ${record.code || ''}</p><p>Sales order: ${record.saleCode || ''}</p><p>Refund amount: ${Number(record.refundAmount || 0).toLocaleString()} VND</p><p>Reason: ${record.reason || ''}</p></body></html>`); popup.document.close(); popup.print() }
 
 export default function Returns() {
-  const navigate = useNavigate()
-  const [rows, setRows] = useState([])
-  const [source, setSource] = useState('backend')
-
-  const load = async () => {
-    const res = await withFallback(() => returnService.list())
-    setRows(toList(res.data))
-    setSource(res.source)
-  }
-  useEffect(() => { load() }, [])
-
-  const stats = useMemo(() => ({
-    total: rows.length,
-    today: rows.filter((r) => (r.returnDate || '').slice(0, 10) === isoDate()).length,
-    refunded: rows.reduce((s, r) => s + (Number(r.refundAmount) || 0), 0),
-  }), [rows])
-
-  return (
-    <div>
-      <PageHeader
-        breadcrumb="POS · 3.8.4"
-        title="Trả hàng & Hoàn tiền"
-        subtitle="Tra cứu hóa đơn gốc, chọn mặt hàng trả và tạo phiếu hoàn tiền (trong 7 ngày)."
-        actions={
-          <div className="flex items-center gap-3">
-            <Button icon={Plus} onClick={() => navigate('/app/pos/returns/new')}>Tạo phiếu trả</Button>
-          </div>
-        }
-      />
-
-      <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Tổng phiếu trả" value={stats.total} icon={Undo2} tone="brand" />
-        <StatCard label="Trả hôm nay" value={stats.today} icon={RotateCcw} tone="amber" />
-        <StatCard label="Tổng hoàn tiền" value={formatCurrency(stats.refunded, { compact: true })} icon={Coins} tone="green" />
-      </div>
-
-      <Card className="mt-6">
-        <CardBody className="p-0">
-          <DataTable
-            rows={rows}
-            rowKey="code"
-            empty={{ title: 'Chưa có phiếu trả hàng', subtitle: 'Tạo phiếu trả để hoàn tiền cho khách.' }}
-            columns={[
-              { key: 'code', header: 'Mã phiếu', render: (r) => <span className="font-mono text-xs">{r.code}</span> },
-              { key: 'saleCode', header: 'HĐ gốc', render: (r) => <span className="font-mono text-xs text-slate-500">{r.saleCode || '—'}</span> },
-              { key: 'returnDate', header: 'Ngày', render: (r) => formatDate(r.returnDate) },
-              { key: 'reason', header: 'Lý do', render: (r) => <span className="text-slate-600">{r.reason || '—'}</span> },
-              { key: 'refundAmount', header: 'Hoàn tiền', align: 'right', render: (r) => <span className="font-bold text-rose-600">{formatCurrency(r.refundAmount)}</span> },
-              { key: 'status', header: 'Trạng thái', render: (r) => <StatusBadge status={r.status} /> },
-            ]}
-            actions={(r) => (
-              <Button size="sm" variant="secondary" icon={Printer} onClick={() => printReturn(r)}>In</Button>
-            )}
-          />
-        </CardBody>
-      </Card>
-    </div>
-  )
+  const toast = useToast(); const { user } = useAuth(); const [query, setQuery] = useState(''); const [sale, setSale] = useState(null); const [quantities, setQuantities] = useState({}); const [reason, setReason] = useState(REASONS[0]); const [restock, setRestock] = useState(true); const [saving, setSaving] = useState(false); const [lastReturn, setLastReturn] = useState(null)
+  const search = async () => { if (!query.trim()) return toast.error('Enter a receipt or sales order number.'); try { const result = await returnService.lookup(query.trim()); setSale(result); setQuantities(Object.fromEntries((result.lineItems || []).map((item) => [item.productCode, 0]))); if (!result) toast.error('Sales order was not found.') } catch (error) { toast.error(error.message); setSale(null) } }
+  const lines = sale?.lineItems || []
+  const selectedLines = useMemo(() => lines.filter((line) => Number(quantities[line.productCode] || 0) > 0).map((line) => ({ productCode: line.productCode, productName: line.productName, unitPrice: Number(line.unitPrice || 0), quantity: Math.min(Number(quantities[line.productCode] || 0), Number(line.quantity || 0)), lineTotal: Number(line.unitPrice || 0) * Math.min(Number(quantities[line.productCode] || 0), Number(line.quantity || 0)), restockable: restock })), [lines, quantities, restock])
+  const subtotal = selectedLines.reduce((sum, line) => sum + line.lineTotal, 0); const vat = Math.round(subtotal * 0.08); const refund = subtotal + vat
+  const submit = async () => { if (!sale || !selectedLines.length) return toast.error('Select at least one return item.'); setSaving(true); try { const response = await returnService.create({ code: `RET-${Date.now().toString().slice(-7)}`, saleCode: sale.code, cashier: user?.fullName || user?.username || 'Cashier', customerCode: sale.customerCode || null, returnDate: isoDate(), reason, refundAmount: refund, note: restock ? 'Restock sellable items' : 'Do not restock', lineItems: selectedLines }); setLastReturn(response); toast.success('Return and refund completed.') } catch (error) { toast.error(error.message) } finally { setSaving(false) } }
+  return <div><PageHeader breadcrumb="Point of Sale · 3.8.4" title="Return / Refund" subtitle="Search a completed sale, select return items, calculate the refund, and issue a refund receipt." /><div className="mb-6 flex max-w-2xl gap-3"><Field label="Receipt / Sales Order Search"><Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="RC-3103 or SO-20260613-003" onKeyDown={(event) => event.key === 'Enter' && search()} /></Field><div className="flex items-end gap-2"><Button icon={Search} onClick={search}>Search</Button><Button variant="secondary" icon={RotateCcw} onClick={() => { setQuery(''); setSale(null) }}>Clear</Button></div></div><div className="grid gap-5 xl:grid-cols-3"><Card><CardHeader title="Sales Order Detail" /><CardBody className="min-h-[11rem] space-y-2 text-sm text-slate-600">{sale ? <><p>Sales Order: <b>{sale.code}</b></p><p>Receipt: {sale.receiptCode || sale.id || '—'}</p><p>Customer: {sale.customerName || 'Walk-in'}</p><p>Payment: {sale.payment || 'Completed'}</p><p>Total Paid: <b>{formatCurrency(sale.total)}</b></p></> : <p>Search for a completed sales order.</p>}</CardBody></Card><Card><CardHeader title="Return Settings" /><CardBody className="min-h-[11rem]"><Field label="Return Reason"><Select value={reason} onChange={(event) => setReason(event.target.value)}>{REASONS.map((item) => <option key={item}>{item}</option>)}</Select></Field><label className="mt-4 flex items-center gap-2 text-sm text-slate-600"><input type="checkbox" checked={restock} onChange={(event) => setRestock(event.target.checked)} />Restock item if condition is sellable</label></CardBody></Card><Card className="xl:row-span-2"><CardHeader title="Refund Calculation" icon={Calculator} /><CardBody className="space-y-4 text-sm"><Summary label="Returned Items Subtotal" value={formatCurrency(subtotal)} /><Summary label="Promotion Reversal" value={formatCurrency(0)} /><Summary label="VAT Adjustment" value={formatCurrency(vat)} /><Summary label="Refund Amount" value={formatCurrency(refund)} strong /><Summary label="Loyalty Reversal" value={`-${Math.floor(refund / 10000)} points`} /><Summary label="Sales Order After Refund" value={refund ? 'Partially Refunded' : 'Unchanged'} /><div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-500">Refund quantity cannot exceed remaining refundable quantity.</div><div className="flex gap-2"><Button icon={Undo2} loading={saving} onClick={submit}>Confirm Refund</Button><Button variant="secondary" icon={Printer} onClick={() => printReturn(lastReturn)}>Print Preview</Button></div></CardBody></Card><section className="min-w-0 xl:col-span-2"><div className="mb-3"><h2 className="font-bold text-slate-900">Return Item Selection</h2></div><DataTable dense rows={lines} empty={{ title: 'No sale items loaded' }} columns={[{ key: 'productName', header: 'Product' }, { key: 'quantity', header: 'Sold Qty' }, { key: 'refundable', header: 'Refundable', render: (line) => line.quantity }, { key: 'returnQty', header: 'Return Qty', render: (line) => <Input className="w-24" type="number" min="0" max={line.quantity} value={quantities[line.productCode] || 0} onChange={(event) => setQuantities((current) => ({ ...current, [line.productCode]: event.target.value }))} /> }, { key: 'subtotal', header: 'Subtotal', render: (line) => formatCurrency(Number(line.unitPrice || 0) * Number(quantities[line.productCode] || 0)) }]} /></section></div><div className="mt-6 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500 shadow-card">3.8.4 Return / Refund · the audit snapshot stores the cashier, original order, returned items, refund amount, loyalty reversal, and restock decision</div></div>
 }
+function Summary({ label, value, strong }) { return <div className="flex items-center justify-between gap-4"><span className="text-slate-500">{label}</span><span className={strong ? 'font-bold text-brand-700' : 'font-medium text-slate-800'}>{value}</span></div> }

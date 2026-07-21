@@ -103,9 +103,9 @@ export default function SystemSettings() {
   return (
     <div>
       <PageHeader
-        breadcrumb="Hệ thống · 3.11.1"
-        title="Cấu hình hệ thống"
-        subtitle="Thiết lập thông tin cửa hàng, thuế, thông báo và tích hợp."
+        breadcrumb="System Administration · 3.11.1"
+        title="Configure System Settings"
+        subtitle="Submit VAT, loyalty, role, notification, and integration configuration changes for approval."
         actions={
           <div className="flex items-center gap-3">
             <Button icon={Plus} onClick={openNew}>Thêm cấu hình</Button>

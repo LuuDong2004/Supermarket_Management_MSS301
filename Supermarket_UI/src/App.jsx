@@ -12,6 +12,7 @@ import { Forbidden, NotFound } from './pages/Errors.jsx'
 import ProcessSale from './pages/pos/ProcessSale.jsx'
 import ProcessPayment from './pages/pos/ProcessPayment.jsx'
 import Returns from './pages/pos/Returns.jsx'
+import CancelSales from './pages/pos/CancelSales.jsx'
 import Shift from './pages/pos/Shift.jsx'
 import Members from './pages/pos/Members.jsx'
 import MemberDetail from './pages/pos/MemberDetail.jsx'
@@ -34,6 +35,7 @@ import Adjustments from './pages/warehouse/Adjustments.jsx'
 import AdjustmentForm from './pages/warehouse/AdjustmentForm.jsx'
 import ApprovalStatus from './pages/warehouse/ApprovalStatus.jsx'
 import Products from './pages/warehouse/Products.jsx'
+import Categories from './pages/warehouse/Categories.jsx'
 import ProductForm from './pages/warehouse/ProductForm.jsx'
 import GoodsReceipts from './pages/warehouse/GoodsReceipts.jsx'
 import GoodsReceiptForm from './pages/warehouse/GoodsReceiptForm.jsx'
@@ -58,6 +60,7 @@ import UserForm from './pages/admin/UserForm.jsx'
 import ApprovalRequests from './pages/admin/ApprovalRequests.jsx'
 import ApprovalRequestDetail from './pages/admin/ApprovalRequestDetail.jsx'
 import Monitoring from './pages/admin/Monitoring.jsx'
+import PromotionCampaigns from './pages/admin/PromotionCampaigns.jsx'
 import Permissions from './pages/admin/Permissions.jsx'
 import SecurityAlerts from './pages/admin/SecurityAlerts.jsx'
 import Notifications from './pages/admin/Notifications.jsx'
@@ -103,6 +106,7 @@ export default function App() {
         <Route path="pos/payment" element={G('/app/pos/payment', <ProcessPayment />)} />
         <Route path="pos/returns" element={G('/app/pos/returns', <Returns />)} />
         <Route path="pos/returns/new" element={G('/app/pos/returns', <ReturnForm />)} />
+        <Route path="pos/cancel-sales" element={G('/app/pos/cancel-sales', <CancelSales />)} />
         <Route path="pos/shift" element={G('/app/pos/shift', <Shift />)} />
         <Route path="pos/members" element={G('/app/pos/members', <Members />)} />
         <Route path="pos/members/:id" element={G('/app/pos/members', <MemberDetail />)} />
@@ -125,6 +129,7 @@ export default function App() {
         <Route path="warehouse/adjustments/new" element={G('/app/warehouse/adjustments', <AdjustmentForm />)} />
         <Route path="warehouse/approval-status" element={G('/app/warehouse/approval-status', <ApprovalStatus />)} />
         <Route path="warehouse/products" element={G('/app/warehouse/products', <Products />)} />
+        <Route path="warehouse/categories" element={G('/app/warehouse/categories', <Categories />)} />
         <Route path="warehouse/products/new" element={G('/app/warehouse/products', <ProductForm />)} />
         <Route path="warehouse/products/:id/edit" element={G('/app/warehouse/products', <ProductForm />)} />
         <Route path="warehouse/suppliers" element={G('/app/warehouse/suppliers', <Suppliers />)} />
@@ -153,6 +158,7 @@ export default function App() {
         <Route path="admin/approval-requests" element={G('/app/admin/approval-requests', <ApprovalRequests />)} />
         <Route path="admin/approval-requests/:id" element={G('/app/admin/approval-requests', <ApprovalRequestDetail />)} />
         <Route path="admin/monitoring" element={G('/app/admin/monitoring', <Monitoring />)} />
+        <Route path="admin/promotion-campaigns" element={G('/app/admin/promotion-campaigns', <PromotionCampaigns />)} />
         <Route path="admin/permissions" element={G('/app/admin/permissions', <Permissions />)} />
         <Route path="admin/security-alerts" element={G('/app/admin/security-alerts', <SecurityAlerts />)} />
         <Route path="admin/notifications" element={G('/app/admin/notifications', <Notifications />)} />

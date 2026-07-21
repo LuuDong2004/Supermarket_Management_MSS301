@@ -1,169 +1,54 @@
-import { useState, useEffect, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
 import { PageHeader, FilterBar } from '../../components/ui/PageHeader.jsx'
-import { Button, Badge, Field, Input, Select, Spinner } from '../../components/ui/primitives.jsx'
+import { Badge, Button, Card, CardBody, CardHeader, Field, Input, Select, Spinner } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
-import { StatCard } from '../../components/ui/StatCard.jsx'
-import { Modal } from '../../components/ui/Modal.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
-import { useConfirm } from '../../components/ui/Confirm.jsx'
-import { formatCurrency, formatNumber, formatDate } from '../../lib/format.js'
-import { customerService, withFallback, toList, mockCustomers } from '../../services/index.js'
-import { Search, UserPlus, Users, Crown, Star, Eye } from 'lucide-react'
+import { customerService, mockCustomers, toList, withFallback } from '../../services/index.js'
+import { RotateCcw, Save, Search, Star } from 'lucide-react'
 
-const TIER_TONE = { Platinum: 'violet', Gold: 'amber', Silver: 'slate', Member: 'blue' }
+const emptyFilters = { phone: '', name: '', status: '', email: '' }
+const emptyForm = { id: '', code: '', phone: '', name: '', email: '', tier: 'Member', points: 0, joined: '', spent: 0 }
+const tierTone = { Platinum: 'violet', Gold: 'amber', Silver: 'slate', Member: 'blue' }
 
 export default function Members() {
   const toast = useToast()
-  const confirm = useConfirm()
-  const navigate = useNavigate()
   const [members, setMembers] = useState([])
+  const [filters, setFilters] = useState(emptyFilters)
+  const [applied, setApplied] = useState(emptyFilters)
+  const [form, setForm] = useState(emptyForm)
   const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [source, setSource] = useState('backend')
-  const [search, setSearch] = useState('')
-  const [tier, setTier] = useState('all')
-  const [register, setRegister] = useState(false)
-  const [form, setForm] = useState({ name: '', phone: '', email: '', tier: 'Member' })
 
-  const load = async () => {
-    setLoading(true)
-    const r = await withFallback(() => customerService.list(), mockCustomers)
-    setMembers(toList(r.data)); setSource(r.source); setLoading(false)
-  }
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    const load = async () => { const result = await withFallback(() => customerService.list(), mockCustomers); const rows = toList(result.data); setMembers(rows); setSource(result.source); setForm(rows[0] ? { ...emptyForm, ...rows[0] } : emptyForm); setLoading(false) }
+    load()
+  }, [])
+  const rows = useMemo(() => members.filter((member) => (!applied.phone || String(member.phone || '').includes(applied.phone)) && (!applied.name || String(member.name || '').toLowerCase().includes(applied.name.toLowerCase())) && (!applied.status || member.tier === applied.status)), [applied, members])
+  const setFilter = (key, value) => setFilters((current) => ({ ...current, [key]: value }))
+  const setField = (key, value) => setForm((current) => ({ ...current, [key]: value }))
+  const selectMember = (member) => setForm({ ...emptyForm, ...member })
+  const reset = () => { setFilters(emptyFilters); setApplied(emptyFilters) }
+  const newMember = () => setForm({ ...emptyForm, joined: new Date().toISOString().slice(0, 10) })
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase()
-    return members.filter((c) => {
-      const matchQ = !q || (c.name || '').toLowerCase().includes(q) || (c.phone || '').includes(q)
-      const matchT = tier === 'all' || c.tier === tier
-      return matchQ && matchT
-    })
-  }, [members, search, tier])
-
-  const goldPlus = members.filter((c) => c.tier === 'Gold' || c.tier === 'Platinum').length
-  const avgPoints = members.length ? Math.round(members.reduce((s, c) => s + (c.points || 0), 0) / members.length) : 0
-
-  const submitRegister = async () => {
-    if (!form.name.trim() || !form.phone.trim()) return toast.error('Vui lòng nhập họ tên và số điện thoại.')
-    if (!(await confirm({
-      title: 'Đăng ký thành viên?',
-      message: `Tạo hồ sơ thành viên mới cho ${form.name.trim()} (${form.phone.trim()}).`,
-      confirmLabel: 'Đăng ký',
-    }))) return
-    const payload = {
-      code: `C${String(members.length + 1).padStart(3, '0')}`,
-      name: form.name.trim(),
-      phone: form.phone.trim(),
-      tier: form.tier,
-      points: 0,
-      joined: new Date().toISOString().slice(0, 10),
-      spent: 0,
-    }
+  const save = async () => {
+    if (!form.phone.trim() || !form.name.trim()) return toast.error('Phone number and customer name are required.')
+    const payload = { code: form.code || `C${Date.now().toString().slice(-6)}`, name: form.name.trim(), phone: form.phone.trim(), tier: form.tier, points: Number(form.points || 0), joined: form.joined || new Date().toISOString().slice(0, 10), spent: Number(form.spent || 0) }
+    setSaving(true)
     try {
-      await customerService.create(payload)
-      toast.success(`Đã đăng ký thành viên ${payload.name}.`)
-      setRegister(false)
-      setForm({ name: '', phone: '', email: '', tier: 'Member' })
-      await load()
-    } catch (e) {
-      toast.error(e.message)
-    }
+      const response = source === 'backend' ? (form.id ? await customerService.update(form.id, payload) : await customerService.create(payload)) : { id: form.id || payload.code, ...payload }
+      const saved = { ...response, email: form.email }
+      setMembers((current) => form.id ? current.map((member) => member.id === form.id ? saved : member) : [saved, ...current])
+      setForm(saved); toast.success(form.id ? 'Customer profile updated.' : 'Customer member registered.')
+    } catch (error) { toast.error(error.message) } finally { setSaving(false) }
   }
 
-  return (
-    <div>
-      <PageHeader
-        breadcrumb="POS · 3.9.1"
-        title="Khách hàng thành viên"
-        subtitle="Tra cứu, đăng ký và quản lý thông tin khách hàng thành viên."
-        actions={
-          <div className="flex items-center gap-3">
-            <Button icon={UserPlus} onClick={() => setRegister(true)}>Đăng ký thành viên</Button>
-          </div>
-        }
-      />
-
-      <div className="mb-6 grid gap-4 sm:grid-cols-3">
-        <StatCard label="Tổng thành viên" value={formatNumber(members.length)} icon={Users} tone="brand" hint="đang hoạt động" />
-        <StatCard label="Gold trở lên" value={formatNumber(goldPlus)} icon={Crown} tone="amber" hint="khách VIP" />
-        <StatCard label="Điểm trung bình" value={formatNumber(avgPoints)} icon={Star} tone="violet" hint="mỗi thành viên" />
-      </div>
-
-      <FilterBar>
-        <Field label="Tìm kiếm" className="grow">
-          <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <Input className="pl-9" placeholder="Tên hoặc số điện thoại..." value={search} onChange={(e) => setSearch(e.target.value)} />
-          </div>
-        </Field>
-        <Field label="Hạng thành viên">
-          <Select value={tier} onChange={(e) => setTier(e.target.value)}>
-            <option value="all">Tất cả hạng</option>
-            <option value="Platinum">Platinum</option>
-            <option value="Gold">Gold</option>
-            <option value="Silver">Silver</option>
-            <option value="Member">Member</option>
-          </Select>
-        </Field>
-      </FilterBar>
-
-      {loading ? (
-        <div className="flex items-center justify-center rounded-xl border border-slate-200 bg-white py-16">
-          <Spinner className="h-7 w-7" />
-        </div>
-      ) : (
-      <DataTable
-        rows={filtered}
-        onRowClick={(r) => navigate(`/app/pos/members/${r.id}`)}
-        empty={{ title: 'Không tìm thấy thành viên', subtitle: 'Thử thay đổi từ khóa hoặc bộ lọc hạng.' }}
-        columns={[
-          { key: 'name', header: 'Họ tên', render: (r) => <span className="font-medium text-slate-700">{r.name}</span> },
-          { key: 'phone', header: 'Số điện thoại', render: (r) => <span className="font-mono text-sm">{r.phone}</span> },
-          { key: 'tier', header: 'Hạng', align: 'center', render: (r) => <Badge tone={TIER_TONE[r.tier] || 'slate'}>{r.tier}</Badge> },
-          { key: 'points', header: 'Điểm', align: 'right', render: (r) => <span className="font-semibold">{formatNumber(r.points)}</span> },
-          { key: 'joined', header: 'Ngày tham gia', render: (r) => formatDate(r.joined) },
-          { key: 'spent', header: 'Chi tiêu', align: 'right', render: (r) => <span className="font-semibold text-slate-800">{formatCurrency(r.spent)}</span> },
-        ]}
-        actions={(r) => (
-          <Button size="sm" variant="secondary" icon={Eye} onClick={() => navigate(`/app/pos/members/${r.id}`)}>Xem</Button>
-        )}
-      />
-      )}
-
-      {/* Register modal */}
-      <Modal
-        open={register}
-        onClose={() => setRegister(false)}
-        title="Đăng ký thành viên"
-        subtitle="Tạo hồ sơ khách hàng thành viên mới"
-        footer={
-          <>
-            <Button variant="secondary" onClick={() => setRegister(false)}>Hủy</Button>
-            <Button icon={UserPlus} onClick={submitRegister}>Đăng ký</Button>
-          </>
-        }
-      >
-        <div className="space-y-4">
-          <Field label="Họ tên" required>
-            <Input placeholder="Nguyễn Văn A" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-          </Field>
-          <Field label="Số điện thoại" required>
-            <Input placeholder="09xxxxxxxx" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
-          </Field>
-          <Field label="Email" hint="Không bắt buộc">
-            <Input type="email" placeholder="email@example.com" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-          </Field>
-          <Field label="Hạng thành viên">
-            <Select value={form.tier} onChange={(e) => setForm({ ...form, tier: e.target.value })}>
-              <option value="Member">Member</option>
-              <option value="Silver">Silver</option>
-              <option value="Gold">Gold</option>
-              <option value="Platinum">Platinum</option>
-            </Select>
-          </Field>
-        </div>
-      </Modal>
-    </div>
-  )
+  return <div>
+    <PageHeader breadcrumb="Customer Membership · 3.9.1" title="Search or Register Customer Member" subtitle="Find an existing member or create a new customer profile." actions={<Button variant="secondary" onClick={newMember}>New Member</Button>} />
+    <FilterBar className="mb-6"><Field label="Phone Number"><Input placeholder="Customer phone" value={filters.phone} onChange={(event) => setFilter('phone', event.target.value)} /></Field><Field label="Customer Name"><Input placeholder="Name" value={filters.name} onChange={(event) => setFilter('name', event.target.value)} /></Field><Field label="Status"><Select value={filters.status} onChange={(event) => setFilter('status', event.target.value)}><option value="">Active / New</option><option>Member</option><option>Silver</option><option>Gold</option><option>Platinum</option></Select></Field><Field label="Email"><Input placeholder="Optional" value={filters.email} onChange={(event) => setFilter('email', event.target.value)} /></Field><div className="flex !basis-auto !grow-0 gap-2"><Button icon={Search} onClick={() => setApplied(filters)}>Apply</Button><Button variant="secondary" icon={RotateCcw} onClick={reset}>Reset</Button></div></FilterBar>
+    {loading ? <div className="flex justify-center rounded-2xl border bg-white py-20"><Spinner className="h-7 w-7" /></div> : <div className="grid items-start gap-6 xl:grid-cols-5"><section className="min-w-0 xl:col-span-3"><div className="mb-3 flex items-center justify-between"><div><h2 className="font-bold text-slate-900">Customer Search Result</h2><p className="text-xs text-slate-500">Select a customer to view or edit the profile.</p></div><Badge tone="slate">{rows.length} customers</Badge></div><DataTable dense rows={rows} onRowClick={selectMember} empty={{ title: 'No customer members found' }} columns={[
+      { key: 'code', header: 'Customer ID', render: (row) => <span className="font-mono text-xs font-semibold">{row.code || row.id}</span> }, { key: 'phone', header: 'Phone' }, { key: 'name', header: 'Name' }, { key: 'points', header: 'Points' }, { key: 'tier', header: 'Status', render: (row) => <Badge tone={tierTone[row.tier] || 'slate'}>{row.tier || 'Active'}</Badge> },
+    ]} /></section><Card className="xl:col-span-2"><CardHeader title="Customer Profile / Registration" subtitle={form.id ? form.code || form.id : 'New customer member'} /><CardBody className="flex min-h-[22rem] flex-col"><div className="grid gap-4 sm:grid-cols-2"><Field label="Phone Number" required><Input value={form.phone} onChange={(event) => setField('phone', event.target.value)} placeholder="Required" /></Field><Field label="Customer Name" required><Input value={form.name} onChange={(event) => setField('name', event.target.value)} placeholder="Required for new" /></Field><Field label="Email"><Input type="email" value={form.email || ''} onChange={(event) => setField('email', event.target.value)} placeholder="Optional" /></Field><Field label="Membership Status"><Select value={form.tier} onChange={(event) => setField('tier', event.target.value)}><option>Member</option><option>Silver</option><option>Gold</option><option>Platinum</option></Select></Field></div><div className="mt-5 rounded-xl border border-brand-100 bg-brand-50 p-4"><h3 className="mb-2 flex items-center gap-2 font-semibold text-slate-900"><Star size={16} />Loyalty Summary</h3><p className="text-sm text-slate-600">Available points: <b>{Number(form.points || 0).toLocaleString()}</b></p><p className="text-sm text-slate-600">Last purchase: {form.joined || 'No activity'}</p></div><div className="mt-auto flex gap-2 border-t border-slate-100 pt-5"><Button icon={Save} onClick={save} loading={saving}>Save Member</Button><Button variant="secondary" onClick={() => form.id && (window.location.href = `/app/pos/loyalty?member=${form.id}`)}>View Points</Button></div></CardBody></Card></div>}
+    {!loading && <div className="mt-6 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500 shadow-card">3.9.1 Search or Register Customer Member · email is retained in the interface profile while the customer service stores membership fields</div>}
+  </div>
 }

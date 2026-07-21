@@ -1,218 +1,106 @@
-import { useMemo, useState, useEffect } from 'react'
-import { PageHeader } from '../../components/ui/PageHeader.jsx'
-import { Card, CardHeader, CardBody, Button, Badge, Field, Input, Select, EmptyState, Spinner } from '../../components/ui/primitives.jsx'
-import { Modal } from '../../components/ui/Modal.jsx'
+import { useEffect, useMemo, useState } from 'react'
+import { PageHeader, FilterBar } from '../../components/ui/PageHeader.jsx'
+import { Badge, Button, Card, CardBody, CardHeader, Field, Input, Select, Spinner, StatusBadge } from '../../components/ui/primitives.jsx'
+import { DataTable } from '../../components/ui/DataTable.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
-import { formatCurrency, formatDate, formatNumber } from '../../lib/format.js'
-import {
-  purchaseOrderService, productService, warehouseTxnService,
-  withFallback, toList, mockPurchaseOrders, mockProducts,
-} from '../../services/index.js'
-import { PackageCheck, ClipboardCheck, Inbox } from 'lucide-react'
+import { goodsReceiptService, mockProducts, mockPurchaseOrders, productService, purchaseOrderService, toList, withFallback } from '../../services/index.js'
+import { ClipboardCheck, RotateCcw, Search, Send, X } from 'lucide-react'
 
-function buildSheet(products) {
-  return products.slice(0, 4).map((p) => ({
-    id: p.id || p.code,
-    name: p.name,
-    code: p.code || p.id,
-    unit: p.unit,
-    ordered: Math.max(10, Math.round((p.stock || 0) / 4)),
-    received: Math.max(10, Math.round((p.stock || 0) / 4)),
-    condition: 'Tốt',
-  }))
-}
+const emptyFilters = { search: '', status: '', dateFrom: '', dateTo: '', type: '' }
+const emptyForm = { poCode: '', productCode: '', quantity: 1, condition: 'Good', expiry: '' }
+const today = () => new Date().toISOString().slice(0, 10)
 
 export default function Receive() {
   const toast = useToast()
+  const [receipts, setReceipts] = useState([])
   const [orders, setOrders] = useState([])
   const [products, setProducts] = useState([])
+  const [form, setForm] = useState(emptyForm)
+  const [filters, setFilters] = useState(emptyFilters)
+  const [applied, setApplied] = useState(emptyFilters)
   const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [source, setSource] = useState('backend')
-  const [poCode, setPoCode] = useState('')
-  const [sheet, setSheet] = useState([])
-  const [confirm, setConfirm] = useState(false)
 
-  const load = async () => {
-    setLoading(true)
-    const [po, prod] = await Promise.all([
-      withFallback(() => purchaseOrderService.list(), mockPurchaseOrders),
-      withFallback(() => productService.list(), mockProducts),
-    ])
-    const poList = toList(po.data)
-    const prodList = toList(prod.data)
-    setOrders(poList)
-    setProducts(prodList)
-    setSource(po.source)
-    const receivable = poList.filter((o) => o.status === 'Approved' || o.status === 'Received')
-    setPoCode(receivable[0]?.code || '')
-    setSheet(buildSheet(prodList))
-    setLoading(false)
-  }
-  useEffect(() => { load() }, [])
-
-  const receivablePOs = useMemo(
-    () => orders.filter((o) => o.status === 'Approved' || o.status === 'Received'),
-    [orders],
-  )
-  const selectedPO = useMemo(() => receivablePOs.find((o) => o.code === poCode), [receivablePOs, poCode])
-
-  const setRow = (id, key, val) => setSheet((s) => s.map((r) => (r.id === id ? { ...r, [key]: val } : r)))
-  const totalReceived = sheet.reduce((s, r) => s + Number(r.received || 0), 0)
-
-  const confirmReceive = async () => {
-    try {
-      // Ghi nhận một giao dịch nhập kho cho mỗi mặt hàng nhận được.
-      await Promise.all(
-        sheet
-          .filter((r) => Number(r.received) > 0)
-          .map((r, i) =>
-            warehouseTxnService.create({
-              code: `WT-${poCode}-${i + 1}`,
-              type: 'Nhập kho',
-              ref: poCode,
-              product: r.name,
-              qty: Number(r.received),
-              txnDate: '2026-06-15',
-              status: 'Chờ duyệt',
-            }),
-          ),
-      )
-      toast.success(`Đã nhận hàng cho đơn ${poCode}. Tồn kho sẽ được cập nhật.`)
-      setConfirm(false)
-      setSheet(buildSheet(products))
-    } catch (e) {
-      toast.error(e.message)
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true)
+      const [receiptResult, orderResult, productResult] = await Promise.all([
+        withFallback(() => goodsReceiptService.list()),
+        withFallback(() => purchaseOrderService.list(), mockPurchaseOrders),
+        withFallback(() => productService.list(), mockProducts),
+      ])
+      const orderRows = toList(orderResult.data)
+      const productRows = toList(productResult.data)
+      let receiptRows = toList(receiptResult.data)
+      if (!receiptRows.length) {
+        receiptRows = orderRows.slice(0, 6).map((order, index) => ({
+          id: `GR-${String(index + 1).padStart(3, '0')}`, code: `GR-${String(index + 1).padStart(3, '0')}`,
+          poCode: order.code, product: productRows[index % Math.max(productRows.length, 1)]?.name || 'Product item',
+          quantity: order.items || 1, receiveDate: order.orderDate, condition: index % 4 ? 'Good' : 'Inspection',
+          status: order.status === 'Received' ? 'Completed' : index % 3 ? 'Waiting' : 'Draft', supplier: order.supplier,
+        }))
+      }
+      setReceipts(receiptRows)
+      setOrders(orderRows)
+      setProducts(productRows)
+      setSource(receiptResult.source)
+      setLoading(false)
     }
+    load()
+  }, [])
+
+  const rows = useMemo(() => {
+    const query = applied.search.trim().toLowerCase()
+    return receipts.filter((row) => (!query || [row.code, row.poCode, row.product, row.supplier].some((value) => String(value || '').toLowerCase().includes(query)))
+      && (!applied.status || row.status === applied.status)
+      && (!applied.type || row.condition === applied.type)
+      && (!applied.dateFrom || (row.receiveDate || '') >= applied.dateFrom)
+      && (!applied.dateTo || (row.receiveDate || '') <= applied.dateTo))
+  }, [applied, receipts])
+  const selectedOrder = orders.find((order) => order.code === form.poCode)
+  const selectedProduct = products.find((product) => String(product.code || product.id) === form.productCode)
+  const setFilter = (key, value) => setFilters((current) => ({ ...current, [key]: value }))
+  const setField = (key, value) => setForm((current) => ({ ...current, [key]: value }))
+  const resetFilters = () => { setFilters(emptyFilters); setApplied(emptyFilters) }
+
+  const submit = async () => {
+    if (!selectedOrder || !selectedProduct || Number(form.quantity) < 1) return toast.error('Purchase order, product, and received quantity are required.')
+    const code = `GR-${Date.now().toString().slice(-7)}`
+    const payload = {
+      code, poCode: selectedOrder.code, supplier: selectedOrder.supplier, receiveDate: today(), receivedBy: 'Warehouse Staff',
+      items: Number(form.quantity), total: Number(selectedProduct.cost || selectedProduct.price || 0) * Number(form.quantity),
+      note: `Product: ${selectedProduct.name}; Condition: ${form.condition}; Expiry: ${form.expiry || 'N/A'}`,
+    }
+    setSaving(true)
+    try {
+      const response = source === 'backend' ? await goodsReceiptService.create(payload) : { id: code, ...payload, status: 'Pending' }
+      setReceipts((current) => [{ ...response, product: selectedProduct.name, quantity: Number(form.quantity), condition: form.condition, expiry: form.expiry, status: response.status || 'Pending' }, ...current])
+      setForm(emptyForm)
+      toast.success('Goods receipt submitted for approval.')
+    } catch (error) { toast.error(error.message) } finally { setSaving(false) }
   }
 
-  return (
-    <div>
-      <PageHeader
-        breadcrumb="Kho · 3.7.1"
-        title="Nhận hàng"
-        subtitle="Đối chiếu số lượng thực nhận với đơn mua đã duyệt và ghi nhận tình trạng hàng."
-        actions={
-          <div className="flex items-center gap-3">
-            <Button icon={PackageCheck} disabled={!selectedPO} onClick={() => setConfirm(true)}>Xác nhận nhận hàng</Button>
-          </div>
-        }
-      />
-
-      {loading ? (
-        <div className="flex items-center justify-center rounded-xl border border-slate-200 bg-white py-16">
-          <Spinner className="h-7 w-7" />
-        </div>
-      ) : (
-        <>
-          <Card className="mb-6">
-            <CardHeader title="Đơn mua cần nhận" subtitle="Chọn đơn đã được phê duyệt" icon={ClipboardCheck} />
-            <CardBody>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <Field label="Đơn mua">
-                  <Select value={poCode} onChange={(e) => setPoCode(e.target.value)}>
-                    {receivablePOs.map((o) => (
-                      <option key={o.code} value={o.code}>{o.code} — {o.supplier}</option>
-                    ))}
-                  </Select>
-                </Field>
-                {selectedPO && (
-                  <>
-                    <Info label="Nhà cung cấp" value={selectedPO.supplier} />
-                    <Info label="Ngày đặt" value={formatDate(selectedPO.orderDate)} />
-                    <Info label="Giá trị" value={formatCurrency(selectedPO.total)} />
-                  </>
-                )}
-              </div>
-            </CardBody>
-          </Card>
-
-          {selectedPO ? (
-            <Card>
-              <CardHeader title="Phiếu nhận hàng" subtitle={`${sheet.length} mặt hàng · ${formatNumber(totalReceived)} đơn vị`} icon={PackageCheck} />
-              <CardBody className="p-0">
-                <div className="overflow-x-auto">
-                <table className="w-full min-w-max text-sm">
-                  <thead>
-                    <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      <th className="px-4 py-3">Sản phẩm</th>
-                      <th className="px-4 py-3 text-center">Đặt</th>
-                      <th className="px-4 py-3 text-center">Số lượng nhận</th>
-                      <th className="px-4 py-3">Tình trạng</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {sheet.map((r) => (
-                      <tr key={r.id}>
-                        <td className="px-4 py-3">
-                          <p className="font-medium text-slate-700">{r.name}</p>
-                          <p className="font-mono text-xs text-slate-400">{r.code}</p>
-                        </td>
-                        <td className="px-4 py-3 text-center text-slate-600">{r.ordered} {r.unit}</td>
-                        <td className="px-4 py-3">
-                          <Input
-                            type="number"
-                            min={0}
-                            className="mx-auto w-24 text-center"
-                            value={r.received}
-                            onChange={(e) => setRow(r.id, 'received', e.target.value)}
-                          />
-                        </td>
-                        <td className="px-4 py-3">
-                          <Select value={r.condition} onChange={(e) => setRow(r.id, 'condition', e.target.value)} className="w-36">
-                            <option value="Tốt">Tốt</option>
-                            <option value="Hư hỏng">Hư hỏng</option>
-                          </Select>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                </div>
-              </CardBody>
-            </Card>
-          ) : (
-            <Card><CardBody><EmptyState icon={Inbox} title="Không có đơn để nhận" subtitle="Chưa có đơn mua nào ở trạng thái đã duyệt." /></CardBody></Card>
-          )}
-        </>
-      )}
-
-      <Modal
-        open={confirm}
-        onClose={() => setConfirm(false)}
-        title="Xác nhận nhận hàng"
-        subtitle={selectedPO ? `${selectedPO.code} · ${selectedPO.supplier}` : ''}
-        footer={
-          <>
-            <Button variant="secondary" onClick={() => setConfirm(false)}>Hủy</Button>
-            <Button variant="success" onClick={confirmReceive}>Xác nhận</Button>
-          </>
-        }
-      >
-        <div className="space-y-2 text-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-slate-500">Số mặt hàng</span>
-            <span className="font-medium text-slate-700">{sheet.length}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-slate-500">Tổng số lượng nhận</span>
-            <span className="font-semibold text-slate-800">{formatNumber(totalReceived)} đơn vị</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-slate-500">Hàng hư hỏng</span>
-            <Badge tone="amber">{sheet.filter((r) => r.condition === 'Hư hỏng').length} mặt hàng</Badge>
-          </div>
-          <p className="pt-2 text-xs text-slate-400">Mỗi mặt hàng sẽ tạo một giao dịch nhập kho chờ duyệt.</p>
-        </div>
-      </Modal>
-    </div>
-  )
-}
-
-function Info({ label, value }) {
-  return (
-    <div>
-      <p className="mb-1.5 text-sm font-medium text-slate-700">{label}</p>
-      <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">{value}</p>
-    </div>
-  )
+  return <div>
+    <PageHeader breadcrumb="Warehouse Operations · 3.7.1" title="Receive Goods" subtitle="Record received products and submit the receipt for warehouse approval." />
+    <FilterBar className="mb-6">
+      <Field label="Search" className="grow"><div className="relative"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" /><Input className="pl-9" placeholder="Receipt / PO / product" value={filters.search} onChange={(event) => setFilter('search', event.target.value)} /></div></Field>
+      <Field label="Status"><Select value={filters.status} onChange={(event) => setFilter('status', event.target.value)}><option value="">All</option>{['Draft', 'Pending', 'Waiting', 'Completed', 'Rejected'].map((status) => <option key={status}>{status}</option>)}</Select></Field>
+      <Field label="Date" className="grow"><div className="grid grid-cols-2 gap-2"><Input type="date" value={filters.dateFrom} onChange={(event) => setFilter('dateFrom', event.target.value)} /><Input type="date" value={filters.dateTo} min={filters.dateFrom || undefined} onChange={(event) => setFilter('dateTo', event.target.value)} /></div></Field>
+      <Field label="Type"><Select value={filters.type} onChange={(event) => setFilter('type', event.target.value)}><option value="">All</option><option>Good</option><option>Damaged</option><option>Inspection</option></Select></Field>
+      <div className="flex !basis-auto !grow-0 gap-2"><Button onClick={() => setApplied(filters)}>Apply</Button><Button variant="secondary" icon={RotateCcw} onClick={resetFilters}>Reset</Button></div>
+    </FilterBar>
+    {loading ? <div className="flex justify-center rounded-2xl border bg-white py-20"><Spinner className="h-7 w-7" /></div> : <div className="grid items-start gap-6 xl:grid-cols-5">
+      <section className="min-w-0 xl:col-span-3"><div className="mb-3 flex items-center justify-between"><div><h2 className="font-bold text-slate-900">Goods Receipt Drafts</h2><p className="text-xs text-slate-500">Recent receiving records and their approval status.</p></div><Badge tone="slate">{rows.length} receipts</Badge></div><DataTable dense rows={rows} empty={{ title: 'No goods receipts found' }} columns={[
+        { key: 'code', header: 'Receipt ID', render: (row) => <span className="font-mono text-xs font-semibold">{row.code}</span> }, { key: 'poCode', header: 'PO' },
+        { key: 'product', header: 'Product', render: (row) => row.product || row.note?.match(/Product: ([^;]+)/)?.[1] || `${row.items || 0} item(s)` },
+        { key: 'quantity', header: 'Qty', render: (row) => row.quantity ?? row.items ?? 0 }, { key: 'status', header: 'Status', render: (row) => <StatusBadge status={row.status} /> },
+      ]} /></section>
+      <Card className="xl:col-span-2"><CardHeader title="Goods Receipt Form" subtitle="Enter actual delivery information" icon={ClipboardCheck} /><CardBody className="flex min-h-[24rem] flex-col">
+        <div className="grid gap-4 sm:grid-cols-2"><Field label="Purchase Order" required><Select value={form.poCode} onChange={(event) => setField('poCode', event.target.value)}><option value="">Select PO</option>{orders.map((order) => <option key={order.id || order.code} value={order.code}>{order.code}</option>)}</Select></Field><Field label="Product" required><Select value={form.productCode} onChange={(event) => setField('productCode', event.target.value)}><option value="">Select product</option>{products.map((product) => <option key={product.id || product.code} value={product.code || product.id}>{product.name}</option>)}</Select></Field><Field label="Received Quantity" required><Input type="number" min="1" value={form.quantity} onChange={(event) => setField('quantity', event.target.value)} /></Field><Field label="Product Condition"><Select value={form.condition} onChange={(event) => setField('condition', event.target.value)}><option>Good</option><option>Damaged</option><option>Inspection</option></Select></Field><Field label="Expiration Date" className="sm:col-span-2"><Input type="date" value={form.expiry} onChange={(event) => setField('expiry', event.target.value)} /></Field></div>
+        <div className="mt-auto flex gap-2 border-t border-slate-100 pt-5"><Button icon={Send} onClick={submit} loading={saving}>Submit</Button><Button variant="secondary" icon={X} onClick={() => setForm(emptyForm)}>Cancel</Button></div>
+      </CardBody></Card>
+    </div>}
+    {!loading && <div className="mt-6 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500 shadow-card">3.7.1 Receive Goods · received quantity, product condition, and expiry are retained in the receipt audit note</div>}
+  </div>
 }

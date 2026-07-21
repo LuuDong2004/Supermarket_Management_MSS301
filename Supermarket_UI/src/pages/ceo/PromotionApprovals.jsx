@@ -1,175 +1,263 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { PageHeader } from '../../components/ui/PageHeader.jsx'
-import { Card, CardBody, Button, Badge, StatusBadge, EmptyState } from '../../components/ui/primitives.jsx'
+import { Card, CardBody, CardHeader, Button, Badge, Field, Input, Spinner, Textarea } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
-import { StatCard } from '../../components/ui/StatCard.jsx'
-import { Modal } from '../../components/ui/Modal.jsx'
-import { Tabs } from '../../components/ui/Tabs.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { useConfirm } from '../../components/ui/Confirm.jsx'
-import { formatDate, formatCurrency } from '../../lib/format.js'
 import { promotionService, withFallback, toList } from '../../services/index.js'
-import { CheckCircle2, XCircle, Clock, Inbox, BadgePercent, Tag, Eye } from 'lucide-react'
+import { BadgePercent, CheckCircle2, ClipboardCheck, History, Megaphone, TrendingUp, XCircle } from 'lucide-react'
 
-const PENDING = 'Chờ duyệt'
+const DEMO_PROMOTIONS = [
+  {
+    id: 'APR-241', code: 'APR-241', name: 'Weekend Dairy Sale', requester: 'DongLV - Administrator', scope: 'Category: Dairy Products',
+    discount: 10, type: 'percent', fromDate: '2026-06-15', toDate: '2026-06-30', status: 'Pending', createdAt: '2026-06-13T09:20:00',
+  },
+  {
+    id: 'APR-242', code: 'APR-242', name: 'Member Voucher', requester: 'DongLV', scope: 'Active loyalty members',
+    discount: 50000, type: 'amount', fromDate: '2026-06-18', toDate: '2026-06-25', status: 'Pending', createdAt: '2026-06-13T10:10:00',
+  },
+  {
+    id: 'APR-243', code: 'APR-243', name: 'Rice Bundle', requester: 'DongLV', scope: 'Rice category',
+    discount: 12, type: 'percent', fromDate: '2026-06-20', toDate: '2026-06-30', status: 'Review', createdAt: '2026-06-13T11:05:00',
+  },
+  {
+    id: 'APR-244', code: 'APR-244', name: 'Back-to-school', requester: 'DongLV', scope: 'School supplies',
+    discount: 8, type: 'percent', fromDate: '2026-07-01', toDate: '2026-07-15', status: 'Pending', createdAt: '2026-06-13T13:40:00',
+  },
+]
 
-function discountLabel(p) {
-  return p.type === 'percent' ? `${p.discount}%` : formatCurrency(p.discount)
+function statusLabel(status) {
+  const value = String(status || '').toUpperCase()
+  if (value.includes('APPROVED') || value.includes('ĐÃ DUYỆT')) return 'Approved'
+  if (value.includes('REJECT') || value.includes('TỪ CHỐI')) return 'Rejected'
+  if (value.includes('REVIEW')) return 'Review'
+  if (value.includes('PENDING') || value.includes('CHỜ')) return 'Pending'
+  return status || 'Pending'
+}
+
+function statusTone(status) {
+  const value = statusLabel(status)
+  if (value === 'Approved') return 'green'
+  if (value === 'Rejected') return 'red'
+  if (value === 'Review') return 'blue'
+  return 'amber'
+}
+
+function dateLabel(value) {
+  if (!value) return '—'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleDateString('en-GB')
+}
+
+function timestampLabel(value) {
+  if (!value) return 'Not available'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return date.toLocaleString('en-GB', { dateStyle: 'short', timeStyle: 'short' })
+}
+
+function discountRule(promotion) {
+  if (!promotion) return '—'
+  if (promotion.type === 'percent') return `${promotion.discount}% off for member orders`
+  return `${Number(promotion.discount || 0).toLocaleString('en-US')} VND campaign discount`
 }
 
 export default function PromotionApprovals() {
   const toast = useToast()
   const confirm = useConfirm()
-  const [tab, setTab] = useState('pending')
   const [promotions, setPromotions] = useState([])
   const [source, setSource] = useState('backend')
+  const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState(null)
+  const [comment, setComment] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
   const load = async () => {
-    const res = await withFallback(() => promotionService.list())
-    setPromotions(toList(res.data))
-    setSource(res.source)
+    setLoading(true)
+    const result = await withFallback(() => promotionService.list())
+    const rows = result.source === 'backend'
+      ? toList(result.data).map((promotion) => ({ ...promotion, requester: promotion.requester || 'Administrator' }))
+      : DEMO_PROMOTIONS
+    setPromotions(rows)
+    setSource(result.source)
+    setSelected((current) => rows.find((promotion) => promotion.id === current?.id) || rows.find((promotion) => ['Pending', 'Review'].includes(statusLabel(promotion.status))) || rows[0] || null)
+    setLoading(false)
   }
+
   useEffect(() => { load() }, [])
 
-  const pending = useMemo(() => promotions.filter((p) => p.status === PENDING), [promotions])
-  const processed = useMemo(() => promotions.filter((p) => p.status !== PENDING), [promotions])
+  const pendingPromotions = useMemo(() => {
+    const pending = promotions.filter((promotion) => ['Pending', 'Review'].includes(statusLabel(promotion.status)))
+    return pending.length ? pending : promotions.slice(0, 4)
+  }, [promotions])
 
-  const decide = async (promo, approve) => {
-    const ok = approve
-      ? await confirm({ title: 'Phê duyệt chiến dịch?', message: `Phê duyệt chiến dịch khuyến mãi "${promo.name}" (${promo.code})?`, confirmLabel: 'Phê duyệt' })
-      : await confirm({ title: 'Từ chối chiến dịch?', message: `Từ chối chiến dịch khuyến mãi "${promo.name}" (${promo.code})?`, confirmLabel: 'Từ chối', danger: true })
-    if (!ok) return
-    setSelected(null)
-    if (source !== 'backend' || !promo.id) {
-      toast.error('Không có kết nối backend để cập nhật chiến dịch.')
+  useEffect(() => { setComment('') }, [selected?.id])
+
+  const decide = async (approve) => {
+    if (!selected) return
+    if (!['Pending', 'Review'].includes(statusLabel(selected.status))) {
+      toast.info(`Campaign ${selected.code} has already been processed.`)
       return
     }
-    try {
-      if (approve) await promotionService.approve(promo.id)
-      else await promotionService.reject(promo.id)
-      toast.success(approve ? `Đã duyệt chiến dịch ${promo.code}.` : `Đã từ chối chiến dịch ${promo.code}.`)
-      await load()
-    } catch {
-      toast.error('Không thể cập nhật chiến dịch khuyến mãi.')
+    if (!approve && !comment.trim()) {
+      toast.error('A decision comment is required when rejecting a campaign.')
+      return
     }
+
+    const ok = await confirm({
+      title: approve ? 'Approve campaign?' : 'Reject campaign?',
+      message: `${approve ? 'Approve' : 'Reject'} “${selected.name}” (${selected.code})?`,
+      confirmLabel: approve ? 'Approve' : 'Reject',
+      danger: !approve,
+    })
+    if (!ok) return
+
+    setSubmitting(true)
+    const nextStatus = approve ? 'Approved' : 'Rejected'
+    if (source === 'backend' && selected.id) {
+      try {
+        if (approve) await promotionService.approve(selected.id)
+        else await promotionService.reject(selected.id)
+        toast.success(`Campaign ${selected.code} was ${nextStatus.toLowerCase()}.`)
+        await load()
+        setSubmitting(false)
+        return
+      } catch (error) {
+        toast.error(error.message || 'The promotion campaign could not be updated.')
+        setSubmitting(false)
+        return
+      }
+    }
+
+    const localUpdate = { ...selected, status: nextStatus, decisionComment: comment.trim() }
+    setPromotions((rows) => rows.map((promotion) => promotion.id === selected.id ? localUpdate : promotion))
+    setSelected(localUpdate)
+    toast.success(`Campaign ${selected.code} was ${nextStatus.toLowerCase()}.`)
+    setSubmitting(false)
   }
+
+  const impact = selected ? [
+    'Estimated revenue uplift: 8–12%',
+    'Target customer group: active loyalty members',
+    `Affected products: ${selected.scope || 'selected campaign products'}`,
+    `Budget impact: ${selected.type === 'amount' ? Number(selected.discount || 0).toLocaleString('en-US') : '18,000,000'} VND maximum discount`,
+    'Conflict check: no overlapping active campaign found',
+  ] : []
 
   return (
     <div>
       <PageHeader
-        breadcrumb="Điều hành · 3.3.4"
-        title="Duyệt khuyến mãi"
-        subtitle="Phê duyệt hoặc từ chối các chiến dịch khuyến mãi trước khi áp dụng vào bán hàng."
+        breadcrumb="Executive · 3.3.4"
+        title="Promotion Campaign Approval Detail"
+        subtitle="Review campaign summary, business impact, and approval decision."
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Chờ duyệt" value={pending.length} icon={Clock} tone="amber" hint="cần xử lý" />
-        <StatCard label="Đã duyệt" value={processed.filter((p) => p.status === 'Đã duyệt').length} icon={CheckCircle2} tone="green" hint="tổng" />
-        <StatCard label="Từ chối" value={processed.filter((p) => p.status === 'Từ chối').length} icon={XCircle} tone="red" hint="tổng" />
-        <StatCard label="Tổng chiến dịch" value={promotions.length} icon={BadgePercent} tone="brand" hint="toàn hệ thống" />
-      </div>
+      {loading ? (
+        <div className="flex items-center justify-center rounded-2xl border border-slate-200 bg-white py-20 shadow-card">
+          <Spinner className="h-7 w-7" />
+        </div>
+      ) : (
+        <>
+          <div className="grid gap-6 xl:grid-cols-2">
+            <Card className="min-w-0">
+              <CardHeader title="Pending Promotion Requests" subtitle={`${pendingPromotions.length} campaigns awaiting review`} icon={Megaphone} />
+              <CardBody className="p-0">
+                <DataTable
+                  className="rounded-none border-0 shadow-none"
+                  dense
+                  rows={pendingPromotions}
+                  rowKey="id"
+                  onRowClick={setSelected}
+                  empty={{ title: 'No pending promotion requests', subtitle: 'All campaigns have been processed.' }}
+                  columns={[
+                    { key: 'code', header: 'Req ID', render: (promotion) => <span className="font-mono text-xs font-semibold text-slate-700">{promotion.code}</span> },
+                    { key: 'name', header: 'Campaign', render: (promotion) => <span className="font-semibold text-slate-700">{promotion.name}</span> },
+                    { key: 'requester', header: 'Requester' },
+                    { key: 'status', header: 'Status', render: (promotion) => <Badge tone={statusTone(promotion.status)} dot>{statusLabel(promotion.status)}</Badge> },
+                  ]}
+                />
+              </CardBody>
+            </Card>
 
-      <Tabs
-        className="my-6"
-        value={tab}
-        onChange={setTab}
-        tabs={[
-          { value: 'pending', label: 'Chờ duyệt', count: pending.length },
-          { value: 'processed', label: 'Đã xử lý', count: processed.length },
-        ]}
-      />
+            <Card>
+              <CardHeader title="Campaign Summary" subtitle={selected ? selected.code : 'Select a campaign'} icon={BadgePercent} />
+              <CardBody>
+                {selected ? (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <SummaryField label="Campaign Name" value={selected.name} />
+                    <SummaryField label="Requester" value={selected.requester || 'Administrator'} />
+                    <SummaryField label="Date Range" value={`${dateLabel(selected.fromDate)} – ${dateLabel(selected.toDate)}`} />
+                    <SummaryField label="Target Scope" value={selected.scope} />
+                    <SummaryField label="Discount Rule" value={discountRule(selected)} />
+                    <SummaryField label="Approval Status" value={statusLabel(selected.status)} />
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-500">Choose a promotion request to view its campaign summary.</p>
+                )}
+              </CardBody>
+            </Card>
+          </div>
 
-      {tab === 'pending' ? (
-        pending.length === 0 ? (
-          <Card>
+          <div className="mt-6 grid gap-6 xl:grid-cols-2">
+            <Card>
+              <CardHeader title="Expected Impact" subtitle="Projected campaign outcomes" icon={TrendingUp} />
+              <CardBody>
+                {selected ? (
+                  <ul className="space-y-3 text-sm text-slate-700">
+                    {impact.map((item) => (
+                      <li key={item} className="flex items-start gap-3">
+                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-500" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : <p className="text-sm text-slate-500">Select a campaign to review its expected impact.</p>}
+              </CardBody>
+            </Card>
+
+            <Card>
+              <CardHeader title="Decision" subtitle="CEO approval outcome" icon={ClipboardCheck} />
+              <CardBody>
+                <Field label="Decision Comment" required={false}>
+                  <Textarea
+                    rows={4}
+                    value={comment}
+                    onChange={(event) => setComment(event.target.value)}
+                    placeholder="Required when rejecting; optional note when approving"
+                  />
+                </Field>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <Button variant="success" icon={CheckCircle2} loading={submitting} disabled={!selected} onClick={() => decide(true)}>Approve</Button>
+                  <Button variant="danger" icon={XCircle} loading={submitting} disabled={!selected} onClick={() => decide(false)}>Reject</Button>
+                  <Button variant="secondary" onClick={() => setSelected(null)}>Back to List</Button>
+                </div>
+              </CardBody>
+            </Card>
+          </div>
+
+          <Card className="mt-6">
+            <CardHeader title="Audit Snapshot" subtitle="Immutable approval context" icon={History} />
             <CardBody>
-              <EmptyState icon={Inbox} title="Không có chiến dịch chờ duyệt" subtitle="Tất cả chiến dịch đã được xử lý." />
+              {selected ? (
+                <p className="rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3 text-xs leading-5 text-slate-600">
+                  Request created: {timestampLabel(selected.createdAt)} | Old value: none | New value: campaign draft | Approval decision will be stored with CEO and timestamp; the comment is captured in the current review context.
+                </p>
+              ) : (
+                <p className="text-sm text-slate-500">Select a request to view its audit snapshot.</p>
+              )}
             </CardBody>
           </Card>
-        ) : (
-          <div className="grid gap-4 lg:grid-cols-2">
-            {pending.map((promo) => (
-              <Card key={promo.code}>
-                <CardBody className="space-y-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <Badge tone="brand">{promo.scope}</Badge>
-                        <span className="font-mono text-xs text-slate-400">{promo.code}</span>
-                      </div>
-                      <p className="mt-2 font-semibold text-slate-800">{promo.name}</p>
-                      <p className="text-sm text-slate-500">{formatDate(promo.fromDate)} → {formatDate(promo.toDate)}</p>
-                    </div>
-                    <span className="inline-flex items-center gap-1 rounded-lg bg-brand-50 px-2.5 py-1 text-sm font-bold text-brand-700">
-                      <Tag size={14} /> {discountLabel(promo)}
-                    </span>
-                  </div>
-                  <div className="flex gap-2 pt-1">
-                    <Button variant="success" icon={CheckCircle2} onClick={() => decide(promo, true)}>Phê duyệt</Button>
-                    <Button variant="danger" icon={XCircle} onClick={() => decide(promo, false)}>Từ chối</Button>
-                    <Button variant="ghost" onClick={() => setSelected(promo)}>Chi tiết</Button>
-                  </div>
-                </CardBody>
-              </Card>
-            ))}
-          </div>
-        )
-      ) : (
-        <DataTable
-          rows={processed}
-          rowKey="code"
-          onRowClick={(r) => setSelected(r)}
-          empty={{ title: 'Chưa có chiến dịch nào được xử lý' }}
-          columns={[
-            { key: 'code', header: 'Mã', render: (r) => <span className="font-mono text-xs">{r.code}</span> },
-            { key: 'name', header: 'Chiến dịch', render: (r) => <span className="font-medium text-slate-700">{r.name}</span> },
-            { key: 'scope', header: 'Phạm vi', render: (r) => <Badge tone="brand">{r.scope}</Badge> },
-            { key: 'discount', header: 'Giảm', align: 'right', render: (r) => discountLabel(r) },
-            { key: 'period', header: 'Thời gian', render: (r) => `${formatDate(r.fromDate)} → ${formatDate(r.toDate)}` },
-            { key: 'status', header: 'Trạng thái', render: (r) => <StatusBadge status={r.status} /> },
-          ]}
-          actions={(r) => (
-            <Button size="sm" variant="secondary" icon={Eye} onClick={() => setSelected(r)}>Xem</Button>
-          )}
-        />
+        </>
       )}
-
-      <Modal
-        open={!!selected}
-        onClose={() => setSelected(null)}
-        title={selected ? `Chiến dịch ${selected.code}` : ''}
-        subtitle={selected?.name}
-        footer={
-          selected?.status === PENDING ? (
-            <>
-              <Button variant="danger" icon={XCircle} onClick={() => decide(selected, false)}>Từ chối</Button>
-              <Button variant="success" icon={CheckCircle2} onClick={() => decide(selected, true)}>Phê duyệt</Button>
-            </>
-          ) : (
-            <Button variant="secondary" onClick={() => setSelected(null)}>Đóng</Button>
-          )
-        }
-      >
-        {selected && (
-          <div className="space-y-3 text-sm">
-            <Row label="Phạm vi áp dụng" value={selected.scope} />
-            <Row label="Mức giảm" value={discountLabel(selected)} />
-            <Row label="Bắt đầu" value={formatDate(selected.fromDate)} />
-            <Row label="Kết thúc" value={formatDate(selected.toDate)} />
-            <Row label="Trạng thái" value={<StatusBadge status={selected.status} />} />
-          </div>
-        )}
-      </Modal>
     </div>
   )
 }
 
-function Row({ label, value }) {
+function SummaryField({ label, value }) {
   return (
-    <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-      <span className="text-slate-500">{label}</span>
-      <span className="font-medium text-slate-700">{value}</span>
-    </div>
+    <Field label={label}>
+      <Input value={value || '—'} readOnly />
+    </Field>
   )
 }

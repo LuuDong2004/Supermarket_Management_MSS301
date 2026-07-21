@@ -277,6 +277,8 @@ export const approvalRequestService = {
   get: (id) => api.get(`/approval-requests/${id}`),
   create: (body) => api.post('/approval-requests', body),
   update: (id, body) => api.put(`/approval-requests/${id}`, body),
+  approve: (id) => api.post(`/approval-requests/${id}/approve`),
+  reject: (id) => api.post(`/approval-requests/${id}/reject`),
   remove: (id) => api.delete(`/approval-requests/${id}`),
 }
 

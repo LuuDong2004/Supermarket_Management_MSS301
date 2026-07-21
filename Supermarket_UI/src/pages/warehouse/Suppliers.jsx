@@ -1,199 +1,41 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { PageHeader, FilterBar } from '../../components/ui/PageHeader.jsx'
-import { Card, CardHeader, CardBody, Button, Badge, StatusBadge, Field, Input, Select, Spinner, Divider } from '../../components/ui/primitives.jsx'
+import { Badge, Button, Card, CardBody, CardHeader, Field, Input, Select, Spinner, Textarea } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
-import { supplierService, withFallback, toList } from '../../services/index.js'
-import { Search, Truck, Save, Trash2, RotateCcw, Info } from 'lucide-react'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
+import { mockSuppliers, supplierService, toList, withFallback } from '../../services/index.js'
+import { Info, RotateCcw, Search, Truck } from 'lucide-react'
 
-const STATUSES = ['ACTIVE', 'INACTIVE', 'SUSPENDED']
-
-const emptyForm = { id: null, code: '', name: '', contact: '', phone: '', status: 'ACTIVE', terms: '', rating: '' }
+const emptyForm = { code: '', name: '', phone: '', email: '', address: '', status: 'ACTIVE' }
 
 export default function Suppliers() {
-  const toast = useToast()
-  const [rows, setRows] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [source, setSource] = useState('backend')
-
-  const [search, setSearch] = useState('')
-  const [status, setStatus] = useState('')
-  const [applied, setApplied] = useState({ search: '', status: '' })
-
-  const [form, setForm] = useState(emptyForm)
-
-  const load = async () => {
-    setLoading(true)
-    const r = await withFallback(() => supplierService.list({ page: 0, size: 100 }))
-    setRows(toList(r.data))
-    setSource(r.source)
-    setLoading(false)
-  }
+  const toast = useToast(); const confirm = useConfirm()
+  const [suppliers, setSuppliers] = useState([]); const [selected, setSelected] = useState(null); const [form, setForm] = useState(emptyForm)
+  const [search, setSearch] = useState(''); const [status, setStatus] = useState(''); const [applied, setApplied] = useState({ search: '', status: '' }); const [loading, setLoading] = useState(true); const [saving, setSaving] = useState(false); const [source, setSource] = useState('backend')
+  const load = async () => { setLoading(true); const result = await withFallback(() => supplierService.list({ page: 0, size: 100 }), mockSuppliers); setSuppliers(toList(result.data)); setSource(result.source); setLoading(false) }
   useEffect(() => { load() }, [])
-
-  const filtered = useMemo(() => {
-    const q = applied.search.trim().toLowerCase()
-    return rows.filter((s) => {
-      if (q && !(s.name || '').toLowerCase().includes(q) && !(s.code || '').toLowerCase().includes(q) && !(s.contact || '').toLowerCase().includes(q)) return false
-      if (applied.status && s.status !== applied.status) return false
-      return true
-    })
-  }, [rows, applied])
-
-  const apply = () => setApplied({ search, status })
-  const reset = () => { setSearch(''); setStatus(''); setApplied({ search: '', status: '' }) }
-
-  const edit = (s) => setForm({
-    id: s.id, code: s.code || '', name: s.name || '', contact: s.contact || '',
-    phone: s.phone || '', status: s.status || 'ACTIVE', terms: s.terms || '',
-    rating: s.rating ?? '',
-  })
-  const create = () => setForm(emptyForm)
-
-  const body = () => ({
-    code: form.code,
-    name: form.name,
-    contact: form.contact,
-    phone: form.phone,
-    status: form.status,
-    terms: form.terms,
-    rating: form.rating === '' ? null : Number(form.rating),
-  })
-
+  const rows = useMemo(() => { const query = applied.search.trim().toLowerCase(); return suppliers.filter((row) => (!query || [row.code, row.name, row.phone, row.email].some((value) => String(value || '').toLowerCase().includes(query))) && (!applied.status || row.status === applied.status)) }, [applied, suppliers])
+  const selectSupplier = (row) => { setSelected(row); setForm({ code: row.code || '', name: row.name || '', phone: row.phone || '', email: row.email || '', address: row.address || row.terms || '', status: row.status || 'ACTIVE' }) }
+  const resetForm = () => { setSelected(null); setForm(emptyForm) }
+  const body = (nextStatus = form.status) => ({ code: form.code.trim(), name: form.name.trim(), contact: selected?.contact || '', phone: form.phone.trim(), rating: selected?.rating ?? null, status: nextStatus, terms: selected?.terms || '' })
   const save = async () => {
-    try {
-      if (form.id) {
-        await supplierService.update(form.id, body())
-        toast.success(`Đã cập nhật nhà cung cấp ${form.name}.`)
-      } else {
-        await supplierService.create(body())
-        toast.success(`Đã thêm nhà cung cấp ${form.name}.`)
-      }
-      setForm(emptyForm)
-      await load()
-    } catch (e) {
-      toast.error(e.message)
-    }
+    if (!form.code.trim() || !form.name.trim()) return toast.error('Supplier code and name are required.')
+    if (suppliers.some((row) => row.id !== selected?.id && row.code === form.code.trim())) return toast.error('Supplier code must be unique.')
+    const accepted = await confirm({ title: selected ? 'Update supplier?' : 'Create supplier?', message: `${selected ? 'Update' : 'Create'} ${form.name}?`, confirmLabel: 'Create/Update' }); if (!accepted) return
+    setSaving(true)
+    try { let saved = source === 'backend' ? (selected ? await supplierService.update(selected.id, body()) : await supplierService.create(body())) : { id: selected?.id || form.code, ...body() }; saved = { ...saved, email: form.email, address: form.address }; setSuppliers((current) => selected ? current.map((row) => row.id === selected.id ? saved : row) : [saved, ...current]); resetForm(); toast.success(selected ? 'Supplier updated.' : 'Supplier created.') } catch (error) { toast.error(error.message) } finally { setSaving(false) }
   }
-
-  const remove = async () => {
-    if (!form.id) return
-    try {
-      await supplierService.remove(form.id)
-      toast.success(`Đã xóa nhà cung cấp ${form.name}.`)
-      setForm(emptyForm)
-      await load()
-    } catch (e) {
-      toast.error(e.message)
-    }
-  }
-
-  return (
-    <div>
-      <PageHeader
-        breadcrumb="Kho · 3.6.6"
-        title="Nhà cung cấp"
-        subtitle="Quản lý danh mục nhà cung cấp phục vụ đơn mua hàng."
-        actions={
-          <Badge tone={source === 'backend' ? 'green' : 'amber'} dot>
-            {source === 'backend' ? 'Dữ liệu backend' : 'Dữ liệu demo'}
-          </Badge>
-        }
-      />
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* List */}
-        <div className="lg:col-span-2">
-          <FilterBar>
-            <Field label="Tìm kiếm" className="grow">
-              <div className="relative">
-                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <Input className="pl-9" placeholder="Tên / mã / người liên hệ..." value={search} onChange={(e) => setSearch(e.target.value)} />
-              </div>
-            </Field>
-            <Field label="Trạng thái">
-              <Select value={status} onChange={(e) => setStatus(e.target.value)}>
-                <option value="">Tất cả</option>
-                {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-              </Select>
-            </Field>
-            <div className="flex gap-2">
-              <Button onClick={apply}>Áp dụng</Button>
-              <Button variant="secondary" icon={RotateCcw} onClick={reset}>Đặt lại</Button>
-            </div>
-          </FilterBar>
-
-          {loading ? (
-            <div className="flex items-center justify-center rounded-xl border border-slate-200 bg-white py-16">
-              <Spinner className="h-7 w-7" />
-            </div>
-          ) : (
-            <DataTable
-              rows={filtered}
-              onRowClick={edit}
-              empty={{ title: 'Chưa có nhà cung cấp', subtitle: 'Thêm nhà cung cấp mới ở biểu mẫu bên phải.' }}
-              columns={[
-                { key: 'code', header: 'Mã', render: (s) => <span className="font-mono text-xs">{s.code}</span> },
-                { key: 'name', header: 'Nhà cung cấp', render: (s) => <span className="font-medium text-slate-700">{s.name}</span> },
-                { key: 'contact', header: 'Liên hệ' },
-                { key: 'phone', header: 'Điện thoại' },
-                { key: 'rating', header: 'Đánh giá', align: 'center', render: (s) => s.rating != null ? <Badge tone="brand">{s.rating}</Badge> : '—' },
-                { key: 'status', header: 'Trạng thái', render: (s) => <StatusBadge status={s.status} /> },
-              ]}
-            />
-          )}
-        </div>
-
-        {/* Form */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader title="Biểu mẫu nhà cung cấp" subtitle={form.id ? `Đang sửa: ${form.code}` : 'Thêm nhà cung cấp mới'} icon={Truck} />
-            <CardBody className="space-y-4">
-              <Field label="Mã nhà cung cấp" required>
-                <Input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="NCC001" disabled={!!form.id} />
-              </Field>
-              <Field label="Tên nhà cung cấp" required>
-                <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Công ty TNHH..." />
-              </Field>
-              <Field label="Người liên hệ">
-                <Input value={form.contact} onChange={(e) => setForm({ ...form, contact: e.target.value })} placeholder="Nguyễn Văn..." />
-              </Field>
-              <Field label="Điện thoại">
-                <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="09..." />
-              </Field>
-              <Field label="Điều khoản">
-                <Input value={form.terms} onChange={(e) => setForm({ ...form, terms: e.target.value })} placeholder="Thanh toán 30 ngày..." />
-              </Field>
-              <Field label="Đánh giá (0–5)">
-                <Input type="number" min="0" max="5" step="0.1" value={form.rating} onChange={(e) => setForm({ ...form, rating: e.target.value })} placeholder="4.5" />
-              </Field>
-              <Field label="Trạng thái">
-                <Select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
-                  {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-                </Select>
-              </Field>
-              <Divider />
-              <div className="flex flex-wrap gap-2">
-                <Button icon={Save} onClick={save}>{form.id ? 'Lưu thay đổi' : 'Thêm mới'}</Button>
-                {form.id && <Button variant="danger" icon={Trash2} onClick={remove}>Xóa</Button>}
-                {form.id && <Button variant="ghost" onClick={create}>Mới</Button>}
-              </div>
-            </CardBody>
-          </Card>
-
-          <Card className="border-brand-200 bg-brand-50/60">
-            <CardBody className="flex gap-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-100 text-brand-600">
-                <Info size={18} />
-              </span>
-              <div>
-                <p className="text-sm font-semibold text-brand-800">Lưu ý</p>
-                <p className="mt-0.5 text-sm text-brand-700">Nhà cung cấp ở đây được chọn khi lập Đơn mua hàng (3.6.1).</p>
-              </div>
-            </CardBody>
-          </Card>
-        </div>
-      </div>
-    </div>
-  )
+  const deactivate = async () => { if (!selected) return toast.error('Select a supplier first.'); const accepted = await confirm({ title: 'Deactivate supplier?', message: `${selected.name} cannot be selected for new purchase orders.`, confirmLabel: 'Deactivate', danger: true }); if (!accepted) return; try { const saved = source === 'backend' ? await supplierService.update(selected.id, body('INACTIVE')) : { ...selected, status: 'INACTIVE' }; setSuppliers((current) => current.map((row) => row.id === selected.id ? { ...row, ...saved } : row)); resetForm(); toast.success('Supplier deactivated.') } catch (error) { toast.error(error.message) } }
+  return <div>
+    <PageHeader breadcrumb="Warehouse Management · 3.6.7" title="Supplier Management" subtitle="Maintain supplier master data for purchase orders and goods receiving." />
+    <FilterBar className="mb-6"><Field label="Supplier Search" className="grow"><div className="relative"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" /><Input className="pl-9" placeholder="Code, name, phone, email" value={search} onChange={(event) => setSearch(event.target.value)} /></div></Field><Field label="Status"><Select value={status} onChange={(event) => setStatus(event.target.value)}><option value="">All</option><option value="ACTIVE">Active</option><option value="INACTIVE">Inactive</option><option value="SUSPENDED">Suspended</option></Select></Field><div className="flex !basis-auto !grow-0 gap-2"><Button variant="secondary" onClick={() => setApplied({ search, status })}>Filter</Button><Button onClick={resetForm}>New Supplier</Button></div></FilterBar>
+    {loading ? <div className="flex justify-center rounded-2xl border bg-white py-20"><Spinner className="h-7 w-7" /></div> : <div className="grid items-start gap-6 xl:grid-cols-5">
+      <section className="min-w-0 xl:col-span-3"><div className="mb-3 flex justify-between"><h2 className="font-bold text-slate-900">Supplier List</h2><Badge tone="slate">{rows.length} suppliers</Badge></div><DataTable dense rows={rows} onRowClick={selectSupplier} empty={{ title: 'No suppliers found' }} columns={[
+        { key: 'code', header: 'Code', render: (row) => <span className="font-mono text-xs font-semibold">{row.code}</span> }, { key: 'name', header: 'Supplier Name' }, { key: 'phone', header: 'Phone' }, { key: 'email', header: 'Email', render: (row) => row.email || '—' }, { key: 'status', header: 'Status', render: (row) => <Badge tone={row.status === 'ACTIVE' ? 'green' : 'red'}>{row.status}</Badge> },
+      ]} /><Card className="mt-6"><CardHeader title="Validation / Business Rule Area" icon={Info} /><CardBody className="text-sm text-slate-600">Supplier code must be unique. Inactive suppliers cannot be selected for new purchase orders. Suppliers with open purchase orders cannot be deactivated until those orders are closed.</CardBody></Card></section>
+      <Card className="xl:col-span-2"><CardHeader title="Create / Update Supplier" subtitle={selected?.code || 'New supplier'} icon={Truck} /><CardBody><div className="grid gap-4 sm:grid-cols-2"><Field label="Supplier Code" required><Input value={form.code} onChange={(event) => setForm({ ...form, code: event.target.value })} disabled={!!selected} /></Field><Field label="Status"><Select value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value })}><option value="ACTIVE">Active</option><option value="INACTIVE">Inactive</option><option value="SUSPENDED">Suspended</option></Select></Field><Field label="Supplier Name" required className="sm:col-span-2"><Input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /></Field><Field label="Phone"><Input value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} /></Field><Field label="Email"><Input type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} /></Field><Field label="Address" className="sm:col-span-2"><Textarea rows={3} value={form.address} onChange={(event) => setForm({ ...form, address: event.target.value })} /></Field></div><div className="mt-5 flex gap-2 border-t pt-5"><Button onClick={save} loading={saving}>Create/Update</Button><Button variant="secondary" onClick={deactivate}>Deactivate</Button><Button variant="secondary" icon={RotateCcw} onClick={resetForm}>Reset</Button></div></CardBody></Card>
+    </div>}
+    {!loading && <div className="mt-6 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500 shadow-card">3.6.7 Supplier Management · supplier status controls purchase-order availability</div>}
+  </div>
 }

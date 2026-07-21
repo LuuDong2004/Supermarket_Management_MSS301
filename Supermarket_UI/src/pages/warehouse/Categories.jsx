@@ -1,0 +1,42 @@
+import { useEffect, useMemo, useState } from 'react'
+import { PageHeader, FilterBar } from '../../components/ui/PageHeader.jsx'
+import { Badge, Button, Card, CardBody, CardHeader, Field, Input, Select, Spinner, Textarea } from '../../components/ui/primitives.jsx'
+import { DataTable } from '../../components/ui/DataTable.jsx'
+import { useToast } from '../../components/ui/Toast.jsx'
+import { useConfirm } from '../../components/ui/Confirm.jsx'
+import { categoryService, mockCategories, mockProducts, productService, toList, withFallback } from '../../services/index.js'
+import { FolderCog, Info, RotateCcw, Search } from 'lucide-react'
+
+const emptyForm = { name: '', requiresExpiry: false, taxGroup: 'VAT 8%', status: 'ACTIVE', description: '' }
+
+export default function Categories() {
+  const toast = useToast(); const confirm = useConfirm()
+  const [categories, setCategories] = useState([]); const [products, setProducts] = useState([]); const [selected, setSelected] = useState(null); const [form, setForm] = useState(emptyForm)
+  const [search, setSearch] = useState(''); const [status, setStatus] = useState(''); const [applied, setApplied] = useState({ search: '', status: '' }); const [loading, setLoading] = useState(true); const [saving, setSaving] = useState(false); const [source, setSource] = useState('backend')
+  const load = async () => { setLoading(true); const [categoryResult, productResult] = await Promise.all([withFallback(() => categoryService.list(), mockCategories), withFallback(() => productService.list(), mockProducts)]); setCategories(toList(categoryResult.data)); setProducts(toList(productResult.data)); setSource(categoryResult.source); setLoading(false) }
+  useEffect(() => { load() }, [])
+  const rows = useMemo(() => { const query = applied.search.trim().toLowerCase(); return categories.filter((row) => (!query || row.name.toLowerCase().includes(query)) && (!applied.status || (row.active ? 'ACTIVE' : 'INACTIVE') === applied.status)) }, [applied, categories])
+  const countProducts = (name) => products.filter((product) => product.category === name).length
+  const selectCategory = (row) => { setSelected(row); setForm({ name: row.name || '', requiresExpiry: row.requiresExpiry ?? /fresh|dairy/i.test(row.name), taxGroup: row.taxGroup || 'VAT 8%', status: row.active === false ? 'INACTIVE' : 'ACTIVE', description: row.description || '' }) }
+  const resetForm = () => { setSelected(null); setForm(emptyForm) }
+  const save = async () => {
+    if (!form.name.trim()) return toast.error('Category name is required.')
+    if (categories.some((row) => row.id !== selected?.id && row.name.toLowerCase() === form.name.trim().toLowerCase())) return toast.error('Category name must be unique.')
+    const accepted = await confirm({ title: selected ? 'Update category?' : 'Create category?', message: `${selected ? 'Update' : 'Create'} ${form.name}?`, confirmLabel: 'Create/Update' }); if (!accepted) return
+    const payload = { name: form.name.trim(), description: form.description.trim() || null, active: form.status === 'ACTIVE' }
+    setSaving(true)
+    try { let saved = source === 'backend' ? (selected ? await categoryService.update(selected.id, payload) : await categoryService.create(payload)) : { id: selected?.id || form.name, ...payload }; saved = { ...saved, requiresExpiry: form.requiresExpiry, taxGroup: form.taxGroup }; setCategories((current) => selected ? current.map((row) => row.id === selected.id ? saved : row) : [saved, ...current]); resetForm(); toast.success(selected ? 'Category updated.' : 'Category created.') } catch (error) { toast.error(error.message) } finally { setSaving(false) }
+  }
+  const deactivate = async () => { if (!selected) return toast.error('Select a category first.'); const accepted = await confirm({ title: 'Deactivate category?', message: `${selected.name} will remain available for historical products but cannot be selected for new products.`, confirmLabel: 'Deactivate', danger: true }); if (!accepted) return; const payload = { name: selected.name, description: selected.description || null, active: false }; try { const saved = source === 'backend' ? await categoryService.update(selected.id, payload) : { ...selected, active: false }; setCategories((current) => current.map((row) => row.id === selected.id ? { ...row, ...saved } : row)); resetForm(); toast.success('Category deactivated.') } catch (error) { toast.error(error.message) } }
+  return <div>
+    <PageHeader breadcrumb="Warehouse Management · 3.6.6" title="Category Management" subtitle="Maintain product categories and handling rules." />
+    <FilterBar className="mb-6"><Field label="Category Search" className="grow"><div className="relative"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" /><Input className="pl-9" placeholder="Category name or tax group" value={search} onChange={(event) => setSearch(event.target.value)} /></div></Field><Field label="Status"><Select value={status} onChange={(event) => setStatus(event.target.value)}><option value="">All</option><option value="ACTIVE">Active</option><option value="INACTIVE">Inactive</option></Select></Field><div className="flex !basis-auto !grow-0 gap-2"><Button variant="secondary" onClick={() => setApplied({ search, status })}>Filter</Button><Button onClick={resetForm}>New Category</Button></div></FilterBar>
+    {loading ? <div className="flex justify-center rounded-2xl border bg-white py-20"><Spinner className="h-7 w-7" /></div> : <div className="grid items-start gap-6 xl:grid-cols-5">
+      <section className="min-w-0 xl:col-span-3"><div className="mb-3 flex justify-between"><h2 className="font-bold text-slate-900">Category List</h2><Badge tone="slate">{rows.length} categories</Badge></div><DataTable dense rows={rows} onRowClick={selectCategory} empty={{ title: 'No categories found' }} columns={[
+        { key: 'name', header: 'Category' }, { key: 'requiresExpiry', header: 'Requires Expiry', render: (row) => (row.requiresExpiry ?? /fresh|dairy/i.test(row.name)) ? 'Yes' : 'No' }, { key: 'taxGroup', header: 'Tax Group', render: (row) => row.taxGroup || 'VAT 8%' }, { key: 'products', header: 'Products', render: (row) => countProducts(row.name) }, { key: 'active', header: 'Status', render: (row) => <Badge tone={row.active === false ? 'red' : 'green'}>{row.active === false ? 'Inactive' : 'Active'}</Badge> },
+      ]} /><Card className="mt-6"><CardHeader title="Validation / Business Rule Area" icon={Info} /><CardBody className="text-sm text-slate-600">Category name must be unique among active categories. Categories used by active products cannot be deleted directly; use Inactive status.</CardBody></Card></section>
+      <Card className="xl:col-span-2"><CardHeader title="Create / Update Category" subtitle={selected?.name || 'New category'} icon={FolderCog} /><CardBody><div className="space-y-4"><Field label="Category Name" required><Input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /></Field><label className="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" checked={form.requiresExpiry} onChange={(event) => setForm({ ...form, requiresExpiry: event.target.checked })} /> Requires expiry date during goods receipt</label><div className="grid grid-cols-2 gap-4"><Field label="Tax Group"><Select value={form.taxGroup} onChange={(event) => setForm({ ...form, taxGroup: event.target.value })}><option>VAT 5%</option><option>VAT 8%</option><option>VAT 10%</option></Select></Field><Field label="Status"><Select value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value })}><option value="ACTIVE">Active</option><option value="INACTIVE">Inactive</option></Select></Field></div><Field label="Description"><Textarea rows={4} value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} /></Field></div><div className="mt-5 flex gap-2 border-t pt-5"><Button onClick={save} loading={saving}>Create/Update</Button><Button variant="secondary" onClick={deactivate}>Deactivate</Button><Button variant="secondary" icon={RotateCcw} onClick={resetForm}>Reset</Button></div></CardBody></Card>
+    </div>}
+    {!loading && <div className="mt-6 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500 shadow-card">3.6.6 Category Management · category rules support product and goods-receipt validation</div>}
+  </div>
+}
