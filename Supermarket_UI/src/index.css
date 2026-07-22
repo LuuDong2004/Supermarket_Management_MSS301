@@ -209,6 +209,8 @@
 }
 
 .sms-filter-bar {
+  position: relative;
+  z-index: 20;
   backdrop-filter: blur(8px);
 }
 
