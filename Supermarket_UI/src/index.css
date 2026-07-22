@@ -212,14 +212,28 @@
   backdrop-filter: blur(8px);
 }
 
+.sms-table {
+  border-color: #cbd5e1;
+}
+
 .sms-table table {
-  border-collapse: separate;
-  border-spacing: 0;
+  border-collapse: collapse;
 }
 
 .sms-table th,
 .sms-table td {
+  border-right: 1px solid #cbd5e1;
+  border-bottom: 1px solid #cbd5e1;
   white-space: nowrap;
+}
+
+.sms-table th:last-child,
+.sms-table td:last-child {
+  border-right: 0;
+}
+
+.sms-table tbody tr:last-child td {
+  border-bottom: 0;
 }
 
 .sms-table tbody tr {

@@ -81,6 +81,7 @@ export default function BarcodePrint() {
   const [products, setProducts] = useState([])
   const [source, setSource] = useState('backend')
   const [search, setSearch] = useState('')
+  const [appliedSearch, setAppliedSearch] = useState('')
   const [selected, setSelected] = useState({}) // code -> true
   const [copies, setCopies] = useState(1)
 
@@ -92,10 +93,10 @@ export default function BarcodePrint() {
   useEffect(() => { load() }, [])
 
   const rows = useMemo(() => {
-    const q = search.trim().toLowerCase()
+    const q = appliedSearch.trim().toLowerCase()
     if (!q) return products
     return products.filter((p) => (p.name || '').toLowerCase().includes(q) || (p.code || '').toLowerCase().includes(q) || (p.barcode || '').toLowerCase().includes(q))
-  }, [products, search])
+  }, [appliedSearch, products])
 
   const selectedList = useMemo(() => products.filter((p) => selected[p.code]), [products, selected])
   const toggle = (code) => setSelected((s) => ({ ...s, [code]: !s[code] }))
@@ -138,6 +139,7 @@ export default function BarcodePrint() {
                 </div>
               </Field>
               <div className="flex items-end gap-2">
+                <Button size="sm" onClick={() => setAppliedSearch(search)}>Apply</Button>
                 <Button variant="secondary" size="sm" onClick={selectAll}>Chọn tất cả</Button>
                 <Button variant="ghost" size="sm" onClick={clear}>Bỏ chọn</Button>
               </div>

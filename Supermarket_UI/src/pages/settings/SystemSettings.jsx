@@ -3,7 +3,6 @@ import { PageHeader, FilterBar } from '../../components/ui/PageHeader.jsx'
 import { Card, CardHeader, CardBody, Button, Badge, Field, Input, Select, Spinner } from '../../components/ui/primitives.jsx'
 import { DataTable } from '../../components/ui/DataTable.jsx'
 import { Modal } from '../../components/ui/Modal.jsx'
-import { Tabs } from '../../components/ui/Tabs.jsx'
 import { useToast } from '../../components/ui/Toast.jsx'
 import { useConfirm } from '../../components/ui/Confirm.jsx'
 import { settingService, withFallback, toList } from '../../services/index.js'
@@ -30,11 +29,13 @@ const CATEGORY_TONE = {
 }
 
 const emptyForm = { id: null, settingKey: '', settingValue: '', label: '', category: 'Chung' }
+const emptyFilters = { type: 'all', status: '', effectiveDate: '', approval: '' }
 
 export default function SystemSettings() {
   const toast = useToast()
   const confirm = useConfirm()
-  const [tab, setTab] = useState('all')
+  const [filters, setFilters] = useState(emptyFilters)
+  const [applied, setApplied] = useState(emptyFilters)
 
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
@@ -54,13 +55,16 @@ export default function SystemSettings() {
 
   useEffect(() => { load() }, [])
 
-  const filtered = useMemo(
-    () => (tab === 'all' ? rows : rows.filter((s) => s.category === tab)),
-    [rows, tab],
-  )
+  const filtered = useMemo(() => rows.filter((setting) => {
+    const status = String(setting.status || 'PENDING').toUpperCase()
+    return (applied.type === 'all' || setting.category === applied.type)
+      && (!applied.status || status === applied.status)
+      && (!applied.effectiveDate || String(setting.effectiveDate || '').slice(0, 10) === applied.effectiveDate)
+      && (!applied.approval || String(setting.approval || setting.approver || '').toUpperCase() === applied.approval)
+  }), [applied, rows])
 
   const openNew = () => {
-    setForm({ ...emptyForm, category: tab === 'all' ? 'Chung' : tab })
+    setForm({ ...emptyForm, category: applied.type === 'all' ? 'Chung' : applied.type })
     setEditing({})
   }
   const openEdit = (s) => {
@@ -114,11 +118,11 @@ export default function SystemSettings() {
       />
 
       <FilterBar>
-        <Field label="Configuration Type"><Select value={tab} onChange={(e) => setTab(e.target.value)}><option value="all">VAT / Loyalty / Role</option></Select></Field>
-        <Field label="Status"><Select value="status" onChange={() => {}}><option value="status">Draft/Pending</option></Select></Field>
-        <Field label="Effective Date"><Input placeholder="dd/mm/yyyy" /></Field>
-        <Field label="Approval"><Input value="CEO" readOnly /></Field>
-        <div className="flex gap-3"><Button>Apply</Button><Button variant="secondary">Reset</Button></div>
+        <Field label="Configuration Type"><Select value={filters.type} onChange={(event) => setFilters((current) => ({ ...current, type: event.target.value }))}>{TABS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</Select></Field>
+        <Field label="Status"><Select value={filters.status} onChange={(event) => setFilters((current) => ({ ...current, status: event.target.value }))}><option value="">All</option><option value="PENDING">Draft/Pending</option><option value="APPROVED">Approved</option><option value="REJECTED">Rejected</option></Select></Field>
+        <Field label="Effective Date"><Input type="date" value={filters.effectiveDate} onChange={(event) => setFilters((current) => ({ ...current, effectiveDate: event.target.value }))} /></Field>
+        <Field label="Approval"><Select value={filters.approval} onChange={(event) => setFilters((current) => ({ ...current, approval: event.target.value }))}><option value="">All</option><option value="CEO">CEO</option><option value="ADMIN">Admin</option></Select></Field>
+        <div className="flex gap-3"><Button onClick={() => setApplied(filters)}>Apply</Button><Button variant="secondary" onClick={() => { setFilters(emptyFilters); setApplied(emptyFilters) }}>Reset</Button></div>
       </FilterBar>
 
       <div className="grid gap-7 xl:grid-cols-[minmax(0,1.05fr)_minmax(360px,1fr)]">

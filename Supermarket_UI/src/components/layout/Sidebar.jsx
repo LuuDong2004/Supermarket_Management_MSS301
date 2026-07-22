@@ -2,7 +2,13 @@ import { NavLink } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { navForRole } from '../../routes/nav.js'
 import { cn } from '../../lib/cn.js'
-import { X, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
+import { CalendarDays, X, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
+
+const today = new Intl.DateTimeFormat('en-GB', {
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric',
+}).format(new Date())
 
 export function Sidebar({ open, onClose, collapsed, onToggleCollapse }) {
   const { user } = useAuth()
@@ -68,19 +74,34 @@ export function Sidebar({ open, onClose, collapsed, onToggleCollapse }) {
           ))}
         </nav>
 
-        {/* Collapse toggle — desktop only */}
-        <div className="hidden shrink-0 border-t border-white/10 p-3 lg:block">
-          <button
-            onClick={onToggleCollapse}
-            title={collapsed ? 'Mở rộng' : 'Thu gọn'}
+        {/* Date and desktop collapse control */}
+        <div className="shrink-0 border-t border-white/10 px-3 py-3">
+          <div
             className={cn(
-              'flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-500 transition hover:bg-white/[0.06] hover:text-slate-200',
-              collapsed && 'justify-center px-0',
+              'flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.05] px-3.5 py-3 text-slate-300 shadow-sm',
+              collapsed && 'lg:justify-center lg:px-0',
             )}
           >
-            {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
-            {!collapsed && <span>Thu gọn</span>}
-          </button>
+            <div className={cn('flex min-w-0 flex-1 items-center gap-3', collapsed && 'lg:hidden')}>
+              <CalendarDays size={18} className="shrink-0 text-emerald-400" />
+              <div className="min-w-0">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">Today</p>
+                <time dateTime={new Date().toISOString().slice(0, 10)} className="mt-0.5 block text-sm font-semibold text-slate-200">
+                  {today}
+                </time>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={onToggleCollapse}
+              title={collapsed ? `Mở rộng — Today, ${today}` : 'Thu gọn'}
+              aria-label={collapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}
+              className="hidden shrink-0 rounded-lg p-2 text-slate-500 transition hover:bg-white/10 hover:text-emerald-300 lg:block"
+            >
+              {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+            </button>
+          </div>
         </div>
       </aside>
     </>

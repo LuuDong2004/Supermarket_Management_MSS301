@@ -133,6 +133,7 @@ export default function ProcessSale() {
   const toast = useToast()
   const { user } = useAuth()
   const [query, setQuery] = useState('')
+  const [appliedQuery, setAppliedQuery] = useState('')
   const [products, setProducts] = useState([])
   const [customers, setCustomers] = useState([])
   const [vouchers, setVouchers] = useState([])
@@ -253,12 +254,12 @@ export default function ProcessSale() {
   }
 
   const matches = useMemo(() => {
-    const q = query.trim().toLowerCase()
+    const q = appliedQuery.trim().toLowerCase()
     if (!q) return []
     return products.filter((p) => (p.name || '').toLowerCase().includes(q) || (p.barcode || '').includes(q)).slice(0, 6)
-  }, [query, products])
+  }, [appliedQuery, products])
 
-  useEffect(() => { setActiveIndex(-1) }, [query])
+  useEffect(() => { setActiveIndex(-1) }, [appliedQuery])
 
   const addProduct = (p) => {
     if (p.stock <= 0) {
@@ -277,6 +278,7 @@ export default function ProcessSale() {
       return [...c, { ...p, qty: 1 }]
     })
     setQuery('')
+    setAppliedQuery('')
     setActiveIndex(-1)
   }
 
@@ -306,11 +308,13 @@ export default function ProcessSale() {
       setActiveIndex((prev) => (prev > 0 ? prev - 1 : matches.length - 1))
     } else if (e.key === 'Enter') {
       e.preventDefault()
+      if (query !== appliedQuery) return
       if (activeIndex >= 0 && activeIndex < matches.length) addProduct(matches[activeIndex])
       else if (matches[0]) addProduct(matches[0])
     } else if (e.key === 'Escape') {
       e.preventDefault()
       setQuery('')
+      setAppliedQuery('')
       setActiveIndex(-1)
     }
   }
@@ -463,18 +467,19 @@ export default function ProcessSale() {
           <Card className="sms-sale-panel" hoverEffect>
             <CardHeader title="Nhập sản phẩm" icon={ScanLine} subtitle="Barcode / tên sản phẩm" />
             <CardBody>
-              <div className="relative">
-                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                <Input
-                  className="pl-10"
-                  placeholder="Quét mã vạch hoặc nhập tên sản phẩm... (Mũi tên Lên/Xuống để duyệt, Enter chọn)"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  autoFocus
-                />
-                {matches.length > 0 && (
-                  <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-xl border border-slate-100 bg-white shadow-premium-hover">
+              <div className="flex items-start gap-2">
+                <div className="relative min-w-0 flex-1">
+                  <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <Input
+                    className="pl-10"
+                    placeholder="Quét mã vạch hoặc nhập tên sản phẩm..."
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    autoFocus
+                  />
+                  {matches.length > 0 && (
+                    <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-xl border border-slate-100 bg-white shadow-premium-hover">
                     {matches.map((p, index) => {
                       const active = index === activeIndex
                       return (
@@ -499,8 +504,10 @@ export default function ProcessSale() {
                         </button>
                       )
                     })}
-                  </div>
-                )}
+                    </div>
+                  )}
+                </div>
+                <Button className="shrink-0" onClick={() => setAppliedQuery(query)}>Apply</Button>
               </div>
               <div className="mt-5 border-t border-slate-100 pt-5">
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3.5">Sản phẩm phổ biến (Chọn nhanh)</p>

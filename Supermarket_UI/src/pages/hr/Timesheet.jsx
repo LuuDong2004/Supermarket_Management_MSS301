@@ -10,6 +10,7 @@ import { Clock, CheckCircle2, AlertTriangle, XCircle, Download, CalendarRange } 
 
 const firstOfMonth = () => { const d = new Date(); return isoDate(new Date(d.getFullYear(), d.getMonth(), 1)) }
 const today = () => isoDate()
+const initialRange = { from: firstOfMonth(), to: today() }
 
 function exportCsv(rows, from, to) {
   const header = ['Nhân viên', 'Ngày công', 'Tổng giờ', 'Đúng giờ', 'Đi muộn', 'Vắng', 'Ca xếp', 'Ca hoàn thành']
@@ -26,20 +27,21 @@ function exportCsv(rows, from, to) {
 
 export default function Timesheet() {
   const toast = useToast()
-  const [from, setFrom] = useState(firstOfMonth())
-  const [to, setTo] = useState(today())
+  const [from, setFrom] = useState(initialRange.from)
+  const [to, setTo] = useState(initialRange.to)
+  const [appliedRange, setAppliedRange] = useState(initialRange)
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
   const [source, setSource] = useState('backend')
 
   const load = async () => {
     setLoading(true)
-    const r = await withFallback(() => attendanceService.timesheet({ from, to }))
+    const r = await withFallback(() => attendanceService.timesheet(appliedRange))
     setRows(toList(r.data))
     setSource(r.source)
     setLoading(false)
   }
-  useEffect(() => { load() }, [from, to])
+  useEffect(() => { load() }, [appliedRange])
 
   const totals = useMemo(() => rows.reduce((acc, r) => ({
     hours: acc.hours + (r.totalHours || 0),
@@ -50,7 +52,7 @@ export default function Timesheet() {
 
   const doExport = () => {
     if (rows.length === 0) return toast.error('Không có dữ liệu để xuất.')
-    exportCsv(rows, from, to)
+    exportCsv(rows, appliedRange.from, appliedRange.to)
     toast.success('Đã xuất báo cáo chấm công (CSV).')
   }
 
@@ -70,6 +72,10 @@ export default function Timesheet() {
       <FilterBar>
         <Field label="Từ ngày"><Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></Field>
         <Field label="Đến ngày"><Input type="date" value={to} onChange={(e) => setTo(e.target.value)} /></Field>
+        <div className="flex !basis-auto !grow-0 gap-2">
+          <Button onClick={() => setAppliedRange({ from, to })}>Apply</Button>
+          <Button variant="secondary" onClick={() => { setFrom(initialRange.from); setTo(initialRange.to); setAppliedRange(initialRange) }}>Reset</Button>
+        </div>
       </FilterBar>
 
       <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

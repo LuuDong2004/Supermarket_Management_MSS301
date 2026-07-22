@@ -22,6 +22,7 @@ export default function StrategicDecisions() {
   const [decisions, setDecisions] = useState([])
   const [source, setSource] = useState('backend')
   const [category, setCategory] = useState('')
+  const [appliedCategory, setAppliedCategory] = useState('')
 
   const load = async () => {
     const res = await withFallback(() => strategicDecisionService.list())
@@ -31,8 +32,8 @@ export default function StrategicDecisions() {
   useEffect(() => { load() }, [])
 
   const rows = useMemo(
-    () => (category ? decisions.filter((d) => d.category === category) : decisions),
-    [category, decisions],
+    () => (appliedCategory ? decisions.filter((d) => d.category === appliedCategory) : decisions),
+    [appliedCategory, decisions],
   )
 
   const counts = useMemo(() => ({
@@ -81,6 +82,10 @@ export default function StrategicDecisions() {
             {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
           </Select>
         </Field>
+        <div className="flex !basis-auto !grow-0 gap-2">
+          <Button onClick={() => setAppliedCategory(category)}>Apply</Button>
+          <Button variant="secondary" onClick={() => { setCategory(''); setAppliedCategory('') }}>Reset</Button>
+        </div>
       </FilterBar>
 
       {rows.length === 0 ? (

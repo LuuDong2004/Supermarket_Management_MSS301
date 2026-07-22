@@ -32,8 +32,8 @@ export default function Reports() {
   const [dateFrom, setDateFrom] = useState('2026-06-06')
   const [dateTo, setDateTo] = useState('2026-06-12')
   const [filter, setFilter] = useState('')
-  const [appliedFilter, setAppliedFilter] = useState('')
   const [exportType, setExportType] = useState('excel')
+  const [applied, setApplied] = useState({ reportType: 'management', dateFrom: '2026-06-06', dateTo: '2026-06-12', filter: '', exportType: 'excel' })
   const [trend, setTrend] = useState([])
   const [financial, setFinancial] = useState([])
   const [products, setProducts] = useState([])
@@ -86,12 +86,12 @@ export default function Reports() {
   }, [financial, sources.financial])
 
   const visibleDetails = useMemo(() => {
-    const query = appliedFilter.trim().toLowerCase()
+    const query = applied.filter.trim().toLowerCase()
     if (!query) return reportDetails
     return reportDetails.filter((row) =>
       [row.date, row.category, row.revenue, row.cost, row.profit, row.status]
         .some((value) => String(value ?? '').toLowerCase().includes(query)))
-  }, [appliedFilter, reportDetails])
+  }, [applied, reportDetails])
 
   const totalSales = Number(dashboard.todayRevenue || 0)
   const transactions = Number(dashboard.todayOrders || 0)
@@ -99,18 +99,23 @@ export default function Reports() {
     ? Number(financial.at(-1)?.grossProfit || 0) * 1_000_000
     : 0
   const inventoryValue = products.reduce((sum, product) => sum + Number(product.cost || 0) * Number(product.stock || 0), 0)
+  const appliedReportLabel = {
+    management: 'Management Report',
+    financial: 'Financial Report',
+    operational: 'Operational Report',
+  }[applied.reportType]
 
   const resetFilters = () => {
     setReportType('management')
     setDateFrom('2026-06-06')
     setDateTo('2026-06-12')
     setFilter('')
-    setAppliedFilter('')
     setExportType('excel')
+    setApplied({ reportType: 'management', dateFrom: '2026-06-06', dateTo: '2026-06-12', filter: '', exportType: 'excel' })
   }
 
   const exportReport = () => {
-    if (exportType === 'pdf') {
+    if (applied.exportType === 'pdf') {
       window.print()
       return
     }
@@ -123,7 +128,7 @@ export default function Reports() {
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
     const anchor = document.createElement('a')
     anchor.href = url
-    anchor.download = `management-report_${dateFrom}_${dateTo}.csv`
+    anchor.download = `management-report_${applied.dateFrom}_${applied.dateTo}.csv`
     anchor.click()
     URL.revokeObjectURL(url)
   }
@@ -160,7 +165,7 @@ export default function Reports() {
           </Select>
         </Field>
         <div className="flex gap-2">
-          <Button onClick={() => setAppliedFilter(filter)}>Apply</Button>
+          <Button onClick={() => setApplied({ reportType, dateFrom, dateTo, filter, exportType })}>Apply</Button>
           <Button variant="secondary" onClick={resetFilters}>Reset</Button>
         </div>
       </FilterBar>
@@ -179,7 +184,7 @@ export default function Reports() {
       ) : (
         <div className="mt-6 grid gap-6 xl:grid-cols-2">
           <Card className="min-w-0">
-            <CardHeader title="Trend Summary" subtitle="Revenue · million VND" icon={BarChart3} />
+            <CardHeader title="Trend Summary" subtitle={`${appliedReportLabel} · Revenue · million VND`} icon={BarChart3} />
             <CardBody>
               <Bars
                 data={trendRows}
