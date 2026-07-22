@@ -103,12 +103,7 @@ export default function Login() {
             </div>
 
             <div className="sms-login-field">
-              <div className="sms-login-label-row">
-                <label htmlFor="password">Password</label>
-                <button type="button" onClick={forgotPassword} disabled={loading}>
-                  Forgot password?
-                </button>
-              </div>
+              <label htmlFor="password">Password</label>
               <div className="sms-login-input-wrap">
                 <LockKeyhole size={18} aria-hidden="true" />
                 <input
@@ -146,8 +141,11 @@ export default function Login() {
 
             <div className="sms-login-actions">
               <button type="submit" disabled={loading}>
-                <span>{loading ? 'Signing in...' : 'Sign in'}</span>
+                <span>{loading ? 'Logging in...' : 'Login'}</span>
                 {!loading && <ArrowRight size={19} aria-hidden="true" />}
+              </button>
+              <button type="button" onClick={forgotPassword} disabled={loading}>
+                Forgot Password
               </button>
             </div>
           </form>
